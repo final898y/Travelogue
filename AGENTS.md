@@ -5,39 +5,65 @@
 ## 1. 語言與認知
 
 - **輸出語言**: 必須使用 **繁體中文 (Traditional Chinese)** 回覆。
-- **專業術語**: 專有名詞（如 FastAPI, Pytest, Loguru）應保留英文，必要時可加註中文說明。
-- **檔案可見性 (File Visibility)**:
-  - Agent 的搜尋與列表工具預設會忽略 .gitignore 中的檔案。
-  - 若需操作這些檔案，必須直接指定完整路徑進行讀取或寫入。
+- **專業術語**: 專有名詞（如 FastAPI, Pytest, Vitest）應保留英文，必要時可加註中文說明。
 
-## 2. Git 操作規範 (Git Operations)
+## 2. 開發與驗證強制流程 (Mandatory Workflow)
 
-Agent 必須嚴格執行以下流程，以確保代碼庫的可追溯性與整潔。
+在完成任何功能開發或代碼重構後，**必須**依序執行以下流程進行驗證，確保代碼品質後方可進入 Git 提交：
 
-### 2.1. 提交前的標準作業程序 (Pre-Commit SOP)
+1.  **自動測試 (Test)**: 執行 `npm run test`，確保所有測試案例通過。
+2.  **代碼檢查 (Lint)**: 執行 `npm run lint`，確保無規範錯誤。
+3.  **格式化 (Prettier)**: 執行 `npm run format`，確保代碼風格統一。
 
-1.  **加入暫存**: 執行 `git add <file>`。
-2.  **強制檢查差異**: 必須執行 `git diff --staged` 並詳讀內容。
-    - 禁止盲目提交。
-    - 必須確認變更邏輯正確，且無誤刪程式碼或遺留除錯語句。
-3.  **提交 (Commit)**:
-    - 使用 `git commit`。
-    - 變更內容若涉及多個模組，必須在提交訊息中包含細項說明清單。
+**若上述任一步驟失敗，必須修正後重新執行完整流程，嚴禁在未驗證情況下提交代碼。**
 
-### 2.2. Commit Message 格式
+## 3. Git 操作與文件同步 (Git & Docs Sync)
 
-遵循 `<type>(<scope>): <subject>` 格式，並使用 `-` 列出細項。
-類型包括：feat, fix, refactor, docs, test, chore, style。
+### 3.1. 文件同步機制
 
-## 3. 環境與指令規範 (Windows PowerShell)
+Agent 在執行 Commit 前，必須確保以下文件同步更新：
+
+- **`docs/COMMIT_LOG.md`**: 必須記錄該次變更的 Hash（若已知）、日期、改動方向與具體內容。
+- **`README.md`**: 當變更涉及專案基礎架構、啟動方式或重大功能增減時，必須同步更新 README。
+
+### 3.2. 提交前的標準作業程序 (Pre-Commit SOP)
+
+1.  **代碼驗證**: 完成「第 2 點：開發與驗證強制流程」。
+2.  **文件更新**: 完成「第 3.1 點：文件同步機制」。
+3.  **加入暫存**: 執行 `git add <file>`。
+4.  **強制檢查差異**: 必須執行 `git diff --staged` 並詳讀內容，確認無誤。
+5.  **提交 (Commit)**: 使用 `git commit`，遵循 Conventional Commits 格式。
+
+### 3.3. Commit Message 格式
+
+遵循 `<type>(<scope>): <subject>` 格式：
+
+- `feat`: 新功能
+- `fix`: 修復 Bug
+- `docs`: 文件更動
+- `style`: 格式、設計樣式變更
+- `refactor`: 代碼重構
+- `test`: 測試相關
+- `chore`: 基礎設施、依賴更新
+
+## 4. 指令快捷腳本 (Scripts)
+
+本專案使用以下指令進行日常開發與驗證：
+
+| 功能           | 指令 (npm.cmd)             | 說明                     |
+| :------------- | :------------------------- | :----------------------- |
+| **開發啟動**   | `npm.cmd run dev`          | 啟動 Vite 開發伺服器     |
+| **專案建置**   | `npm.cmd run build`        | 執行編譯與打包           |
+| **自動測試**   | `npm.cmd run test`         | 執行 Vitest 單元測試     |
+| **代碼檢查**   | `npm.cmd run lint`         | 使用 ESLint 檢查規範     |
+| **代碼修復**   | `npm.cmd run lint:fix`     | 自動修復 ESLint 警告     |
+| **代碼格式化** | `npm.cmd run format`       | 使用 Prettier 格式化檔案 |
+| **格式檢查**   | `npm.cmd run format:check` | 檢查檔案是否符合格式     |
+
+## 5. 環境規範 (Windows PowerShell)
 
 本專案運行於 Windows (win32) 環境，預設 Shell 為 PowerShell (pwsh)。
 
-### 指令語法限制
-
-- **連接指令**: PowerShell 不支援 `&&`。
-  - 錯誤範例: `cd src && python main.py`
-  - 正確範例: `cd src; python main.py`
-- **環境變數設定**:
-  - 錯誤範例: `export VAR=1`
-  - 正確範例: `$env:VAR="1"`
+- **連接指令**: 使用 `;` 分隔，**禁止使用 `&&`**。
+- **絕對路徑**: 輸出檔案或讀取路徑時，請優先考慮使用絕對路徑以確保穩定性。
+- **npm 指令**: 在 PowerShell 環境下，請使用 `npm.cmd` 以避免執行原則權限問題。
