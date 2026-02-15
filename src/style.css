@@ -1,79 +1,113 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@theme {
+  /* --- 配色方案 (Colors) --- */
+  /* 森林綠 (Forest Green) - 主要品牌色 */
+  --color-forest-50: #f0f4e8;
+  --color-forest-100: #e0e5d5;
+  --color-forest-200: #c8d4b5;
+  --color-forest-300: #a9ba8e;
+  --color-forest-400: #8b9a6d;
+  --color-forest-500: #6f7f4f;
+  --color-forest-600: #5f6f4a;
+  --color-forest-700: #4a5639;
+  --color-forest-800: #3a4429;
+  --color-forest-900: #2a311c;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* 米白色 (Cream) - 背景色 */
+  --color-cream: #f7f4eb;
+  --color-cream-dark: #ede8dc;
+  --color-cream-light: #fdfbf5;
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  /* 大地棕 (Earth Brown) - 溫暖強調色 */
+  --color-earth-50: #faf5ef;
+  --color-earth-100: #f0e8db;
+  --color-earth-200: #e5d6c0;
+  --color-earth-300: #d4b896;
+  --color-earth-400: #c19e72;
+  --color-earth-500: #a68a64;
+  --color-earth-600: #8b7355;
+  --color-earth-700: #6f5c45;
+  --color-earth-800: #564736;
+  --color-earth-900: #3d3226;
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  /* 功能色系 (Accent Colors) */
+  --color-sky-blue: #6b9bd1;
+  --color-lavender: #9b8fb9;
+  --color-honey-orange: #e89f5a;
+  --color-coral-red: #d97878;
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  /* --- 字體系統 (Typography) --- */
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-rounded: "Varela Round", "Noto Sans TC", sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
+  /* --- 圓角系統 (Border Radius) --- */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 
-.card {
-  padding: 2em;
-}
+  /* --- 陰影系統 (Shadows - Soft Shadow) --- */
+  --shadow-soft-sm: 2px 2px 0px rgba(224, 229, 213, 0.8);
+  --shadow-soft: 4px 4px 0px rgba(224, 229, 213, 0.8);
+  --shadow-soft-lg: 6px 6px 0px rgba(224, 229, 213, 0.8);
+  --shadow-soft-hover: 6px 6px 0px rgba(200, 212, 181, 0.9);
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+  /* --- 動畫效果 (Animations) --- */
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-fade-in: fade-in 0.2s ease-in;
+  --animate-bounce-soft: bounce-soft 0.5s ease-in-out;
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+  @keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
-  a:hover {
-    color: #747bff;
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-  button {
-    background-color: #f9f9f9;
+  @keyframes bounce-soft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+}
+
+/* --- 基礎樣式覆寫 --- */
+@layer base {
+  body {
+    @apply bg-cream text-gray-700 font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-rounded font-bold text-forest-800;
+  }
+}
+
+/* --- 元件層 (Components) --- */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-forest-400 text-white font-semibold rounded-xl shadow-soft 
+           hover:bg-forest-500 hover:shadow-soft-hover active:scale-95 transition-all 
+           inline-flex items-center justify-center;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-earth-500 text-white font-semibold rounded-xl shadow-soft-sm 
+           hover:bg-earth-600 hover:shadow-soft active:scale-95 transition-all 
+           inline-flex items-center justify-center;
+  }
+
+  .card-base {
+    @apply bg-white rounded-2xl p-6 shadow-soft hover:shadow-soft-hover 
+           hover:-translate-y-1 transition-all;
+  }
+
+  .input-base {
+    @apply px-4 py-3 bg-white border-2 border-forest-100 rounded-xl 
+           focus:border-forest-400 focus:outline-none focus:ring-4 focus:ring-forest-400/10 
+           transition-all placeholder:text-gray-400;
+  }
+
+  .badge-forest {
+    @apply px-3 py-1 bg-forest-100 text-forest-700 text-xs font-bold rounded-full;
   }
 }
