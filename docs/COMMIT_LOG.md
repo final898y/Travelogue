@@ -6,6 +6,18 @@
 
 ## 📅 提交歷史
 
+### [2026-02-16]
+
+#### `pending` - feat(ui): 實作首頁 UI/UX 設計與設計系統優化
+
+- **改動方向**: 建立 Travelogue 的核心視覺風格與首頁列表。
+- **具體內容**:
+  - 導入 `ui-ux-pro-max` 專家系統，定義「Motion-Driven」風格與「Storytelling」佈局。
+  - 新增 `TripCard.vue`: 手帳風格旅程卡片，具備懸停動畫與 SVG 狀態標籤。
+  - 新增 `BottomNav.vue`: 行動優先的懸浮導覽列，整合 Lucide 風格 SVG 圖示與毛玻璃效果。
+  - 更新 `App.vue`: 實作完整首頁佈局，包含品牌頁首、個人化歡迎語、旅程列表與快速新增區塊。
+  - 優化設計系統：在 `App.vue` 引入 Google Fonts 並定義全域字體變數。
+
 ### [2026-02-15]
 
 #### `pending` - docs: 更新 Agent 規範並建立 README.md

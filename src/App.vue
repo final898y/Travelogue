@@ -1,53 +1,163 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref } from "vue";
+import TripCard from "./components/TripCard.vue";
+import BottomNav from "./components/BottomNav.vue";
+
+// Mock data for demonstration
+const trips = ref([
+  {
+    id: 1,
+    title: "2024 東京賞櫻之旅",
+    startDate: "03/20",
+    endDate: "03/24",
+    days: 5,
+    coverImage:
+      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
+    countdown: 15,
+    status: "upcoming" as const,
+  },
+  {
+    id: 2,
+    title: "京都古都漫步",
+    startDate: "02/15",
+    endDate: "02/20",
+    days: 6,
+    coverImage:
+      "https://images.unsplash.com/photo-1493780474015-ba834ff0ce2f?q=80&w=800&auto=format&fit=crop",
+    status: "ongoing" as const,
+  },
+  {
+    id: 3,
+    title: "北海道冬季祭典",
+    startDate: "01/10",
+    endDate: "01/15",
+    days: 6,
+    coverImage:
+      "https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=800&auto=format&fit=crop",
+    status: "finished" as const,
+  },
+]);
+</script>
 
 <template>
   <div
-    class="min-h-screen p-8 flex flex-col items-center justify-center animate-fade-in"
+    class="min-h-screen pb-32 bg-cream-light font-sans selection:bg-forest-100"
   >
-    <div class="card-base max-w-md w-full text-center space-y-6">
-      <div class="space-y-2">
-        <h1 class="text-4xl">Travelogue</h1>
-        <p class="text-gray-500">溫馨自然風格的旅遊規劃</p>
+    <!-- Header -->
+    <header
+      class="sticky top-0 z-40 bg-cream-light/80 backdrop-blur-md px-6 py-5 flex justify-between items-center"
+    >
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🌿</span>
+        <h1
+          class="text-2xl font-rounded font-bold text-forest-800 tracking-tight"
+        >
+          Travelogue
+        </h1>
       </div>
+      <button
+        class="w-10 h-10 flex items-center justify-center bg-forest-400 text-white rounded-full shadow-soft hover:bg-forest-500 active:scale-90 transition-all cursor-pointer"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-plus"
+        >
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
+      </button>
+    </header>
 
-      <div class="py-4">
-        <div class="flex flex-wrap gap-2 justify-center mb-6">
-          <span class="badge-forest">行程規劃</span>
-          <span
-            class="px-3 py-1 bg-sky-blue/10 text-sky-blue text-xs font-bold rounded-full"
-            >交通資訊</span
+    <!-- Main Content -->
+    <main class="px-6 space-y-8 animate-fade-in">
+      <!-- Welcome Message -->
+      <section class="mt-4">
+        <h2 class="text-gray-400 text-sm font-medium mb-1">Welcome back,</h2>
+        <p
+          class="text-3xl font-rounded font-bold text-forest-900 leading-tight"
+        >
+          準備好下一次<br />冒險了嗎？
+        </p>
+      </section>
+
+      <!-- Active Trips -->
+      <section class="space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-bold text-forest-800">我的旅程</h3>
+          <button
+            class="text-forest-400 text-sm font-bold hover:text-forest-600 transition-colors cursor-pointer flex items-center gap-1"
           >
-          <span
-            class="px-3 py-1 bg-lavender/10 text-lavender text-xs font-bold rounded-full"
-            >住宿預訂</span
-          >
-          <span
-            class="px-3 py-1 bg-honey-orange/10 text-honey-orange text-xs font-bold rounded-full"
-            >美食地圖</span
-          >
+            全部旅程
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-chevron-right"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
         </div>
 
-        <input
-          type="text"
-          placeholder="要去哪裡旅行？"
-          class="input-base w-full mb-4"
-        />
-
-        <div class="flex gap-4 justify-center">
-          <button class="btn-primary">開始規劃</button>
-          <button class="btn-secondary">查看日誌</button>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <TripCard v-for="trip in trips" :key="trip.id" v-bind="trip" />
         </div>
-      </div>
+      </section>
 
-      <div class="pt-4 border-t border-forest-100">
-        <p class="text-xs text-forest-300 font-mono">DESIGN SYSTEM V1.0.0</p>
-      </div>
-    </div>
+      <!-- Quick Action Card -->
+      <section
+        class="card-base bg-forest-50 border-2 border-dashed border-forest-200 !shadow-none py-8 flex flex-col items-center justify-center text-center space-y-3 cursor-pointer hover:bg-forest-100 transition-all"
+      >
+        <div
+          class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-forest-400 shadow-sm mb-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-map-pin"
+          >
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </div>
+        <h4 class="text-lg font-bold text-forest-800">新增旅程</h4>
+        <p class="text-gray-500 text-sm max-w-[200px]">
+          開始規劃你的下一個夢想景點
+        </p>
+      </section>
+    </main>
 
-    <div class="mt-8 text-forest-400 animate-bounce-soft">
-      <span class="text-2xl">🌿</span>
-    </div>
+    <!-- Navigation -->
+    <BottomNav />
   </div>
 </template>
 
-<style scoped></style>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Varela+Round&display=swap");
+
+:root {
+  --font-sans: "Noto Sans TC", sans-serif;
+  --font-rounded: "Varela Round", "Noto Sans TC", sans-serif;
+}
+</style>
