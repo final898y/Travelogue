@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import TripCard from "../TripCard.vue";
+import TripCard from "../../src/components/trip/TripCard.vue";
 
 describe("TripCard.vue", () => {
   const mockTrip = {
