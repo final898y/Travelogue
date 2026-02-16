@@ -65,7 +65,7 @@ const scheduleItems: Activity[] = [
 ];
 
 const goBack = () => {
-  router.back();
+  router.push("/");
 };
 </script>
 

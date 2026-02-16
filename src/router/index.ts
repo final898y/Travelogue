@@ -14,6 +14,31 @@ const router = createRouter({
       name: "schedule",
       component: () => import("../views/ScheduleView.vue"),
     },
+    {
+      path: "/bookings",
+      name: "bookings",
+      component: () => import("../views/BookingsView.vue"),
+    },
+    {
+      path: "/expense",
+      name: "expense",
+      component: () => import("../views/ExpenseView.vue"),
+    },
+    {
+      path: "/journal",
+      name: "journal",
+      component: () => import("../views/JournalView.vue"),
+    },
+    {
+      path: "/planning",
+      name: "planning",
+      component: () => import("../views/PlanningView.vue"),
+    },
+    {
+      path: "/settings",
+      name: "settings",
+      component: () => import("../views/SettingsView.vue"),
+    },
   ],
   scrollBehavior() {
     return { top: 0 };

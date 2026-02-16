@@ -8,7 +8,22 @@
 
 ### [2026-02-16]
 
-#### `pending` - chore(test): 遷移測試架構並更新 Agent 規範
+#### `pending` - feat(ui): 實作核心視圖並優化設計系統規範
+
+- **改動方向**: 擴展功能模組並提升 UI/UX 質感。
+- **具體內容**:
+  - **設計系統**: 升級至 v1.1.0，引入「Soft UI Evolution」理念，並在 `style.css` 實作更細膩的混合式軟陰影。
+  - **核心視圖**: 實作預訂 (Bookings)、記帳 (Expense)、日誌 (Journal)、準備 (Planning) 與設定 (Settings) 頁面。
+  - **功能細節**: 
+    - `BookingsView`: 實作 PIN 碼鎖定與登機證風格卡片。
+    - `ExpenseView`: 實作視覺化支出儀表板。
+    - `JournalView`: 實作瀑布流佈局展示旅行記錄。
+  - **導航優化**: 
+    - `BottomNav`: 改為 `router-link` 導航，新增「首頁」按鈕，並修正 Z-index 遮擋問題。
+    - `ScheduleView`: 將返回按鈕邏輯修正為回到首頁列表。
+  - **代碼修正**: 修正 `SettingsView` 的語法錯誤與圖示規範。
+
+#### `86a6477` - chore(test): 遷移測試架構並更新 Agent 規範
 
 - **改動方向**: 優化測試管理並強化工程化規範。
 - **具體內容**:
@@ -47,6 +62,7 @@
 ### [2026-02-15]
 
 #### `6d233b0` - chore: 配置 ESLint 與 Prettier 並更新專案 Script
+
 #### `dfea005` - feat: 專案初始化
 
 ---

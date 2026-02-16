@@ -50,7 +50,7 @@
   /* --- 陰影系統 (Shadows - Soft Shadow) --- */
   --shadow-soft-sm: 2px 2px 0px rgba(224, 229, 213, 0.8);
   --shadow-soft: 4px 4px 0px rgba(224, 229, 213, 0.8);
-  --shadow-soft-lg: 6px 6px 0px rgba(224, 229, 213, 0.8);
+  --shadow-soft-lg: 6px 6px 2px rgba(224, 229, 213, 0.6);
   --shadow-soft-hover: 6px 6px 0px rgba(200, 212, 181, 0.9);
 
   /* --- 動畫效果 (Animations) --- */
@@ -90,7 +90,7 @@
 /* --- 基礎樣式覆寫 --- */
 @layer base {
   body {
-    @apply bg-cream text-gray-700 font-sans;
+    @apply bg-cream text-gray-700 font-sans antialiased;
   }
   h1,
   h2,
@@ -98,7 +98,7 @@
   h4,
   h5,
   h6 {
-    @apply font-rounded font-bold text-forest-800;
+    @apply font-rounded font-bold text-forest-800 tracking-tight;
   }
 }
 
@@ -107,18 +107,18 @@
   .btn-primary {
     @apply px-6 py-2.5 bg-forest-400 text-white font-semibold rounded-xl shadow-soft 
            hover:bg-forest-500 hover:shadow-soft-hover active:scale-95 transition-all 
-           inline-flex items-center justify-center;
+           inline-flex items-center justify-center cursor-pointer;
   }
 
   .btn-secondary {
     @apply px-6 py-2.5 bg-earth-500 text-white font-semibold rounded-xl shadow-soft-sm 
            hover:bg-earth-600 hover:shadow-soft active:scale-95 transition-all 
-           inline-flex items-center justify-center;
+           inline-flex items-center justify-center cursor-pointer;
   }
 
   .card-base {
     @apply bg-white rounded-2xl p-6 shadow-soft hover:shadow-soft-hover 
-           hover:-translate-y-1 transition-all;
+           hover:-translate-y-1 transition-all cursor-pointer;
   }
 
   .input-base {
@@ -128,6 +128,6 @@
   }
 
   .badge-forest {
-    @apply px-3 py-1 bg-forest-100 text-forest-700 text-xs font-bold rounded-full;
+    @apply px-3 py-1 bg-forest-100 text-forest-700 text-xs font-bold rounded-full uppercase tracking-wider;
   }
 }
