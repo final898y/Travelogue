@@ -1,49 +1,59 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useTripStore } from "../stores/tripStore";
+import { importSeedData } from "../services/seed";
 import TripCard from "../components/trip/TripCard.vue";
-import type { Trip } from "../types/trip";
 
 const router = useRouter();
+const tripStore = useTripStore();
+const isSeeding = ref(false);
 
-// Mock data for demonstration
-const trips = ref<Trip[]>([
-  {
-    id: 1,
-    title: "2024 東京賞櫻之旅",
-    startDate: "03/20",
-    endDate: "03/24",
-    days: 5,
-    coverImage:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
-    countdown: 15,
-    status: "upcoming" as const,
-  },
-  {
-    id: 2,
-    title: "京都古都漫步",
-    startDate: "02/15",
-    endDate: "02/20",
-    days: 6,
-    coverImage:
-      "https://images.unsplash.com/photo-1493780474015-ba834ff0ce2f?q=80&w=800&auto=format&fit=crop",
-    status: "ongoing" as const,
-  },
-  {
-    id: 3,
-    title: "北海道冬季祭典",
-    startDate: "01/10",
-    endDate: "01/15",
-    days: 6,
-    coverImage:
-      "https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=800&auto=format&fit=crop",
-    status: "finished" as const,
-  },
-]);
+let unsubscribe: (() => void) | null = null;
+
+onMounted(() => {
+  // Subscribe to real-time updates from Firebase
+  unsubscribe = tripStore.subscribeToTrips();
+});
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe();
+});
 
 const navigateToTrip = (tripId: number | string) => {
-  if (tripId === 1 || tripId === "1") {
+  // For demo purposes, we only have the schedule view for ID 1
+  if (tripId === 1 || tripId === "1" || tripStore.trips.length > 0) {
     router.push("/schedule");
+  }
+};
+
+const handleAddTrip = async () => {
+  // Quick test: Add a dummy trip to Firebase
+  try {
+    await tripStore.addTrip({
+      title: "新的冒險旅程",
+      startDate: "2024/05/01",
+      endDate: "2024/05/05",
+      days: 5,
+      coverImage:
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",  
+      status: "upcoming",
+    });
+  } catch {
+    alert("新增失敗，請檢查 Firebase 設定或網絡連接。");
+  }
+};
+const handleSeed = async () => {
+  if (confirm("確定要導入預設資料嗎？這將會填入多筆範例旅程。")) {
+    isSeeding.value = true;
+    try {
+      await importSeedData();
+      alert("資料導入成功！");
+    } catch (err) {
+      alert("導入失敗: " + (err as Error).message);
+    } finally {
+      isSeeding.value = false;
+    }
   }
 };
 </script>
@@ -82,31 +92,49 @@ const navigateToTrip = (tripId: number | string) => {
           Travelogue
         </h1>
       </div>
-      <button
-        class="w-10 h-10 flex items-center justify-center bg-forest-400 text-white rounded-full shadow-soft hover:bg-forest-500 active:scale-90 transition-all cursor-pointer"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-plus"
+      <div class="flex gap-2">
+        <button
+          @click="handleSeed"
+          :disabled="isSeeding"
+          class="px-3 py-1 text-xs font-bold bg-forest-100 text-forest-600 rounded-full hover:bg-forest-200 transition-colors disabled:opacity-50"
         >
-          <path d="M5 12h14" />
-          <path d="M12 5v14" />
-        </svg>
-      </button>
+          {{ isSeeding ? "導入中..." : "初始化資料" }}
+        </button>
+        <button
+          @click="handleAddTrip"
+          class="w-10 h-10 flex items-center justify-center bg-forest-400 text-white rounded-full shadow-soft hover:bg-forest-500 active:scale-90 transition-all cursor-pointer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-plus"
+          >
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <!-- Main Content -->
     <main class="px-6 space-y-8 animate-fade-in">
+      <!-- Loading State -->
+      <section v-if="tripStore.loading" class="py-20 text-center">
+        <div
+          class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-forest-400 border-t-transparent"
+        ></div>
+        <p class="mt-2 text-gray-500 font-medium">載入旅程中...</p>
+      </section>
+
       <!-- Welcome Message -->
-      <section class="mt-4">
+      <section v-else class="mt-4">
         <h2 class="text-gray-400 text-sm font-medium mb-1">Welcome back,</h2>
         <p
           class="text-3xl font-rounded font-bold text-forest-900 leading-tight"
@@ -116,7 +144,7 @@ const navigateToTrip = (tripId: number | string) => {
       </section>
 
       <!-- Active Trips -->
-      <section class="space-y-4">
+      <section v-if="!tripStore.loading" class="space-y-4">
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-bold text-forest-800">我的旅程</h3>
           <button
@@ -140,18 +168,33 @@ const navigateToTrip = (tripId: number | string) => {
           </button>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-if="tripStore.trips.length > 0"
+          class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
           <TripCard
-            v-for="trip in trips"
+            v-for="trip in tripStore.trips"
             :key="trip.id"
             v-bind="trip"
             @click="navigateToTrip(trip.id)"
           />
         </div>
+
+        <!-- Empty State -->
+        <div
+          v-else
+          class="py-12 flex flex-col items-center text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100"
+        >
+          <div class="text-4xl mb-3">🗺️</div>
+          <p class="text-gray-500 font-medium">
+            還沒有任何旅程，<br />點擊上方按鈕開始規劃吧！
+          </p>
+        </div>
       </section>
 
       <!-- Quick Action Card -->
       <section
+        @click="handleAddTrip"
         class="card-base bg-forest-50 border-2 border-dashed border-forest-200 !shadow-none py-8 flex flex-col items-center justify-center text-center space-y-3 cursor-pointer hover:bg-forest-100 transition-all"
       >
         <div

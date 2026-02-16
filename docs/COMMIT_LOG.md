@@ -8,17 +8,24 @@
 
 ### [2026-02-16]
 
-#### `pending` - feat(ui): 實作核心視圖並優化設計系統規範
+#### `HEAD` - feat(firebase): 整合 Firebase Firestore 與 Pinia Store
+- **核心架構**: 初始化 Firebase SDK 並實作離線持久化 (Offline Persistence)。
+- **狀態管理**: 建立 `tripStore` 處理旅程資料的即時訂閱 (onSnapshot) 與 CRUD 操作。
+- **資料導入**: 實作 `seed.ts` 腳本，支援自動比對標題防止重複導入範例資料。
+- **UI 串接**: 在 `HomeView` 實作真實資料讀取、載入狀態與「初始化資料」功能。
+- **測試**: 新增 `tripStore.spec.ts` 單元測試，驗證 Store 初始狀態與數據更新邏輯。
+
+#### `5dcc714` - feat(ui): 實作核心視圖並優化設計系統規範
 
 - **改動方向**: 擴展功能模組並提升 UI/UX 質感。
 - **具體內容**:
   - **設計系統**: 升級至 v1.1.0，引入「Soft UI Evolution」理念，並在 `style.css` 實作更細膩的混合式軟陰影。
   - **核心視圖**: 實作預訂 (Bookings)、記帳 (Expense)、日誌 (Journal)、準備 (Planning) 與設定 (Settings) 頁面。
-  - **功能細節**: 
+  - **功能細節**:
     - `BookingsView`: 實作 PIN 碼鎖定與登機證風格卡片。
     - `ExpenseView`: 實作視覺化支出儀表板。
     - `JournalView`: 實作瀑布流佈局展示旅行記錄。
-  - **導航優化**: 
+  - **導航優化**:
     - `BottomNav`: 改為 `router-link` 導航，新增「首頁」按鈕，並修正 Z-index 遮擋問題。
     - `ScheduleView`: 將返回按鈕邏輯修正為回到首頁列表。
   - **代碼修正**: 修正 `SettingsView` 的語法錯誤與圖示規範。
