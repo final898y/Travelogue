@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import TripCard from "../components/TripCard.vue";
+import TripCard from "../components/trip/TripCard.vue";
+import type { Trip } from "../types/trip";
 
 const router = useRouter();
 
 // Mock data for demonstration
-const trips = ref([
+const trips = ref<Trip[]>([
   {
     id: 1,
     title: "2024 東京賞櫻之旅",
@@ -40,8 +41,8 @@ const trips = ref([
   },
 ]);
 
-const navigateToTrip = (tripId: number) => {
-  if (tripId === 1) {
+const navigateToTrip = (tripId: number | string) => {
+  if (tripId === 1 || tripId === "1") {
     router.push("/schedule");
   }
 };

@@ -4,11 +4,7 @@
  * A scrollable list of dates for the trip.
  */
 
-interface DateItem {
-  day: string; // e.g., "3/20"
-  weekday: string; // e.g., "Wed"
-  fullDate: string;
-}
+import type { DateItem } from "../../types/trip";
 
 interface Props {
   dates: DateItem[];

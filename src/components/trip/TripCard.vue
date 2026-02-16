@@ -4,17 +4,9 @@
  * Follows 'Journal/Cozy' style from DESIGN_BRIEF_FOR_UIUX.md
  * Adheres to UI/UX Pro Max guidelines: SVG icons, cursor-pointer, smooth transitions.
  */
-interface Props {
-  title: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  coverImage: string;
-  countdown?: number;
-  status?: "ongoing" | "upcoming" | "finished";
-}
+import type { Trip } from "../../types/trip";
 
-defineProps<Props>();
+defineProps<Trip>();
 </script>
 
 <template>

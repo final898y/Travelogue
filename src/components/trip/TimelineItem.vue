@@ -3,16 +3,9 @@
  * TimelineItem Component
  * Represents a single activity on the schedule.
  */
-interface Props {
-  time: string;
-  title: string;
-  location?: string;
-  category: "sight" | "food" | "transport" | "hotel";
-  isLast?: boolean;
-  options?: string[]; // For Group A, B options
-}
+import type { Activity } from "../../types/trip";
 
-defineProps<Props>();
+defineProps<Activity>();
 
 const categoryStyles = {
   sight: { color: "bg-forest-400", textColor: "text-forest-700" },

@@ -5,9 +5,10 @@
  */
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import ScheduleHeader from "../components/ScheduleHeader.vue";
-import HorizontalDatePicker from "../components/HorizontalDatePicker.vue";
-import TimelineItem from "../components/TimelineItem.vue";
+import ScheduleHeader from "../components/ui/ScheduleHeader.vue";
+import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
+import TimelineItem from "../components/trip/TimelineItem.vue";
+import type { DateItem, Activity } from "../types/trip";
 
 const router = useRouter();
 
@@ -15,7 +16,7 @@ const tripTitle = "2024 東京賞櫻之旅";
 const daysToTrip = 15;
 const weather = { temp: 22, condition: "晴天", icon: "☀️" };
 
-const dates = [
+const dates: DateItem[] = [
   { day: "3/19", weekday: "Tue", fullDate: "2024-03-19" },
   { day: "3/20", weekday: "Wed", fullDate: "2024-03-20" },
   { day: "3/21", weekday: "Thu", fullDate: "2024-03-21" },
@@ -25,7 +26,7 @@ const dates = [
 
 const selectedDate = ref("2024-03-20");
 
-const scheduleItems = [
+const scheduleItems: Activity[] = [
   {
     time: "09:00",
     title: "淺草寺",
