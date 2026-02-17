@@ -6,13 +6,14 @@ import {
   deleteDoc,
   updateDoc,
   doc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Trip } from "../types/trip";
+import type { Trip, Expense, ResearchCollection } from "../types/trip";
 
 type ExistingTrip = Trip & { id: string };
 
-const seedTrips = [
+const seedTrips: Partial<Trip>[] = [
   {
     title: "2024 東京賞櫻之旅",
     startDate: "2024-03-20",
@@ -21,6 +22,31 @@ const seedTrips = [
     coverImage:
       "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=800&auto=format&fit=crop",
     status: "upcoming",
+    bookings: [
+      {
+        id: "b1",
+        type: "flight",
+        title: "長榮航空 BR-198",
+        dateTime: "2024-03-20 13:30",
+        confirmationNo: "ABC12345",
+        location: "TPE -> NRT",
+        isConfirmed: true,
+      },
+      {
+        id: "b2",
+        type: "hotel",
+        title: "京王廣場大飯店",
+        dateTime: "2024-03-20 15:00",
+        confirmationNo: "KEIO-9988",
+        location: "新宿",
+        isConfirmed: true,
+      },
+    ],
+    preparation: [
+      { id: "p1", title: "辦理日幣換匯", isCompleted: true, category: "財務" },
+      { id: "p2", title: "購買西瓜卡 (Suica)", isCompleted: false, category: "交通" },
+      { id: "p3", title: "打包春季衣物", isCompleted: false, category: "行李" },
+    ],
     plans: [
       {
         date: "2024-03-20",
@@ -170,6 +196,20 @@ const seedTrips = [
     coverImage:
       "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
     status: "ongoing",
+    bookings: [
+      {
+        id: "b3",
+        type: "transport",
+        title: "新幹線 Nozomi 號",
+        dateTime: "2024-02-15 08:30",
+        location: "東京 -> 京都",
+        isConfirmed: true,
+      },
+    ],
+    preparation: [
+      { id: "p4", title: "預約和服體驗", isCompleted: true, category: "活動" },
+      { id: "p5", title: "查好巴士路線", isCompleted: true, category: "交通" },
+    ],
     plans: [
       {
         date: "2024-02-15",
@@ -258,6 +298,8 @@ const seedTrips = [
     coverImage:
       "https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=800&auto=format&fit=crop",
     status: "finished",
+    bookings: [],
+    preparation: [],
     plans: [
       {
         date: "2024-01-10",
@@ -443,16 +485,30 @@ const seedTrips = [
   },
 ];
 
+// 子集合範例資料
+const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
+  "2024 東京賞櫻之旅": [
+    { date: "2024-03-20", category: "Food", amount: 4500, currency: "JPY", description: "六歌仙燒肉" },
+    { date: "2024-03-20", category: "Transport", amount: 1500, currency: "JPY", description: "Suica 加值" },
+    { date: "2024-03-21", category: "Food", amount: 3200, currency: "JPY", description: "今半壽喜燒" },
+  ],
+};
+
+const collectionSeeds: Record<string, Omit<ResearchCollection, "id" | "createdAt">[]> = {
+  "2024 東京賞櫻之旅": [
+    { title: "2024東京櫻花預測", url: "https://example.com/sakura", source: "web", category: "景點", note: "注意滿開時間" },
+    { title: "Threads 上熱門的新宿美食", url: "https://threads.net/tokyo-food", source: "threads", category: "美食" },
+  ],
+};
+
 /**
  * 導入種子資料至 Firestore
- * @param clearExisting 是否先刪除現有資料
  */
 export const importSeedData = async (clearExisting = false) => {
   console.log("開始導入種子資料...");
   const tripsRef = collection(db, "trips");
 
   try {
-    // 1. 選擇性清理現有資料
     if (clearExisting) {
       const snapshot = await getDocs(tripsRef);
       const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
@@ -460,7 +516,6 @@ export const importSeedData = async (clearExisting = false) => {
       console.log("已清理現有資料");
     }
 
-    // 2. 獲取現有資料以進行比對或更新
     const existingSnapshot = await getDocs(tripsRef);
     const existingDocsMap = new Map<string, ExistingTrip>(
       existingSnapshot.docs.map((d) => [
@@ -469,33 +524,48 @@ export const importSeedData = async (clearExisting = false) => {
       ]),
     );
 
-    let updateCount = 0;
-    let addCount = 0;
+    for (const seedTrip of seedTrips) {
+      let tripId: string;
+      const existingDoc = existingDocsMap.get(seedTrip.title!);
 
-    const operations = seedTrips.map(async (seedTrip) => {
-      const existingDoc = existingDocsMap.get(seedTrip.title);
       if (existingDoc) {
-        // 更新現有資料
-        const docRef = doc(db, "trips", existingDoc.id);
+        tripId = existingDoc.id;
+        const docRef = doc(db, "trips", tripId);
         await updateDoc(docRef, {
           ...seedTrip,
           updatedAt: Timestamp.now(),
         });
-        updateCount++;
       } else {
-        // 新增資料
-        await addDoc(tripsRef, {
+        const docRef = await addDoc(tripsRef, {
           ...seedTrip,
           createdAt: Timestamp.now(),
         });
-        addCount++;
+        tripId = docRef.id;
       }
-    });
 
-    await Promise.all(operations);
-    console.log(`導入完成：更新 ${updateCount} 筆，新增 ${addCount} 筆資料`);
+      // 導入子集合：Expenses
+      const expenses = expenseSeeds[seedTrip.title!] || [];
+      const expRef = collection(db, "trips", tripId, "expenses");
+      const expSnapshot = await getDocs(expRef);
+      if (expSnapshot.empty) {
+        for (const exp of expenses) {
+          await addDoc(expRef, { ...exp, createdAt: Timestamp.now() });
+        }
+      }
 
-    return { success: true, updated: updateCount, added: addCount };
+      // 導入子集合：Collections
+      const collections = collectionSeeds[seedTrip.title!] || [];
+      const collRef = collection(db, "trips", tripId, "collections");
+      const collSnapshot = await getDocs(collRef);
+      if (collSnapshot.empty) {
+        for (const coll of collections) {
+          await addDoc(collRef, { ...coll, createdAt: Timestamp.now() });
+        }
+      }
+    }
+
+    console.log("導入完成");
+    return { success: true };
   } catch (error) {
     console.error("導入種子資料失敗:", error);
     throw error;
