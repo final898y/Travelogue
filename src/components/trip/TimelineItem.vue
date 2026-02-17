@@ -4,40 +4,46 @@
  * Represents a single activity on the schedule.
  */
 import type { Activity } from "../../types/trip";
+import { getGoogleMapsUrl } from "../../utils/mapUtils";
+import ActivityOptionItem from "./ActivityOptionItem.vue";
 
-defineProps<Activity>();
+const props = defineProps<Activity>();
 
 const categoryStyles = {
   sight: { color: "bg-forest-400", textColor: "text-forest-700" },
-
   food: { color: "bg-earth-300", textColor: "text-earth-700" },
-
   transport: { color: "bg-sky-blue", textColor: "text-blue-700" },
-
   hotel: { color: "bg-lavender", textColor: "text-purple-700" },
+};
+
+const openMap = () => {
+  const url = getGoogleMapsUrl({
+    title: props.title,
+    subtitle: props.subtitle || props.title,
+    address: props.address,
+    placeId: props.placeId,
+    coordinates: props.coordinates,
+  });
+  window.open(url, "_blank");
 };
 </script>
 
 <template>
   <div class="flex gap-4 group">
     <!-- Left Timeline Pillar -->
-
     <div class="flex flex-col items-center">
       <!-- Time Badge -->
-
       <div class="text-[10px] font-bold text-forest-300 mb-1 font-mono">
         {{ time }}
       </div>
 
       <!-- Connector Node -->
-
       <div
         class="w-4 h-4 rounded-full border-2 border-white shadow-sm z-10"
         :class="categoryStyles[category].color"
       ></div>
 
       <!-- Vertical Line -->
-
       <div
         v-if="!isLast"
         class="flex-1 w-0.5 border-l-2 border-dashed border-forest-100 my-1"
@@ -45,12 +51,11 @@ const categoryStyles = {
     </div>
 
     <!-- Right Content Card -->
-
     <div class="flex-1 pb-8">
       <div
         class="card-base !p-4 group-hover:shadow-soft-lg transition-all"
         :class="
-          options
+          options && options.length > 0
             ? 'border-2 border-dashed border-forest-100 bg-forest-50/30'
             : ''
         "
@@ -60,7 +65,6 @@ const categoryStyles = {
             <div class="flex items-center gap-2">
               <div :class="categoryStyles[category].textColor">
                 <!-- Lucide Icons mapping -->
-
                 <svg
                   v-if="category === 'sight'"
                   xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +145,17 @@ const categoryStyles = {
                 </svg>
               </div>
 
-              <h4 class="font-bold text-forest-800">{{ title }}</h4>
+              <div class="flex flex-col">
+                <h4 class="font-bold text-forest-800 leading-tight">
+                  {{ title }}
+                </h4>
+                <p
+                  v-if="subtitle"
+                  class="text-[10px] text-forest-400 font-medium"
+                >
+                  {{ subtitle }}
+                </p>
+              </div>
             </div>
 
             <p
@@ -167,49 +181,71 @@ const categoryStyles = {
             </p>
           </div>
 
-          <!-- Drag Handle (Simulated) -->
-          <button
-            class="text-forest-100 group-hover:text-forest-300 transition-colors cursor-grab active:cursor-grabbing"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-grip-vertical"
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-1">
+            <button
+              @click="openMap"
+              class="w-8 h-8 flex items-center justify-center rounded-xl bg-forest-50 text-forest-400 hover:bg-forest-100 hover:text-forest-600 transition-all cursor-pointer shadow-sm active:scale-90"
+              title="在 Google Maps 開啟"
             >
-              <circle cx="9" cy="12" r="1" />
-              <circle cx="9" cy="5" r="1" />
-              <circle cx="9" cy="19" r="1" />
-              <circle cx="15" cy="12" r="1" />
-              <circle cx="15" cy="5" r="1" />
-              <circle cx="15" cy="19" r="1" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-map"
+              >
+                <path
+                  d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"
+                />
+                <path d="M15 5.764v15" />
+                <path d="M9 3.236v15" />
+              </svg>
+            </button>
+
+            <!-- Drag Handle (Simulated) -->
+            <button
+              class="text-forest-100 group-hover:text-forest-300 transition-colors cursor-grab active:cursor-grabbing p-1"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-grip-vertical"
+              >
+                <circle cx="9" cy="12" r="1" />
+                <circle cx="9" cy="5" r="1" />
+                <circle cx="9" cy="19" r="1" />
+                <circle cx="15" cy="12" r="1" />
+                <circle cx="15" cy="5" r="1" />
+                <circle cx="15" cy="19" r="1" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Options Block (if any) -->
-        <div v-if="options" class="mt-3 space-y-2">
+        <div v-if="options && options.length > 0" class="mt-3 space-y-2">
           <p class="text-[10px] font-bold text-forest-300 uppercase">
             備選方案
           </p>
-          <div
+          <ActivityOptionItem
             v-for="(opt, idx) in options"
             :key="idx"
-            class="p-2 rounded-lg bg-white/50 border border-forest-100 text-xs text-forest-600 flex items-center gap-2"
-          >
-            <span
-              class="w-5 h-5 rounded-md bg-forest-100 text-forest-500 flex items-center justify-center font-bold text-[10px]"
-            >
-              {{ String.fromCharCode(65 + idx) }}
-            </span>
-            {{ opt }}
-          </div>
+            :option="opt"
+            :index="idx"
+          />
         </div>
       </div>
     </div>

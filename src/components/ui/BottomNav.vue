@@ -8,25 +8,35 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 
-const navItems = [
-  { id: "home", label: "首頁", path: "/" },
-  { id: "schedule", label: "行程", path: "/schedule" },
-  { id: "bookings", label: "預訂", path: "/bookings" },
-  { id: "expense", label: "記帳", path: "/expense" },
-  { id: "journal", label: "日誌", path: "/journal" },
-  { id: "planning", label: "準備", path: "/planning" },
-  { id: "settings", label: "更多", path: "/settings" },
-];
+const navItems = computed(() => {
+  // 動態獲取當前的 tripId
+  const tripId = route.params.id;
+
+  return [
+    { id: "home", label: "首頁", path: "/" },
+    {
+      id: "schedule",
+      label: "行程",
+      path: tripId ? `/schedule/${tripId}` : "/",
+      disabled: !tripId && route.path === "/",
+    },
+    { id: "bookings", label: "預訂", path: "/bookings" },
+    { id: "expense", label: "記帳", path: "/expense" },
+    { id: "journal", label: "日誌", path: "/journal" },
+    { id: "planning", label: "準備", path: "/planning" },
+    { id: "settings", label: "更多", path: "/settings" },
+  ];
+});
 
 const activeTab = computed(() => {
   const path = route.path;
   if (path === "/") return "home";
-  if (path === "/schedule") return "schedule";
-  if (path === "/bookings") return "bookings";
-  if (path === "/expense") return "expense";
-  if (path === "/journal") return "journal";
-  if (path === "/planning") return "planning";
-  if (path === "/settings") return "settings";
+  if (path.startsWith("/schedule")) return "schedule";
+  if (path.startsWith("/bookings")) return "bookings";
+  if (path.startsWith("/expense")) return "expense";
+  if (path.startsWith("/journal")) return "journal";
+  if (path.startsWith("/planning")) return "planning";
+  if (path.startsWith("/settings")) return "settings";
   return "";
 });
 </script>
@@ -40,12 +50,15 @@ const activeTab = computed(() => {
         v-for="item in navItems"
         :key="item.id"
         :to="item.path"
-        class="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 cursor-pointer relative"
-        :class="
+        class="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative"
+        :class="[
           activeTab === item.id
             ? 'text-forest-500 scale-110'
-            : 'text-forest-200 hover:text-forest-300'
-        "
+            : 'text-forest-200 hover:text-forest-300',
+          item.id === 'schedule' && item.disabled
+            ? 'opacity-30 cursor-not-allowed'
+            : 'cursor-pointer',
+        ]"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

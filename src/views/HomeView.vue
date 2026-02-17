@@ -21,7 +21,11 @@ onUnmounted(() => {
 });
 
 const navigateToTrip = (tripId: number | string) => {
-  router.push(`/schedule/${tripId}`);
+  if (!tripId) {
+    console.error("導航失敗：tripId 缺失");
+    return;
+  }
+  router.push({ name: "schedule", params: { id: tripId } });
 };
 
 const handleAddTrip = async () => {

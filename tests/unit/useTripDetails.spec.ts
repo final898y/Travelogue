@@ -15,11 +15,26 @@ describe("useTripDetails Composable", () => {
     plans: [
       {
         date: "2024-03-20",
-        activities: [{ time: "09:00", title: "活動 A", category: "sight" }],
+        activities: [
+          {
+            time: "09:00",
+            title: "活動 A",
+            category: "sight",
+            coordinates: { lat: 35.6895, lng: 139.6917 },
+            address: "東京都新宿區",
+          },
+        ],
       },
       {
         date: "2024-03-21",
-        activities: [{ time: "12:00", title: "活動 B", category: "food" }],
+        activities: [
+          {
+            time: "12:00",
+            title: "活動 B",
+            category: "food",
+            address: "東京都台東區",
+          },
+        ],
       },
     ],
   };

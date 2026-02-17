@@ -8,15 +8,31 @@
 
 ### [2026-02-17]
 
-#### `HEAD` - refactor(logic): 重構行程管理架構並強化型別安全與測試
+#### `HEAD` - feat(ui): 優化地點結構與組件架構並更新地圖工具
 
-- **架構重構**: 
+- **資料結構優化**:
+  - 在 `Activity` 與 `ActivityOption` 中導入 `subtitle` 欄位，明確劃分描述性標題與實際地點名稱。
+  - 規範化 `location` 欄位為大區域名稱（如：淺草、新宿），提升資料的一致性。
+- **組件重構**:
+  - 建立 `ActivityOptionItem.vue` 專門處理備選方案的渲染，實現組件解耦。
+  - 瘦身 `TimelineItem.vue`，將複雜的備選方案邏輯抽離，並修正 template 中存取 `window` 的 TypeScript 報錯。
+- **功能擴充**:
+  - 升級 `mapUtils.ts`，將連結生成邏輯改為優先使用 `subtitle` 作為精確搜尋核心。
+  - 實作結構化備案功能，現在備選方案也能擁有獨立的地圖連結與地點資訊。
+  - 修正 `BottomNav.vue` 的動態路由連結，解決無效 `/schedule` 路徑導致的警告。
+- **文件與測試**:
+  - 更新 `README.md`，補齊資料夾結構、實作項目清單及技術棧說明。
+  - 新增 `mapUtils.spec.ts` 驗證防禦性連結生成邏輯。
+
+#### `85e35ae` - refactor(logic): 重構行程管理架構並強化型別安全與測試
+
+- **架構重構**:
   - 建立 `useTripDetails` composable，實現視圖與業務邏輯分離。
   - 重構 `Trip` 資料結構，引入 `DailyPlan` 與日期驅動 (Date-Driven) 的活動管理。
 - **資料與功能**:
   - 擴充 `seed.ts`，實作東京、京都與北海道（5天）的完整行程假資料。
   - 優化導入邏輯，支援對現有資料的更新 (Upsert)。
-- **型別安全**: 
+- **型別安全**:
   - 修正 TypeScript 在日期處理上的嚴格檢查錯誤。
   - 移除測試代碼中的所有 `any`，改用官方 `DocumentData` 與自定義 Mock 介面。
 - **測試覆蓋**:
