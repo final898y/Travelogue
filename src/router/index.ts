@@ -15,27 +15,27 @@ const router = createRouter({
       component: () => import("../views/ScheduleView.vue"),
     },
     {
-      path: "/bookings",
+      path: "/trip/:id/bookings",
       name: "bookings",
       component: () => import("../views/BookingsView.vue"),
     },
     {
-      path: "/expense",
+      path: "/trip/:id/expense",
       name: "expense",
       component: () => import("../views/ExpenseView.vue"),
     },
     {
-      path: "/journal",
-      name: "journal",
+      path: "/trip/:id/collection",
+      name: "collection",
       component: () => import("../views/JournalView.vue"),
     },
     {
-      path: "/planning",
+      path: "/trip/:id/planning",
       name: "planning",
       component: () => import("../views/PlanningView.vue"),
     },
     {
-      path: "/settings",
+      path: "/trip/:id/settings",
       name: "settings",
       component: () => import("../views/SettingsView.vue"),
     },

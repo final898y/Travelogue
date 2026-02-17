@@ -18,13 +18,38 @@ const navItems = computed(() => {
       id: "schedule",
       label: "行程",
       path: tripId ? `/schedule/${tripId}` : "/",
-      disabled: !tripId && route.path === "/",
+      disabled: !tripId,
     },
-    { id: "bookings", label: "預訂", path: "/bookings" },
-    { id: "expense", label: "記帳", path: "/expense" },
-    { id: "journal", label: "日誌", path: "/journal" },
-    { id: "planning", label: "準備", path: "/planning" },
-    { id: "settings", label: "更多", path: "/settings" },
+    {
+      id: "bookings",
+      label: "預訂",
+      path: tripId ? `/trip/${tripId}/bookings` : "/",
+      disabled: !tripId,
+    },
+    {
+      id: "expense",
+      label: "記帳",
+      path: tripId ? `/trip/${tripId}/expense` : "/",
+      disabled: !tripId,
+    },
+    {
+      id: "collection",
+      label: "資料",
+      path: tripId ? `/trip/${tripId}/collection` : "/",
+      disabled: !tripId,
+    },
+    {
+      id: "planning",
+      label: "準備",
+      path: tripId ? `/trip/${tripId}/planning` : "/",
+      disabled: !tripId,
+    },
+    {
+      id: "settings",
+      label: "更多",
+      path: tripId ? `/trip/${tripId}/settings` : "/",
+      disabled: !tripId,
+    },
   ];
 });
 
@@ -32,11 +57,11 @@ const activeTab = computed(() => {
   const path = route.path;
   if (path === "/") return "home";
   if (path.startsWith("/schedule")) return "schedule";
-  if (path.startsWith("/bookings")) return "bookings";
-  if (path.startsWith("/expense")) return "expense";
-  if (path.startsWith("/journal")) return "journal";
-  if (path.startsWith("/planning")) return "planning";
-  if (path.startsWith("/settings")) return "settings";
+  if (path.includes("/bookings")) return "bookings";
+  if (path.includes("/expense")) return "expense";
+  if (path.includes("/collection")) return "collection";
+  if (path.includes("/planning")) return "planning";
+  if (path.includes("/settings")) return "settings";
   return "";
 });
 </script>
@@ -55,8 +80,8 @@ const activeTab = computed(() => {
           activeTab === item.id
             ? 'text-forest-500 scale-110'
             : 'text-forest-200 hover:text-forest-300',
-          item.id === 'schedule' && item.disabled
-            ? 'opacity-30 cursor-not-allowed'
+          item.disabled && route.path === '/'
+            ? 'opacity-30 cursor-not-allowed pointer-events-none'
             : 'cursor-pointer',
         ]"
       >
@@ -102,10 +127,11 @@ const activeTab = computed(() => {
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </template>
 
-          <!-- Journal Icon -->
-          <template v-if="item.id === 'journal'">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+          <!-- Collection Icon (Research) -->
+          <template v-if="item.id === 'collection'">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <line x1="3" y1="9" x2="21" y2="9" />
+            <line x1="9" y1="21" x2="9" y2="9" />
           </template>
 
           <!-- Planning Icon -->

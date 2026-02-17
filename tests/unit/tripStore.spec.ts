@@ -7,7 +7,9 @@ vi.mock("firebase/firestore", () => ({
   collection: vi.fn(),
   query: vi.fn(),
   getDocs: vi.fn(),
-  addDoc: vi.fn(),
+  getDoc: vi.fn(),
+  doc: vi.fn(),
+  addDoc: vi.fn(() => Promise.resolve({ id: "new-doc-id" })),
   orderBy: vi.fn(),
   onSnapshot: vi.fn(),
   Timestamp: {
@@ -22,6 +24,7 @@ vi.mock("../../src/services/firebase", () => ({
 describe("Trip Store", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it("初始狀態應為空列表且不處於載入中", () => {
@@ -31,20 +34,55 @@ describe("Trip Store", () => {
     expect(store.error).toBe(null);
   });
 
-  it("可以在訂閱時更新 trips 列表 (模擬 snapshot 邏輯)", async () => {
+  it("fetchTripById 應正確呼叫 getDoc 並回傳資料", async () => {
     const store = useTripStore();
+    const { getDoc, doc } = await import("firebase/firestore");
+    
+    (getDoc as any).mockResolvedValueOnce({
+      exists: () => true,
+      id: "trip-123",
+      data: () => ({ title: "測試旅程" })
+    });
 
-    // 雖然真正的訂閱是透過 onSnapshot，
-    // 我們可以測試 store 的 trips 響應式屬性能否正確接收資料
-    const mockData = [
-      { id: "1", title: "東京之旅", status: "upcoming" },
-      { id: "2", title: "京都之旅", status: "ongoing" },
-    ];
+    const result = await store.fetchTripById("trip-123");
+    
+    expect(doc).toHaveBeenCalled();
+    expect(result?.title).toBe("測試旅程");
+    expect(result?.id).toBe("trip-123");
+  });
 
-    // @ts-expect-error - 模擬內部行為
-    store.trips = mockData;
+  it("addExpense 應正確呼叫 addDoc 並指向子集合", async () => {
+    const store = useTripStore();
+    const { addDoc, collection } = await import("firebase/firestore");
+    
+    const expenseData = {
+      date: "2024-03-20",
+      category: "Food",
+      amount: 500,
+      currency: "TWD",
+      description: "Dinner"
+    };
 
-    expect(store.trips.length).toBe(2);
-    expect(store.trips[0].title).toBe("東京之旅");
+    await store.addExpense("trip-123", expenseData);
+    
+    expect(collection).toHaveBeenCalledWith(expect.anything(), "trips", "trip-123", "expenses");
+    expect(addDoc).toHaveBeenCalled();
+  });
+
+  it("addCollection 應正確呼叫 addDoc 並指向子集合", async () => {
+    const store = useTripStore();
+    const { addDoc, collection } = await import("firebase/firestore");
+    
+    const collectionData = {
+      title: "Threads 貼文",
+      url: "https://threads.net/...",
+      source: "threads" as const,
+      category: "Food"
+    };
+
+    await store.addCollection("trip-123", collectionData);
+    
+    expect(collection).toHaveBeenCalledWith(expect.anything(), "trips", "trip-123", "collections");
+    expect(addDoc).toHaveBeenCalled();
   });
 });

@@ -1,148 +1,175 @@
 <script setup lang="ts">
-const journals = [
-  {
-    id: 1,
-    title: "淺草寺初體驗",
-    date: "2024.03.20",
-    image:
-      "https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=400&auto=format&fit=crop",
-    mood: "😊",
-    likes: 12,
-  },
-  {
-    id: 2,
-    title: "一蘭拉麵：真的排好久",
-    date: "2024.03.20",
-    image:
-      "https://images.unsplash.com/photo-1591814468924-caf88d1232e1?q=80&w=400&auto=format&fit=crop",
-    mood: "😋",
-    likes: 8,
-  },
-  {
-    id: 3,
-    title: "新宿御苑：櫻花還沒全開",
-    date: "2024.03.21",
-    image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=400&auto=format&fit=crop",
-    mood: "🤔",
-    likes: 15,
-  },
-  {
-    id: 4,
-    title: "夜晚的晴空塔",
-    date: "2024.03.21",
-    image:
-      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=400&auto=format&fit=crop",
-    mood: "🤩",
-    likes: 24,
-  },
-];
+import { onMounted, onUnmounted, ref, computed } from "vue";
+import { useRoute } from "vue-router";
+import { useTripStore } from "../stores/tripStore";
+import type { ResearchCollection, CollectionSource } from "../types/trip";
+
+const route = useRoute();
+const tripStore = useTripStore();
+const tripId = route.params.id as string;
+
+const collections = ref<ResearchCollection[]>([]);
+const activeFilter = ref<CollectionSource | "all">("all");
+const isModalOpen = ref(false);
+
+const newCollection = ref<Omit<ResearchCollection, "id" | "createdAt">>({
+  title: "",
+  url: "",
+  source: "web",
+  note: "",
+  category: "未分類",
+});
+
+let unsubscribe: (() => void) | null = null;
+
+onMounted(() => {
+  if (tripId) {
+    unsubscribe = tripStore.subscribeToCollections(tripId, (data) => {
+      collections.value = data;
+    });
+  }
+});
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe();
+});
+
+const filteredCollections = computed(() => {
+  if (activeFilter.value === "all") return collections.value;
+  return collections.value.filter((item) => item.source === activeFilter.value);
+});
+
+const getSourceIcon = (source: CollectionSource) => {
+  switch (source) {
+    case "threads": return "🧵";
+    case "instagram": return "📸";
+    case "youtube": return "📺";
+    case "web": return "🌐";
+    default: return "📄";
+  }
+};
+
+const handleAddCollection = async () => {
+  if (!newCollection.value.title || !newCollection.value.url) return;
+  
+  try {
+    await tripStore.addCollection(tripId, {
+      ...newCollection.value,
+      createdAt: new Date(),
+    });
+    isModalOpen.value = false;
+    newCollection.value = { title: "", url: "", source: "web", note: "", category: "未分類" };
+  } catch (err) {
+    alert("新增失敗");
+  }
+};
 </script>
 
 <template>
   <div class="min-h-screen pb-32 animate-fade-in">
-    <header class="px-6 pt-8 pb-4 flex justify-between items-end">
-      <div>
-        <h1 class="text-2xl font-rounded font-bold text-forest-800">
-          旅行日誌
-        </h1>
-        <p class="text-gray-500 text-sm">記錄下每一刻的感動</p>
-      </div>
-      <button
-        class="w-10 h-10 bg-forest-100 text-forest-500 rounded-full flex items-center justify-center cursor-pointer shadow-soft-sm"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+    <header class="px-6 pt-8 pb-4">
+      <h1 class="text-2xl font-rounded font-bold text-forest-800">
+        行前收集
+      </h1>
+      <p class="text-gray-500 text-sm">整理 Threads、IG 與網頁靈感</p>
+      
+      <!-- Filters -->
+      <div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-2">
+        <button 
+          v-for="f in ['all', 'threads', 'instagram', 'web', 'youtube']" 
+          :key="f"
+          @click="activeFilter = f as any"
+          class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap"
+          :class="activeFilter === f ? 'bg-forest-500 text-white shadow-soft' : 'bg-white text-forest-400 border border-forest-100'"
         >
-          <path
-            d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"
-          />
-        </svg>
-      </button>
+          {{ f.toUpperCase() }}
+        </button>
+      </div>
     </header>
 
-    <main class="px-6 mt-6">
-      <!-- Masonry Grid -->
-      <div class="columns-2 gap-4 space-y-4">
-        <div v-for="note in journals" :key="note.id" class="break-inside-avoid">
-          <div class="card-base !p-0 overflow-hidden relative group">
-            <img
-              :src="note.image"
-              :alt="note.title"
-              class="w-full h-auto object-cover"
-            />
+    <main class="px-6 mt-2">
+      <div v-if="filteredCollections.length === 0" class="py-20 text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100">
+        <div class="text-4xl mb-3">🔖</div>
+        <p class="text-gray-500 font-medium">還沒有收集任何資料<br>點擊下方按鈕開始記錄</p>
+      </div>
 
-            <!-- Mood Badge -->
-            <div
-              class="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-lg shadow-sm"
-            >
-              {{ note.mood }}
-            </div>
-
-            <div class="p-4">
-              <h3 class="font-bold text-forest-800 text-sm mb-1 leading-tight">
-                {{ note.title }}
-              </h3>
-              <div class="flex justify-between items-center">
-                <span class="text-[10px] text-gray-400">{{ note.date }}</span>
-                <div class="flex items-center gap-1 text-[10px] text-gray-400">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="text-coral-red"
-                  >
-                    <path
-                      d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
-                    />
-                  </svg>
-                  {{ note.likes }}
-                </div>
-              </div>
-            </div>
+      <div class="grid gap-4">
+        <div v-for="item in filteredCollections" :key="item.id" class="card-base group">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xl">{{ getSourceIcon(item.source) }}</span>
+            <a :href="item.url" target="_blank" class="text-forest-400 hover:text-forest-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+          </div>
+          <h3 class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-500 transition-colors">
+            {{ item.title }}
+          </h3>
+          <p v-if="item.note" class="text-xs text-gray-500 line-clamp-2 mb-2">{{ item.note }}</p>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 bg-forest-50 text-forest-400 rounded text-[10px] font-bold">
+              {{ item.category }}
+            </span>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- FAB: New Post -->
+    <!-- FAB -->
     <button
+      @click="isModalOpen = true"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </button>
+
+    <!-- Simple Add Modal (Portal concept) -->
+    <div v-if="isModalOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-6">
+      <div class="absolute inset-0 bg-forest-900/40 backdrop-blur-sm" @click="isModalOpen = false"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-soft-xl p-6 animate-scale-in">
+        <h2 class="text-xl font-bold text-forest-800 mb-4">新增收集</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">標題</label>
+            <input v-model="newCollection.title" type="text" class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400" placeholder="例如：築地必吃美食清單">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">網址 (URL)</label>
+            <input v-model="newCollection.url" type="text" class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400" placeholder="https://...">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">來源</label>
+              <select v-model="newCollection.source" class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400">
+                <option value="web">網頁文章</option>
+                <option value="threads">Threads</option>
+                <option value="instagram">Instagram</option>
+                <option value="youtube">YouTube</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-1">分類</label>
+              <input v-model="newCollection.category" type="text" class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400" placeholder="美食、景點...">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-400 mb-1">筆記</label>
+            <textarea v-model="newCollection.note" rows="3" class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400" placeholder="寫下你的心得或重點..."></textarea>
+          </div>
+          <button @click="handleAddCollection" class="w-full py-3 bg-forest-400 text-white font-bold rounded-xl shadow-soft hover:bg-forest-500 transition-colors">
+            確認儲存
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
 </style>

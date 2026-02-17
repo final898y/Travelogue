@@ -8,7 +8,24 @@
 
 ### [2026-02-17]
 
-#### `HEAD` - feat(ui): 優化地點結構與組件架構並更新地圖工具
+#### `TBD` - refactor: 重構路由架構並導入 Firebase 子集合與資料收集功能
+
+- **路由架構整合**:
+  - 重構 `router` 配置，將所有旅程相關功能（預定、記帳、準備、收集）改為 `/:id/` 模式，解決功能割裂問題。
+  - 優化 `BottomNav.vue`，實作動態 ID 連結生成與首頁自動禁用邏輯。
+- **資料模型與 Firebase 優化**:
+  - 在 `trip.ts` 導入「混合式儲存架構」：核心行程採大文件存儲，而「資料收集」與「記帳」則設計為子集合。
+  - 擴展 `tripStore` 支援子集合的即時監聽 (onSnapshot) 與 CRUD 操作，新增 `addExpense` 與 `addCollection`。
+- **功能轉型 - 行前資料收集 (Research Collection)**:
+  - 將原有的「日誌 (Journal)」視圖重構為「資料收集」功能。
+  - 支援 Threads、Instagram、Web 與 YouTube 來源標註與分類整理，專注於行前靈感收集。
+  - 實作「新增收集」彈窗與 Firebase 異步寫入邏輯。
+- **測試強化**:
+  - 新增 `BottomNav.spec.ts` 驗證動態路由與權限控制邏輯。
+  - 擴展 `tripStore.spec.ts` 覆蓋子集合操作與單一旅程抓取測試。
+  - 修正 `TripCard.spec.ts` 的 ID 類型不符警告。
+
+#### `bc18a09` - feat(ui): 優化地點結構與組件架構並更新地圖工具
 
 - **資料結構優化**:
   - 在 `Activity` 與 `ActivityOption` 中導入 `subtitle` 欄位，明確劃分描述性標題與實際地點名稱。
