@@ -8,7 +8,23 @@
 
 ### [2026-02-17]
 
-#### `HEAD` - feat(schedule): 實作動態行程讀取與 Firebase 持久化優化
+#### `HEAD` - refactor(logic): 重構行程管理架構並強化型別安全與測試
+
+- **架構重構**: 
+  - 建立 `useTripDetails` composable，實現視圖與業務邏輯分離。
+  - 重構 `Trip` 資料結構，引入 `DailyPlan` 與日期驅動 (Date-Driven) 的活動管理。
+- **資料與功能**:
+  - 擴充 `seed.ts`，實作東京、京都與北海道（5天）的完整行程假資料。
+  - 優化導入邏輯，支援對現有資料的更新 (Upsert)。
+- **型別安全**: 
+  - 修正 TypeScript 在日期處理上的嚴格檢查錯誤。
+  - 移除測試代碼中的所有 `any`，改用官方 `DocumentData` 與自定義 Mock 介面。
+- **測試覆蓋**:
+  - 新增 `useTripDetails.spec.ts` 驗證動態日期計算與活動過濾。
+  - 新增 `firebase.spec.ts` 驗證 SDK 初始化。
+  - 新增 `seed.spec.ts` 驗證資料導入與更新邏輯。
+
+#### `67648e7` - feat(schedule): 實作動態行程讀取與 Firebase 持久化優化
 
 - **Firebase 優化**:
   - 升級持久化配置，將 `enableIndexedDbPersistence` 替換為 `initializeFirestore` 與 `persistentLocalCache`，支援多標籤頁共用快取。

@@ -7,24 +7,30 @@ export type TripStatus = "ongoing" | "upcoming" | "finished";
 export interface Trip {
   id: number | string;
   title: string;
-  startDate: string;
-  endDate: string;
+  startDate: string; // 格式: YYYY-MM-DD
+  endDate: string; // 格式: YYYY-MM-DD
   days: number;
   coverImage: string;
   countdown?: number;
   status: TripStatus;
-  scheduleItems?: Activity[];
+  plans?: DailyPlan[];
+}
+
+export interface DailyPlan {
+  date: string; // 格式: YYYY-MM-DD
+  activities: Activity[];
 }
 
 export type ActivityCategory = "sight" | "food" | "transport" | "hotel";
 
 export interface Activity {
-  time: string;
+  id?: string;
+  time: string; // 格式: HH:mm
   title: string;
   location?: string;
   category: ActivityCategory;
+  note?: string;
   isLast?: boolean;
-  options?: string[];
 }
 
 export interface DateItem {

@@ -6,10 +6,10 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
+import { useTripDetails } from "../composables/useTripDetails";
 import ScheduleHeader from "../components/ui/ScheduleHeader.vue";
 import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
 import TimelineItem from "../components/trip/TimelineItem.vue";
-import type { DateItem } from "../types/trip";
 
 const router = useRouter();
 const route = useRoute();
@@ -20,32 +20,31 @@ const trip = computed(() =>
   tripStore.trips.find((t) => String(t.id) === tripId),
 );
 
+const selectedDate = ref("");
+
+// 使用 Composable 處理邏輯
+const { dates, currentDayIndex, scheduleItems } = useTripDetails(
+  trip,
+  selectedDate,
+);
+
 const tripTitle = computed(() => trip.value?.title || "載入中...");
 const daysToTrip = ref(15);
 const weather = { temp: 22, condition: "晴天", icon: "☀️" };
 
-// In a real app, these dates would be calculated from trip.startDate and trip.endDate
-const dates: DateItem[] = [
-  { day: "3/19", weekday: "Tue", fullDate: "2024-03-19" },
-  { day: "3/20", weekday: "Wed", fullDate: "2024-03-20" },
-  { day: "3/21", weekday: "Thu", fullDate: "2024-03-21" },
-  { day: "3/22", weekday: "Fri", fullDate: "2024-03-22" },
-  { day: "3/23", weekday: "Sat", fullDate: "2024-03-23" },
-];
-
-const selectedDate = ref("2024-03-20");
-
-const scheduleItems = computed(() => trip.value?.scheduleItems || []);
-
-const goBack = () => {
-  router.push("/");
-};
-
+// Set initial date when trip is loaded
 onMounted(async () => {
   if (tripStore.trips.length === 0) {
     await tripStore.fetchTrips();
   }
+  if (trip.value && !selectedDate.value) {
+    selectedDate.value = trip.value.startDate;
+  }
 });
+
+const goBack = () => {
+  router.push("/");
+};
 </script>
 
 <template>
@@ -69,7 +68,7 @@ onMounted(async () => {
     <main class="mt-6 px-6">
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-lg font-rounded font-bold text-forest-800">
-          Day 2 行程安排
+          Day {{ currentDayIndex }} 行程安排
         </h3>
         <button
           class="text-forest-400 text-xs font-bold hover:text-forest-600 transition-colors flex items-center gap-1 cursor-pointer"
