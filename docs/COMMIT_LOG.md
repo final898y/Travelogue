@@ -6,9 +6,25 @@
 
 ## 📅 提交歷史
 
+### [2026-02-17]
+
+#### `HEAD` - feat(schedule): 實作動態行程讀取與 Firebase 持久化優化
+
+- **Firebase 優化**:
+  - 升級持久化配置，將 `enableIndexedDbPersistence` 替換為 `initializeFirestore` 與 `persistentLocalCache`，支援多標籤頁共用快取。
+  - 修正 `.gitignore` 以排除 `.env` 敏感檔案，同時保留 `.env.example`。
+- **動態路由**: 更新 `router` 配置，將 `/schedule` 變更為 `/schedule/:id`，支援根據 ID 顯示特定行程。
+- **資料模型**: 在 `Trip` 型別中新增 `scheduleItems` 欄位，擴展行程細節儲存。
+- **UI 串接**:
+  - `ScheduleView`: 重構為根據路徑參數 ID 從 `tripStore` 動態獲取標題與活動內容，取代靜態資料。
+  - `HomeView`: 修正導航邏輯，點擊行程卡片時傳遞正確的 ID。
+- **資料導入**: 優化 `seed.ts` 邏輯，從「重複則跳過」改為「重複則更新 (Upsert)」，並為預設行程補齊具體的活動細項。
+- **工程規範**: 修正 `seed.ts` 的 TypeScript 類型定義，移除 `any` 轉型並通過 ESLint 檢查。
+
 ### [2026-02-16]
 
 #### `HEAD` - feat(firebase): 整合 Firebase Firestore 與 Pinia Store
+
 - **核心架構**: 初始化 Firebase SDK 並實作離線持久化 (Offline Persistence)。
 - **狀態管理**: 建立 `tripStore` 處理旅程資料的即時訂閱 (onSnapshot) 與 CRUD 操作。
 - **資料導入**: 實作 `seed.ts` 腳本，支援自動比對標題防止重複導入範例資料。

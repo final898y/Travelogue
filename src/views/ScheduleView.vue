@@ -3,19 +3,28 @@
  * ScheduleView (Page)
  * The main view for a trip's schedule.
  */
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useTripStore } from "../stores/tripStore";
 import ScheduleHeader from "../components/ui/ScheduleHeader.vue";
 import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
 import TimelineItem from "../components/trip/TimelineItem.vue";
-import type { DateItem, Activity } from "../types/trip";
+import type { DateItem } from "../types/trip";
 
 const router = useRouter();
+const route = useRoute();
+const tripStore = useTripStore();
 
-const tripTitle = "2024 東京賞櫻之旅";
-const daysToTrip = 15;
+const tripId = route.params.id as string;
+const trip = computed(() =>
+  tripStore.trips.find((t) => String(t.id) === tripId),
+);
+
+const tripTitle = computed(() => trip.value?.title || "載入中...");
+const daysToTrip = ref(15);
 const weather = { temp: 22, condition: "晴天", icon: "☀️" };
 
+// In a real app, these dates would be calculated from trip.startDate and trip.endDate
 const dates: DateItem[] = [
   { day: "3/19", weekday: "Tue", fullDate: "2024-03-19" },
   { day: "3/20", weekday: "Wed", fullDate: "2024-03-20" },
@@ -26,47 +35,17 @@ const dates: DateItem[] = [
 
 const selectedDate = ref("2024-03-20");
 
-const scheduleItems: Activity[] = [
-  {
-    time: "09:00",
-    title: "淺草寺",
-    location: "台東區淺草 2-3-1",
-    category: "sight" as const,
-  },
-  {
-    time: "12:00",
-    title: "一蘭拉麵",
-    location: "台東區西淺草 1-1-1",
-    category: "food" as const,
-  },
-  {
-    time: "14:00",
-    title: "下午茶時光",
-    category: "food" as const,
-    options: ["藍瓶咖啡 淺草店", "猿田彥珈琲"],
-  },
-  {
-    time: "15:30",
-    title: "傍晚活動選擇",
-    category: "sight" as const,
-    options: [
-      "隅田公園散步 (賞櫻)",
-      "晴空塔展望台",
-      "淺草文化觀光中心 (看夕陽)",
-    ],
-  },
-  {
-    time: "18:00",
-    title: "京王飯店 Check-in",
-    location: "新宿區西新宿 2-2-1",
-    category: "hotel" as const,
-    isLast: true,
-  },
-];
+const scheduleItems = computed(() => trip.value?.scheduleItems || []);
 
 const goBack = () => {
   router.push("/");
 };
+
+onMounted(async () => {
+  if (tripStore.trips.length === 0) {
+    await tripStore.fetchTrips();
+  }
+});
 </script>
 
 <template>

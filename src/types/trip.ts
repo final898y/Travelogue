@@ -13,6 +13,7 @@ export interface Trip {
   coverImage: string;
   countdown?: number;
   status: TripStatus;
+  scheduleItems?: Activity[];
 }
 
 export type ActivityCategory = "sight" | "food" | "transport" | "hotel";

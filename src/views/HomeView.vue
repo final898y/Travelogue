@@ -21,10 +21,7 @@ onUnmounted(() => {
 });
 
 const navigateToTrip = (tripId: number | string) => {
-  // For demo purposes, we only have the schedule view for ID 1
-  if (tripId === 1 || tripId === "1" || tripStore.trips.length > 0) {
-    router.push("/schedule");
-  }
+  router.push(`/schedule/${tripId}`);
 };
 
 const handleAddTrip = async () => {
@@ -36,7 +33,7 @@ const handleAddTrip = async () => {
       endDate: "2024/05/05",
       days: 5,
       coverImage:
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",  
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",
       status: "upcoming",
     });
   } catch {
