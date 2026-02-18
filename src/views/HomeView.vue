@@ -2,11 +2,13 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
+import { useAuthStore } from "../stores/authStore";
 import { importSeedData } from "../services/seed";
 import TripCard from "../components/trip/TripCard.vue";
 
 const router = useRouter();
 const tripStore = useTripStore();
+const authStore = useAuthStore();
 const isSeeding = ref(false);
 
 let unsubscribe: (() => void) | null = null;
@@ -29,12 +31,13 @@ const navigateToTrip = (tripId: number | string) => {
 };
 
 const handleAddTrip = async () => {
+  if (!authStore.user) return;
   // Quick test: Add a dummy trip to Firebase
   try {
     await tripStore.addTrip({
       title: "新的冒險旅程",
-      startDate: "2024/05/01",
-      endDate: "2024/05/05",
+      startDate: "2024-05-01",
+      endDate: "2024-05-05",
       days: 5,
       coverImage:
         "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",
@@ -45,10 +48,11 @@ const handleAddTrip = async () => {
   }
 };
 const handleSeed = async () => {
+  if (!authStore.user) return;
   if (confirm("確定要導入預設資料嗎？這將會填入多筆範例旅程。")) {
     isSeeding.value = true;
     try {
-      await importSeedData();
+      await importSeedData(authStore.user.uid);
       alert("資料導入成功！");
     } catch (err) {
       alert("導入失敗: " + (err as Error).message);

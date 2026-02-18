@@ -14,13 +14,25 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(),
   orderBy: vi.fn(),
   onSnapshot: vi.fn(),
-  Timestamp: { now: () => ({ seconds: 123456789 }) },
+  Timestamp: { now: () => ({ seconds: 123456789, nanoseconds: 0 }) },
 }));
 
 vi.mock("../../src/services/firebase", () => ({
   db: {},
   auth: { currentUser: null }, // 預設未登入
 }));
+
+// 建立符合 Zod Schema 的 Mock 資料
+const createMockTrip = (id: string, title: string) => ({
+  id,
+  userId: "user-123",
+  title,
+  startDate: "2024-01-01",
+  endDate: "2024-01-05",
+  days: 5,
+  status: "upcoming",
+  coverImage: "https://example.com/image.jpg",
+});
 
 describe("Trip Store", () => {
   beforeEach(() => {
@@ -39,7 +51,9 @@ describe("Trip Store", () => {
   it("fetchTrips - 登入後應從 Firestore 獲取資料並排序", async () => {
     (auth as unknown as { currentUser: any }).currentUser = { uid: "user-123" };
     const store = useTripStore();
-    const mockDocs = [{ id: "trip-1", data: () => ({ title: "Trip 1" }) }];
+    const mockDocs = [
+      { id: "trip-1", data: () => createMockTrip("trip-1", "Trip 1") },
+    ];
 
     (getDocs as vi.Mock).mockResolvedValueOnce({ docs: mockDocs });
 
@@ -56,7 +70,7 @@ describe("Trip Store", () => {
     (getDoc as vi.Mock).mockResolvedValueOnce({
       exists: () => true,
       id: "trip-1",
-      data: () => ({ title: "Single Trip" }),
+      data: () => createMockTrip("trip-1", "Single Trip"),
     });
 
     const result = await store.fetchTripById("trip-1");
@@ -71,7 +85,10 @@ describe("Trip Store", () => {
     const newTrip = {
       title: "New Trip",
       startDate: "2024-01-01",
-    } as unknown as any;
+      endDate: "2024-01-05",
+      days: 5,
+      status: "upcoming",
+    } as any;
     const id = await store.addTrip(newTrip);
 
     expect(addDoc).toHaveBeenCalledWith(
@@ -91,10 +108,9 @@ describe("Trip Store", () => {
     const expense = {
       amount: 100,
       category: "Food",
-    } as unknown as any;
+    } as any;
     await store.addExpense("trip-1", expense);
 
-    // 驗證 addDoc 被呼叫，路徑由 collection() 控制（雖然這裡 mock 了 collection，但確保流程正確）
     expect(addDoc).toHaveBeenCalled();
   });
 
@@ -105,7 +121,7 @@ describe("Trip Store", () => {
     const item = {
       name: "Cool Spot",
       type: "spot",
-    } as unknown as any;
+    } as any;
     await store.addCollection("trip-1", item);
 
     expect(addDoc).toHaveBeenCalled();

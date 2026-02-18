@@ -12,7 +12,15 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../services/firebase";
-import type { Trip, Expense, ResearchCollection } from "../types/trip";
+import { z } from "zod";
+import {
+  TripSchema,
+  ExpenseSchema,
+  ResearchCollectionSchema,
+  type Trip,
+  type Expense,
+  type ResearchCollection,
+} from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
@@ -22,6 +30,24 @@ export const useTripStore = defineStore("trip", () => {
   // Collection reference
   const tripsRef = collection(db, "trips");
 
+  /**
+   * 輔助函式：驗證並過濾資料
+   */
+  const validateAndFilter = <T>(
+    schema: z.ZodSchema<T>,
+    items: unknown[],
+  ): T[] => {
+    return items.reduce((acc: T[], item: unknown) => {
+      const result = schema.safeParse(item);
+      if (result.success) {
+        acc.push(result.data);
+      } else {
+        console.error(`[Zod Validation Failed]`, result.error.format(), item);
+      }
+      return acc;
+    }, []);
+  };
+
   // Fetch all trips for all users (Shared mode)
   const fetchTrips = async () => {
     if (!auth.currentUser) return;
@@ -29,10 +55,11 @@ export const useTripStore = defineStore("trip", () => {
     try {
       const q = query(tripsRef, orderBy("startDate", "desc"));
       const querySnapshot = await getDocs(q);
-      trips.value = querySnapshot.docs.map((doc) => ({
+      const rawData: unknown[] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Trip[];
+      }));
+      trips.value = validateAndFilter<Trip>(TripSchema, rawData);
     } catch (err) {
       error.value = (err as Error).message;
     } finally {
@@ -46,7 +73,17 @@ export const useTripStore = defineStore("trip", () => {
     const docRef = doc(db, "trips", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Trip;
+      const rawData = { id: docSnap.id, ...docSnap.data() };
+      const result = TripSchema.safeParse(rawData);
+      if (result.success) {
+        return result.data;
+      } else {
+        console.error(
+          `[Zod Validation Failed for Trip ${id}]`,
+          result.error.format(),
+        );
+        return null;
+      }
     }
     return null;
   };
@@ -56,10 +93,11 @@ export const useTripStore = defineStore("trip", () => {
     if (!auth.currentUser) return () => {};
     const q = query(tripsRef, orderBy("startDate", "desc"));
     return onSnapshot(q, (snapshot) => {
-      trips.value = snapshot.docs.map((doc) => ({
+      const rawData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Trip[];
+      }));
+      trips.value = validateAndFilter<Trip>(TripSchema, rawData);
     });
   };
 
@@ -71,15 +109,18 @@ export const useTripStore = defineStore("trip", () => {
     const expensesRef = collection(db, "trips", tripId, "expenses");
     const q = query(expensesRef, orderBy("date", "desc"));
     return onSnapshot(q, (snapshot) => {
-      const expenses = snapshot.docs.map((doc) => ({
+      const rawData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Expense[];
-      callback(expenses);
+      }));
+      callback(validateAndFilter<Expense>(ExpenseSchema, rawData));
     });
   };
 
-  const addExpense = async (tripId: string, expense: Omit<Expense, "id" | "createdAt">) => {
+  const addExpense = async (
+    tripId: string,
+    expense: Omit<Expense, "id" | "createdAt">,
+  ) => {
     const expensesRef = collection(db, "trips", tripId, "expenses");
     return await addDoc(expensesRef, {
       ...expense,
@@ -95,11 +136,16 @@ export const useTripStore = defineStore("trip", () => {
     const collectionsRef = collection(db, "trips", tripId, "collections");
     const q = query(collectionsRef, orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
-      const collections = snapshot.docs.map((doc) => ({
+      const rawData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as ResearchCollection[];
-      callback(collections);
+      }));
+      callback(
+        validateAndFilter<ResearchCollection>(
+          ResearchCollectionSchema,
+          rawData,
+        ),
+      );
     });
   };
 
@@ -115,7 +161,9 @@ export const useTripStore = defineStore("trip", () => {
   };
 
   // Add a new trip
-  const addTrip = async (tripData: Omit<Trip, "id">) => {
+  const addTrip = async (
+    tripData: Omit<Trip, "id" | "userId" | "createdAt">,
+  ) => {
     if (!auth.currentUser)
       throw new Error("User must be logged in to create a trip");
     const docRef = await addDoc(tripsRef, {

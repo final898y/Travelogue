@@ -3,11 +3,11 @@
  * TimelineItem Component
  * Represents a single activity on the schedule.
  */
-import type { Activity } from "../../types/trip";
+import type { ActivityUI } from "../../types/trip-ui";
 import { getGoogleMapsUrl } from "../../utils/mapUtils";
 import ActivityOptionItem from "./ActivityOptionItem.vue";
 
-const props = defineProps<Activity>();
+const props = defineProps<ActivityUI>();
 
 const categoryStyles = {
   sight: { color: "bg-forest-400", textColor: "text-forest-700" },

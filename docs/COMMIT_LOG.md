@@ -8,18 +8,20 @@
 
 ### [2026-02-18]
 
-#### `TBD` - docs(firebase): 優化 Hosting 配置並補全部署文件
+#### `TBD` - feat(logic): 導入 Zod 資料校驗並優化 UI 型別分離架構
 
-- **Firebase Hosting 優化**:
-  - 在 `firebase.json` 加入 `rewrites` 規則，將所有路徑導向 `index.html`，解決 SPA 在線上環境重新整理出現 404 的問題。
-  - 更新 `README.md`，詳細說明路由重寫 (Rewrites) 邏輯與目的。
-- **部署文件與 SOP**:
-  - 在 `README.md` 新增「部署流程 (Deployment)」章節，規範建置、驗證與上線的標準作業程序。
-  - 補充 Firebase Auth 自訂網域授權的關鍵提醒，確保跨網域登入功能的穩定性。
-- **代碼品質維護**:
-  - 執行全站測試與格式化檢查，確保配置變更不影響現有邏輯。
+- **Zod 執行期校驗**:
+  - 在 `src/types/trip.ts` 引入 Zod，建立完整的旅程、行程、預訂與記帳 Schema。
+  - 重構 `tripStore.ts`，實作 `validateAndFilter` 輔助函式，確保從 Firestore 抓取的資料符合 Zod 規範並自動過濾損毀資料。
+  - 補全 `userId` 欄位至所有資料模型與種子導入邏輯中，強化資料歸屬與安全性。
+- **UI 型別分離架構**:
+  - 建立 `src/types/trip-ui.ts` 定義純 TypeScript 介面（`TripUI`, `ActivityUI` 等）。
+  - 將 `TripCard`, `TimelineItem`, `ActivityOptionItem` 等組件的 Props 改為引用 UI 型別，徹底解決 Vue SFC 編譯器無法解析 Zod 推導型別導致的 Build Error。
+- **工程規範與測試同步**:
+  - 更新 `AGENTS.md`，將 `npm run build` 正式納入 Pre-Commit 強制驗證流程。
+  - 同步更新 `tripStore.spec.ts`, `TripCard.spec.ts`, `seed.spec.ts` 的 Mock 資料與斷言，確保測試覆蓋 Zod 校驗邏輯。
 
-#### `TBD` - feat(auth): 實作 Firebase Authentication 與白名單資安防護
+#### `31e2430` - docs(firebase): 優化 Hosting 配置並補全部署文件
 
 - **身分驗證實作**:
   - 實作 Google 登入功能並新增 `authStore` 管理使用者登入狀態。

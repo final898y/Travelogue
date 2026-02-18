@@ -4,9 +4,9 @@
  * Follows 'Journal/Cozy' style from DESIGN_BRIEF_FOR_UIUX.md
  * Adheres to UI/UX Pro Max guidelines: SVG icons, cursor-pointer, smooth transitions.
  */
-import type { Trip } from "../../types/trip";
+import type { TripUI } from "../../types/trip-ui";
 
-defineProps<Trip>();
+defineProps<TripUI>();
 </script>
 
 <template>

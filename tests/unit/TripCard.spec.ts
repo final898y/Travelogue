@@ -5,9 +5,10 @@ import TripCard from "../../src/components/trip/TripCard.vue";
 describe("TripCard.vue", () => {
   const mockTrip = {
     id: "1",
+    userId: "user-123",
     title: "測試旅程",
-    startDate: "03/20",
-    endDate: "03/24",
+    startDate: "2024-03-20",
+    endDate: "2024-03-24",
     days: 5,
     coverImage: "https://example.com/image.jpg",
     countdown: 15,

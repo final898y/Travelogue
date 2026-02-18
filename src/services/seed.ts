@@ -540,11 +540,13 @@ const collectionSeeds: Record<
 /**
  * 導入種子資料至 Firestore
  */
-export const importSeedData = async (clearExisting = false) => {
+export const importSeedData = async (userId: string, clearExisting = false) => {
+  if (!userId) throw new Error("userId is required for seeding");
   console.log("開始導入種子資料...");
   const tripsRef = collection(db, "trips");
 
   try {
+    // ... 清理邏輯保持不變 ...
     if (clearExisting) {
       const snapshot = await getDocs(tripsRef);
       const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
@@ -569,11 +571,13 @@ export const importSeedData = async (clearExisting = false) => {
         const docRef = doc(db, "trips", tripId);
         await updateDoc(docRef, {
           ...seedTrip,
+          userId,
           updatedAt: Timestamp.now(),
         });
       } else {
         const docRef = await addDoc(tripsRef, {
           ...seedTrip,
+          userId,
           createdAt: Timestamp.now(),
         });
         tripId = docRef.id;

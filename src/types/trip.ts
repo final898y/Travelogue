@@ -1,142 +1,194 @@
-/**
- * Trip related type definitions
- */
-
-export type TripStatus = "ongoing" | "upcoming" | "finished";
+import { z } from "zod";
 
 /**
- * 核心旅程介面 (Main Document)
+ * 基本地理座標 Schema
  */
-export interface Trip {
-  id: string;
-  title: string;
-  startDate: string; // 格式: YYYY-MM-DD
-  endDate: string; // 格式: YYYY-MM-DD
-  days: number;
-  coverImage: string;
-  countdown?: number;
-  status: TripStatus;
-
-  // 嵌入式資料 (量小且緊密相關)
-  plans?: DailyPlan[];
-  bookings?: Booking[];
-  preparation?: ChecklistItem[];
-
-  // 子集合資料 (僅作為類型參考，實際由 store 分別抓取)
-  // expenses: Expense[];
-  // collections: ResearchCollection[];
-
-  createdAt?: { seconds: number; nanoseconds: number };
-  updatedAt?: { seconds: number; nanoseconds: number };
-}
+export const CoordinatesSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+});
 
 /**
- * 行程相關 (Embedded)
+ * 旅程狀態 Schema
  */
-export interface DailyPlan {
-  date: string; // 格式: YYYY-MM-DD
-  activities: Activity[];
-}
-
-export type ActivityCategory = "sight" | "food" | "transport" | "hotel";
-
-export interface Activity {
-  id?: string;
-  time: string; // 格式: HH:mm
-  title: string;
-  subtitle?: string;
-  location?: string;
-  address?: string;
-  placeId?: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-  category: ActivityCategory;
-  note?: string;
-  imageUrl?: string;
-  options?: ActivityOption[];
-  isLast?: boolean;
-}
-
-export interface ActivityOption {
-  title: string;
-  subtitle?: string;
-  address?: string;
-  placeId?: string;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
+export const TripStatusSchema = z.enum(["ongoing", "upcoming", "finished"]);
+export type TripStatus = z.infer<typeof TripStatusSchema>;
 
 /**
- * 預訂相關 (Embedded)
+ * 活動備選方案 Schema
  */
-export type BookingType =
-  | "flight"
-  | "hotel"
-  | "transport"
-  | "activity"
-  | "other";
-
-export interface Booking {
-  id: string;
-  type: BookingType;
-  title: string;
-  dateTime?: string;
-  confirmationNo?: string;
-  location?: string;
-  note?: string;
-  isConfirmed: boolean;
-}
+export const ActivityOptionSchema = z.object({
+  title: z.string(),
+  subtitle: z.string().optional(),
+  address: z.string().optional(),
+  placeId: z.string().optional(),
+  coordinates: CoordinatesSchema.optional(),
+});
+export type ActivityOption = z.infer<typeof ActivityOptionSchema>;
 
 /**
- * 準備清單 (Embedded)
+ * 活動分類 Schema
  */
-export interface ChecklistItem {
-  id: string;
-  title: string;
-  isCompleted: boolean;
-  category?: string;
-}
+export const ActivityCategorySchema = z.enum([
+  "sight",
+  "food",
+  "transport",
+  "hotel",
+]);
+export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
 
 /**
- * 記帳相關 (Sub-collection)
+ * 單項活動 Schema
  */
-export interface Expense {
-  id: string;
-  date: string;
-  category: string;
-  amount: number;
-  currency: string;
-  description: string;
-  payer?: string;
-  createdAt?: { seconds: number; nanoseconds: number };
-}
+export const ActivitySchema = z.object({
+  id: z.string().optional(),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "時間格式須為 HH:mm"),
+  title: z.string().min(1, "活動標題不可為空"),
+  subtitle: z.string().optional(),
+  location: z.string().optional(),
+  address: z.string().optional(),
+  placeId: z.string().optional(),
+  coordinates: CoordinatesSchema.optional(),
+  category: ActivityCategorySchema,
+  note: z.string().optional(),
+  imageUrl: z.string().url().or(z.string().optional()),
+  options: z.array(ActivityOptionSchema).optional(),
+  isLast: z.boolean().optional(),
+});
+export type Activity = z.infer<typeof ActivitySchema>;
 
 /**
- * 資料收集 (Sub-collection)
- * 用於行前收集網路文章、Threads、IG 等
+ * 每日行程 Schema
  */
-export type CollectionSource =
-  | "threads"
-  | "instagram"
-  | "web"
-  | "youtube"
-  | "other";
+export const DailyPlanSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
+  activities: z.array(ActivitySchema),
+});
+export type DailyPlan = z.infer<typeof DailyPlanSchema>;
 
-export interface ResearchCollection {
-  id: string;
-  title: string;
-  url: string;
-  source: CollectionSource;
-  note?: string;
-  imageUrl?: string;
-  category?: string; // 例如：美食、景點、購物清單
-  createdAt: { seconds: number; nanoseconds: number };
-}
+/**
+ * 預訂類型 Schema
+ */
+export const BookingTypeSchema = z.enum([
+  "flight",
+  "hotel",
+  "transport",
+  "activity",
+  "other",
+]);
+export type BookingType = z.infer<typeof BookingTypeSchema>;
 
+/**
+ * 預訂資訊 Schema
+ */
+export const BookingSchema = z.object({
+  id: z.string(),
+  type: BookingTypeSchema,
+  title: z.string().min(1, "預訂名稱不可為空"),
+  dateTime: z.string().optional(),
+  confirmationNo: z.string().optional(),
+  location: z.string().optional(),
+  note: z.string().optional(),
+  isConfirmed: z.boolean(),
+});
+export type Booking = z.infer<typeof BookingSchema>;
+
+/**
+ * 準備清單項 Schema
+ */
+export const ChecklistItemSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1, "項目名稱不可為空"),
+  isCompleted: z.boolean(),
+  category: z.string().optional(),
+});
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
+
+/**
+ * 核心旅程 Schema (Main Document)
+ */
+export const TripSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string().min(1, "標題不可為空"),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
+  days: z.number().positive(),
+  coverImage: z.string().url().or(z.string().optional()),
+  countdown: z.number().optional(),
+  status: TripStatusSchema,
+
+  // 嵌入式資料
+  plans: z.array(DailyPlanSchema).optional(),
+  bookings: z.array(BookingSchema).optional(),
+  preparation: z.array(ChecklistItemSchema).optional(),
+
+  createdAt: z
+    .object({
+      seconds: z.number(),
+      nanoseconds: z.number(),
+    })
+    .optional(),
+  updatedAt: z
+    .object({
+      seconds: z.number(),
+      nanoseconds: z.number(),
+    })
+    .optional(),
+});
+
+export type Trip = z.infer<typeof TripSchema>;
+
+/**
+ * 記帳相關 Schema (Sub-collection)
+ */
+export const ExpenseSchema = z.object({
+  id: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
+  category: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  description: z.string(),
+  payer: z.string().optional(),
+  createdAt: z
+    .object({
+      seconds: z.number(),
+      nanoseconds: z.number(),
+    })
+    .optional(),
+});
+export type Expense = z.infer<typeof ExpenseSchema>;
+
+/**
+ * 資料收集 Schema (Sub-collection)
+ */
+export const CollectionSourceSchema = z.enum([
+  "threads",
+  "instagram",
+  "web",
+  "youtube",
+  "other",
+]);
+export type CollectionSource = z.infer<typeof CollectionSourceSchema>;
+
+export const ResearchCollectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string().url(),
+  source: CollectionSourceSchema,
+  note: z.string().optional(),
+  imageUrl: z.string().url().or(z.string().optional()),
+  category: z.string().optional(),
+  createdAt: z.object({
+    seconds: z.number(),
+    nanoseconds: z.number(),
+  }),
+});
+export type ResearchCollection = z.infer<typeof ResearchCollectionSchema>;
+
+/**
+ * 輔助 UI 型別
+ */
 export interface DateItem {
   day: string;
   weekday: string;

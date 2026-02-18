@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ActivityOption } from "../../types/trip";
+import type { ActivityOptionUI } from "../../types/trip-ui";
 import { getGoogleMapsUrl } from "../../utils/mapUtils";
 
 const props = defineProps<{
-  option: ActivityOption;
+  option: ActivityOptionUI;
   index: number;
 }>();
 
