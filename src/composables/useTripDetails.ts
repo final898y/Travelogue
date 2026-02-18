@@ -48,7 +48,14 @@ export function useTripDetails(
   const scheduleItems = computed<Activity[]>(() => {
     if (!trip.value || !selectedDate.value) return [];
     const plan = trip.value.plans?.find((p) => p.date === selectedDate.value);
-    return plan?.activities || [];
+    const activities = plan?.activities || [];
+
+    // 依照時間 (time) 進行排序
+    return [...activities].sort((a, b) => {
+      const timeA = a.time || "00:00";
+      const timeB = b.time || "00:00";
+      return timeA.localeCompare(timeB);
+    });
   });
 
   return {

@@ -6,9 +6,29 @@
 
 ## 📅 提交歷史
 
+## [<日期 YYYY-MM-DD>] feat(schedule): 實作行程編輯與備選方案管理功能
+
+- Hash: `TBD`
+- 改動方向: 建立完整的行程活動編輯系統，並強化資料一致性與排序邏輯。
+- 具體內容:
+  - **編輯功能實作**:
+    - 建立 `BaseBottomSheet.vue` 通用底部抽屜組件，支援行動端手勢感與背景遮罩。
+    - 建立 `ActivityForm.vue` 互動式表單，支援行程標題、時間、分類、地點與詳細說明的編輯。
+    - 實作「備選方案」動態編輯介面，支援多個備案的增刪與標題/副標題維護。
+  - **資料一致性與型別強化**:
+    - 更新 `ActivitySchema`，將 `id` 欄位改為必填 (Required)，確保 CRUD 操作的準確性。
+    - 更新 `seed.ts` 種子資料，為所有範例活動補上唯一 ID，並同步更新 Zod 驗證邏輯。
+    - 修改 `tripStore.ts` 實作 `updateTripActivity` 與 `deleteTripActivity`，支援 Firestore 步同步與本地 Pinia 狀態反應式更新。
+  - **UI/UX 優化**:
+    - 修正 `useTripDetails` 排序邏輯，強制所有行程活動依照 `time` (HH:mm) 欄位進行排序。
+    - 優化 `TimelineItem` 與 `ActivityOptionItem` 的點擊區域，區分「開啟地圖」與「開啟編輯」，防止行動端誤觸。
+  - **工程規範**:
+    - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+    - 修復 Zod `format()` 過時警告，改用 `flatten()` 優化錯誤日誌輸出。
+
 ### [2026-02-18]
 
-#### `TBD` - feat(logic): 導入 Zod 資料校驗並優化 UI 型別分離架構
+#### `af4a0d5` - feat(logic): 導入 Zod 資料校驗並優化 UI 型別分離架構
 
 - **Zod 執行期校驗**:
   - 在 `src/types/trip.ts` 引入 Zod，建立完整的旅程、行程、預訂與記帳 Schema。

@@ -41,7 +41,7 @@ export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
  * 單項活動 Schema
  */
 export const ActivitySchema = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "時間格式須為 HH:mm"),
   title: z.string().min(1, "活動標題不可為空"),
   subtitle: z.string().optional(),

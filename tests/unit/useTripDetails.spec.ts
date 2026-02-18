@@ -79,6 +79,29 @@ describe("useTripDetails Composable", () => {
     expect(scheduleItems.value).toHaveLength(0);
   });
 
+  it("應確保活動項目按照時間順序排列", () => {
+    const tripWithUnsortedActivities: Trip = {
+      ...mockTrip,
+      plans: [
+        {
+          date: "2024-03-20",
+          activities: [
+            { time: "12:00", title: "午餐", category: "food" },
+            { time: "08:00", title: "早餐", category: "food" },
+            { time: "18:00", title: "晚餐", category: "food" },
+          ],
+        },
+      ],
+    };
+    const trip = ref<Trip | undefined>(tripWithUnsortedActivities);
+    const selectedDate = ref("2024-03-20");
+    const { scheduleItems } = useTripDetails(trip, selectedDate);
+
+    expect(scheduleItems.value[0].time).toBe("08:00");
+    expect(scheduleItems.value[1].time).toBe("12:00");
+    expect(scheduleItems.value[2].time).toBe("18:00");
+  });
+
   it("當 trip 為 undefined 時應回傳空資料", () => {
     const trip = ref<Trip | undefined>(undefined);
     const selectedDate = ref("");

@@ -56,6 +56,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-03-20",
         activities: [
           {
+            id: "a1",
             time: "08:00",
             title: "早起出發前往機場",
             subtitle: "桃園機場第一航廈",
@@ -63,6 +64,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a2",
             time: "12:30",
             title: "抵達日本並完成入關",
             subtitle: "成田機場",
@@ -70,6 +72,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a3",
             time: "14:30",
             title: "辦理飯店入住手續",
             subtitle: "京王飯店",
@@ -77,6 +80,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "hotel",
           },
           {
+            id: "a4",
             time: "16:00",
             title: "新宿御苑賞櫻散策",
             subtitle: "新宿御苑",
@@ -84,6 +88,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a5",
             time: "19:00",
             title: "享用美味燒肉晚餐",
             subtitle: "六歌仙燒肉",
@@ -96,6 +101,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-03-21",
         activities: [
           {
+            id: "a6",
             time: "09:00",
             title: "築地市場品嚐海鮮",
             subtitle: "築地場外市場",
@@ -105,6 +111,7 @@ const seedTrips: Partial<Trip>[] = [
             placeId: "ChIJW2cLzSGLGGARXAKXv6EkbqI",
           },
           {
+            id: "a7",
             time: "11:30",
             title: "淺草寺參拜與雷門拍照",
             subtitle: "淺草寺",
@@ -115,6 +122,7 @@ const seedTrips: Partial<Trip>[] = [
             coordinates: { lat: 35.7148, lng: 139.7967 },
           },
           {
+            id: "a8",
             time: "13:00",
             title: "百年老店壽喜燒午餐",
             subtitle: "今半壽喜燒",
@@ -122,6 +130,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a9",
             time: "15:30",
             title: "上野公園文化行程選擇",
             subtitle: "上野公園",
@@ -148,6 +157,7 @@ const seedTrips: Partial<Trip>[] = [
             address: "東京都台東區上野公園",
           },
           {
+            id: "a10",
             time: "20:00",
             title: "阿美橫町藥妝最後採買",
             subtitle: "阿美橫町",
@@ -162,6 +172,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-03-22",
         activities: [
           {
+            id: "a11",
             time: "10:00",
             title: "明治神宮大鳥居祈福",
             subtitle: "明治神宮",
@@ -169,6 +180,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a12",
             time: "13:00",
             title: "原宿流行文化散策",
             subtitle: "竹下通",
@@ -176,12 +188,14 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a13",
             time: "15:00",
             title: "搭乘 Skyliner 前往機場",
             subtitle: "成田機場",
             category: "transport",
           },
           {
+            id: "a14",
             time: "18:00",
             title: "搭機返回桃園",
             subtitle: "成田機場",
@@ -219,6 +233,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-02-15",
         activities: [
           {
+            id: "a15",
             time: "09:00",
             title: "抵達京都展開古都之旅",
             subtitle: "京都車站",
@@ -226,6 +241,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a16",
             time: "10:30",
             title: "清水舞台遠眺市景",
             subtitle: "清水寺",
@@ -236,6 +252,7 @@ const seedTrips: Partial<Trip>[] = [
             coordinates: { lat: 34.9949, lng: 135.785 },
           },
           {
+            id: "a17",
             time: "12:30",
             title: "三年坂懷石午餐",
             subtitle: "三年坂",
@@ -243,6 +260,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a18",
             time: "15:00",
             title: "千本鳥居隧道巡禮",
             subtitle: "伏見稻荷大社",
@@ -250,6 +268,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a19",
             time: "18:30",
             title: "祇園古街尋覓舞妓蹤跡",
             subtitle: "祇園花見小路",
@@ -262,6 +281,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-02-16",
         activities: [
           {
+            id: "a20",
             time: "09:30",
             title: "渡月橋欣賞河岸風光",
             subtitle: "嵐山渡月橋",
@@ -269,6 +289,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a21",
             time: "11:30",
             title: "天龍寺禪意庭園參觀",
             subtitle: "天龍寺",
@@ -276,6 +297,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a22",
             time: "13:00",
             title: "品嚐道地豆腐料理",
             subtitle: "嵐山豆腐料理",
@@ -283,6 +305,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a23",
             time: "16:00",
             title: "閃耀金閣寺倒影拍照",
             subtitle: "金閣寺",
@@ -309,6 +332,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-01-10",
         activities: [
           {
+            id: "a24",
             time: "11:00",
             title: "抵達北國雪境",
             subtitle: "新千歲機場",
@@ -316,6 +340,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a25",
             time: "13:00",
             title: "第一餐就吃道地拉麵",
             subtitle: "札幌拉麵共和國",
@@ -323,6 +348,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a26",
             time: "15:00",
             title: "欣賞世界級冰雕作品",
             subtitle: "大通公園雪祭",
@@ -332,6 +358,7 @@ const seedTrips: Partial<Trip>[] = [
             coordinates: { lat: 43.0598, lng: 141.3469 },
           },
           {
+            id: "a27",
             time: "19:00",
             title: "晚餐後自由活動規劃",
             subtitle: "薄野周邊",
@@ -357,6 +384,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-01-11",
         activities: [
           {
+            id: "a28",
             time: "09:00",
             title: "海鮮控必訪的晨間市場",
             subtitle: "二條市場",
@@ -364,6 +392,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a29",
             time: "13:00",
             title: "夢幻巧克力工廠參觀",
             subtitle: "白色戀人公園",
@@ -371,6 +400,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a30",
             time: "17:00",
             title: "搭乘纜車看市區全景",
             subtitle: "藻岩山展望台",
@@ -378,6 +408,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a31",
             time: "20:00",
             title: "札幌必吃湯咖哩",
             subtitle: "湯咖哩奧芝商店",
@@ -390,6 +421,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-01-12",
         activities: [
           {
+            id: "a32",
             time: "09:00",
             title: "前往浪漫小樽運河",
             subtitle: "小樽車站",
@@ -397,6 +429,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a33",
             time: "10:30",
             title: "漫步在白雪覆蓋的運河畔",
             subtitle: "小樽運河",
@@ -404,6 +437,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a34",
             time: "12:30",
             title: "品嚐最新鮮的壽司",
             subtitle: "政壽司",
@@ -411,6 +445,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "food",
           },
           {
+            id: "a35",
             time: "15:00",
             title: "參觀精緻玻璃工藝",
             subtitle: "北一硝子館",
@@ -418,6 +453,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a36",
             time: "18:00",
             title: "雪地裡的微光漫步",
             subtitle: "小樽雪燈路",
@@ -430,6 +466,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-01-13",
         activities: [
           {
+            id: "a37",
             time: "08:30",
             title: "出發前往旭川動物園",
             subtitle: "旭川車站",
@@ -437,6 +474,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a38",
             time: "11:00",
             title: "超萌企鵝散步表演",
             subtitle: "旭山動物園",
@@ -444,6 +482,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a39",
             time: "15:00",
             title: "旭川冬祭冰雕體驗",
             subtitle: "旭川冬祭場地",
@@ -451,6 +490,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a40",
             time: "19:00",
             title: "回飯店享用溫泉設施",
             subtitle: "札幌飯店",
@@ -463,6 +503,7 @@ const seedTrips: Partial<Trip>[] = [
         date: "2024-01-14",
         activities: [
           {
+            id: "a41",
             time: "10:00",
             title: "最後的伴手禮採購",
             subtitle: "札幌大丸百貨",
@@ -470,6 +511,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "sight",
           },
           {
+            id: "a42",
             time: "13:00",
             title: "依依不捨前往機場",
             subtitle: "新千歲機場",
@@ -477,6 +519,7 @@ const seedTrips: Partial<Trip>[] = [
             category: "transport",
           },
           {
+            id: "a43",
             time: "16:00",
             title: "平安飛抵家門",
             subtitle: "桃園機場",

@@ -9,6 +9,8 @@ import ActivityOptionItem from "./ActivityOptionItem.vue";
 
 const props = defineProps<ActivityUI>();
 
+const emit = defineEmits(["click-item"]);
+
 const categoryStyles = {
   sight: { color: "bg-forest-400", textColor: "text-forest-700" },
   food: { color: "bg-earth-300", textColor: "text-earth-700" },
@@ -53,7 +55,8 @@ const openMap = () => {
     <!-- Right Content Card -->
     <div class="flex-1 pb-8">
       <div
-        class="card-base !p-4 group-hover:shadow-soft-lg transition-all"
+        @click="emit('click-item')"
+        class="card-base !p-4 group-hover:shadow-soft-lg transition-all cursor-pointer active:scale-[0.98]"
         :class="
           options && options.length > 0
             ? 'border-2 border-dashed border-forest-100 bg-forest-50/30'

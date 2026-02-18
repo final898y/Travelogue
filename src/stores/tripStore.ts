@@ -7,6 +7,7 @@ import {
   getDoc,
   doc,
   addDoc,
+  updateDoc,
   orderBy,
   onSnapshot,
   Timestamp,
@@ -18,6 +19,7 @@ import {
   ExpenseSchema,
   ResearchCollectionSchema,
   type Trip,
+  type Activity,
   type Expense,
   type ResearchCollection,
 } from "../types/trip";
@@ -42,7 +44,11 @@ export const useTripStore = defineStore("trip", () => {
       if (result.success) {
         acc.push(result.data);
       } else {
-        console.error(`[Zod Validation Failed]`, result.error.format(), item);
+        console.error(
+          `[Zod Validation Failed]`,
+          result.error.flatten().fieldErrors,
+          item,
+        );
       }
       return acc;
     }, []);
@@ -99,6 +105,82 @@ export const useTripStore = defineStore("trip", () => {
       }));
       trips.value = validateAndFilter<Trip>(TripSchema, rawData);
     });
+  };
+
+  /**
+   * 更新行程中的活動 (新增或修改)
+   */
+  const updateTripActivity = async (
+    tripId: string,
+    date: string,
+    activity: Activity,
+  ) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const trip = trips.value.find((t) => t.id === tripId);
+    if (!trip) throw new Error("Trip not found");
+
+    const plans = trip.plans ? [...trip.plans] : [];
+    let plan = plans.find((p) => p.date === date);
+
+    if (!plan) {
+      plan = { date, activities: [] };
+      plans.push(plan);
+    }
+
+    // 如果沒有 ID，則是新增；如果有 ID，則是編輯
+    if (!activity.id) {
+      activity.id = crypto.randomUUID();
+      plan.activities.push(activity);
+    } else {
+      const idx = plan.activities.findIndex((a) => a.id === activity.id);
+      if (idx !== -1) {
+        plan.activities[idx] = activity;
+      } else {
+        // 若帶有 ID 但沒找到 (可能是 legacy data)，也當作新增
+        plan.activities.push(activity);
+      }
+    }
+
+    const docRef = doc(db, "trips", tripId);
+    await updateDoc(docRef, {
+      plans,
+      updatedAt: Timestamp.now(),
+    });
+
+    // 同步更新本地狀態，觸發 UI 反應性
+    trip.plans = plans;
+  };
+
+  /**
+   * 刪除行程中的活動
+   */
+  const deleteTripActivity = async (
+    tripId: string,
+    date: string,
+    activityId: string,
+  ) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const trip = trips.value.find((t) => t.id === tripId);
+    if (!trip || !trip.plans) return;
+
+    const plans = trip.plans.map((plan) => {
+      if (plan.date === date) {
+        return {
+          ...plan,
+          activities: plan.activities.filter((a) => a.id !== activityId),
+        };
+      }
+      return plan;
+    });
+
+    const docRef = doc(db, "trips", tripId);
+    await updateDoc(docRef, {
+      plans,
+      updatedAt: Timestamp.now(),
+    });
+
+    // 同步更新本地狀態，觸發 UI 反應性
+    trip.plans = plans;
   };
 
   // Sub-collection: Expenses
@@ -181,6 +263,8 @@ export const useTripStore = defineStore("trip", () => {
     fetchTrips,
     fetchTripById,
     subscribeToTrips,
+    updateTripActivity,
+    deleteTripActivity,
     subscribeToExpenses,
     addExpense,
     subscribeToCollections,
