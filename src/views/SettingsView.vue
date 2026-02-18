@@ -1,4 +1,19 @@
 <script setup lang="ts">
+import { useAuthStore } from "../stores/authStore";
+import { useRouter } from "vue-router";
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout();
+    router.push("/login");
+  } catch (error) {
+    console.error("Logout Error:", error);
+  }
+};
+
 const settingsGroups = [
   {
     title: "旅程管理",
@@ -34,39 +49,24 @@ const settingsGroups = [
     >
       <div class="flex items-center gap-6">
         <div
-          class="w-20 h-20 rounded-3xl border-4 border-white/20 overflow-hidden shadow-soft"
+          class="w-20 h-20 rounded-3xl border-4 border-white/20 overflow-hidden shadow-soft bg-forest-700 flex items-center justify-center"
         >
           <img
-            src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop"
+            v-if="authStore.user?.photoURL"
+            :src="authStore.user.photoURL"
             alt="Avatar"
             class="w-full h-full object-cover"
           />
+          <span v-else class="text-2xl font-bold">{{
+            authStore.user?.displayName?.charAt(0) || "U"
+          }}</span>
         </div>
         <div>
-          <h1 class="text-2xl font-rounded font-bold">小美</h1>
+          <h1 class="text-2xl font-rounded font-bold">
+            {{ authStore.user?.displayName || "未登入" }}
+          </h1>
           <p class="text-white/60 text-sm flex items-center gap-1">
-            喜歡旅行的行銷專員
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="text-forest-300"
-            >
-              <path d="M7 20h10" />
-              <path d="M10 20c5.5-2.5 8-6.4 8-10" />
-              <path
-                d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"
-              />
-              <path
-                d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"
-              />
-            </svg>
+            {{ authStore.user?.email || "travelogue@example.com" }}
           </p>
         </div>
       </div>
@@ -83,7 +83,7 @@ const settingsGroups = [
           <button
             v-for="item in group.items"
             :key="item.id"
-            class="w-full card-base !p-4 flex items-center justify-between hover:bg-forest-50 transition-all cursor-pointer"
+            class="w-full card-base !p-4 flex items-center justify-between hover:bg-forest-50 transition-all cursor-pointer text-left"
           >
             <div class="flex items-center gap-4 text-forest-600">
               <!-- Icons based on ID -->
@@ -259,6 +259,7 @@ const settingsGroups = [
 
       <div class="pt-4">
         <button
+          @click="handleLogout"
           class="w-full py-4 text-coral-red font-bold flex items-center justify-center gap-2 hover:bg-coral-red/5 rounded-2xl transition-all cursor-pointer"
         >
           <svg

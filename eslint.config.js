@@ -38,5 +38,25 @@ export default defineConfig([
       },
     },
   },
+
+  // 5. 特定路徑與規則調整
+  {
+    files: ["tests/**/*.{ts,js}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
   eslintConfigPrettier,
 ]);

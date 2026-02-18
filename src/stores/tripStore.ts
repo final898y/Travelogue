@@ -11,7 +11,7 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { db, auth } from "../services/firebase";
 import type { Trip, Expense, ResearchCollection } from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
@@ -22,8 +22,9 @@ export const useTripStore = defineStore("trip", () => {
   // Collection reference
   const tripsRef = collection(db, "trips");
 
-  // Fetch all trips
+  // Fetch all trips for all users (Shared mode)
   const fetchTrips = async () => {
+    if (!auth.currentUser) return;
     loading.value = true;
     try {
       const q = query(tripsRef, orderBy("startDate", "desc"));
@@ -41,6 +42,7 @@ export const useTripStore = defineStore("trip", () => {
 
   // Fetch single trip
   const fetchTripById = async (id: string) => {
+    if (!auth.currentUser) return null;
     const docRef = doc(db, "trips", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -51,6 +53,7 @@ export const useTripStore = defineStore("trip", () => {
 
   // Real-time listener for all trips
   const subscribeToTrips = () => {
+    if (!auth.currentUser) return () => {};
     const q = query(tripsRef, orderBy("startDate", "desc"));
     return onSnapshot(q, (snapshot) => {
       trips.value = snapshot.docs.map((doc) => ({
@@ -61,7 +64,10 @@ export const useTripStore = defineStore("trip", () => {
   };
 
   // Sub-collection: Expenses
-  const subscribeToExpenses = (tripId: string, callback: (expenses: Expense[]) => void) => {
+  const subscribeToExpenses = (
+    tripId: string,
+    callback: (expenses: Expense[]) => void,
+  ) => {
     const expensesRef = collection(db, "trips", tripId, "expenses");
     const q = query(expensesRef, orderBy("date", "desc"));
     return onSnapshot(q, (snapshot) => {
@@ -84,7 +90,7 @@ export const useTripStore = defineStore("trip", () => {
   // Sub-collection: Collections (Research)
   const subscribeToCollections = (
     tripId: string,
-    callback: (collections: ResearchCollection[]) => void
+    callback: (collections: ResearchCollection[]) => void,
   ) => {
     const collectionsRef = collection(db, "trips", tripId, "collections");
     const q = query(collectionsRef, orderBy("createdAt", "desc"));
@@ -97,7 +103,10 @@ export const useTripStore = defineStore("trip", () => {
     });
   };
 
-  const addCollection = async (tripId: string, item: Omit<ResearchCollection, "id">) => {
+  const addCollection = async (
+    tripId: string,
+    item: Omit<ResearchCollection, "id">,
+  ) => {
     const collectionsRef = collection(db, "trips", tripId, "collections");
     return await addDoc(collectionsRef, {
       ...item,
@@ -107,8 +116,11 @@ export const useTripStore = defineStore("trip", () => {
 
   // Add a new trip
   const addTrip = async (tripData: Omit<Trip, "id">) => {
+    if (!auth.currentUser)
+      throw new Error("User must be logged in to create a trip");
     const docRef = await addDoc(tripsRef, {
       ...tripData,
+      userId: auth.currentUser.uid,
       createdAt: Timestamp.now(),
     });
     return docRef.id;

@@ -208,7 +208,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: "journal",
         name: "Journal",
-        component: () => import("@/views/journal/JournalView.vue"),
+        component: () => import("@/views/collection/CollectionView.vue"),
         meta: {
           title: "Journal",
           icon: "book",

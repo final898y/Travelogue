@@ -6,6 +6,23 @@
 
 ## 📅 提交歷史
 
+### [2026-02-18]
+
+#### `TBD` - feat(auth): 實作 Firebase Authentication 與白名單資安防護
+
+- **身分驗證實作**:
+  - 實作 Google 登入功能並新增 `authStore` 管理使用者登入狀態。
+  - 建立 `LoginView.vue` 登入頁面，並在 `App.vue` 實作全域初始載入動畫與 Splash Screen。
+  - 實作全域路由守護 (Navigation Guard)，在確認登入狀態前進行非同步等待，確保未登入者無法存取受保護頁面。
+- **白名單機制與資安強化**:
+  - 導入「Email 白名單」機制，結合 Firestore `exists()` 安全性規則實作高效的存取控制。
+  - 更新 `authStore` 邏輯，登入後自動比對白名單 Email（以 Email 作為 Document ID）。
+  - 更新 `tripStore` 邏輯，強制在 CRUD 操作中檢查登入狀態並自動綁定 `userId`。
+- **UI/UX 優化與架構調整**:
+  - 移除 `BookingsView.vue` 舊有的 PIN 碼鎖定功能，改由 Firebase Auth 統一控管。
+  - 更新 `BottomNav.vue` 與 `router` 配置，讓「更多」按鈕支援全域與旅程設定的彈性跳轉。
+  - 新增 `docs/FIREBASE_CONFIG.md` 技術文件並同步更新 `README.md` 的後端配置指南。
+
 ### [2026-02-17]
 
 #### `TBD` - feat(seed): 補全範例資料並實作全站實體資料串接
@@ -101,7 +118,7 @@
   - **功能細節**:
     - `BookingsView`: 實作 PIN 碼鎖定與登機證風格卡片。
     - `ExpenseView`: 實作視覺化支出儀表板。
-    - `JournalView`: 實作瀑布流佈局展示旅行記錄。
+    - `CollectionView`: 實作資料收集與展示邏輯。
   - **導航優化**:
     - `BottomNav`: 改為 `router-link` 導航，新增「首頁」按鈕，並修正 Z-index 遮擋問題。
     - `ScheduleView`: 將返回按鈕邏輯修正為回到首頁列表。

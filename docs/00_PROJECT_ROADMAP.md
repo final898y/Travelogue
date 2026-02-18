@@ -456,7 +456,7 @@ Day 7: 視覺化與測試
 Day 1-3: 日誌模組
 ├── types/journal.ts
 ├── stores/journal.ts
-├── JournalView.vue
+├── CollectionView.vue
 ├── JournalGrid.vue（瀑布流）
 ├── JournalCard.vue
 └── JournalEditor.vue

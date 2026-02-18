@@ -4,13 +4,9 @@ import * as firestore from "firebase/firestore";
 import type { DocumentData } from "firebase/firestore";
 
 // 定義 Mock 用的型別，只包含我們程式碼中有用到的屬性
-interface MockDoc {
+interface _MockDoc {
   id: string;
   data: () => DocumentData;
-}
-
-interface MockSnapshot {
-  docs: MockDoc[];
 }
 
 // Mock Firebase Firestore
@@ -40,7 +36,7 @@ describe("Seed Service", () => {
     vi.mocked(firestore.getDocs).mockResolvedValue({
       docs: [],
       empty: true,
-    } as any);
+    } as unknown as firestore.QuerySnapshot);
 
     const result = await importSeedData();
 
@@ -48,8 +44,18 @@ describe("Seed Service", () => {
     // 驗證是否新增了旅程文件
     expect(firestore.addDoc).toHaveBeenCalled();
     // 驗證是否嘗試獲取子集合（用於檢查是否為空）
-    expect(firestore.collection).toHaveBeenCalledWith(expect.anything(), "trips", expect.any(String), "expenses");
-    expect(firestore.collection).toHaveBeenCalledWith(expect.anything(), "trips", expect.any(String), "collections");
+    expect(firestore.collection).toHaveBeenCalledWith(
+      expect.anything(),
+      "trips",
+      expect.any(String),
+      "expenses",
+    );
+    expect(firestore.collection).toHaveBeenCalledWith(
+      expect.anything(),
+      "trips",
+      expect.any(String),
+      "collections",
+    );
   });
 
   it("當標題重複時應執行更新邏輯並補充子集合", async () => {
@@ -60,8 +66,14 @@ describe("Seed Service", () => {
 
     // 第一次 getDocs 回傳現有旅程，後續回傳空的子集合
     vi.mocked(firestore.getDocs)
-      .mockResolvedValueOnce({ docs: [mockTripDoc], empty: false } as any) // trips
-      .mockResolvedValue({ docs: [], empty: true } as any); // sub-collections
+      .mockResolvedValueOnce({
+        docs: [mockTripDoc],
+        empty: false,
+      } as unknown as firestore.QuerySnapshot) // trips
+      .mockResolvedValue({
+        docs: [],
+        empty: true,
+      } as unknown as firestore.QuerySnapshot); // sub-collections
 
     const result = await importSeedData();
 
@@ -80,11 +92,14 @@ describe("Seed Service", () => {
       { id: "id3", data: () => ({ title: "北海道冬季祭典" }) },
     ];
 
-    vi.mocked(firestore.getDocs).mockImplementation(async () => ({
-      empty: false,
-      docs: mockTripDocs
-    } as any));
-    
+    vi.mocked(firestore.getDocs).mockImplementation(
+      async () =>
+        ({
+          empty: false,
+          docs: mockTripDocs,
+        }) as unknown as firestore.QuerySnapshot,
+    );
+
     await importSeedData();
 
     // 既然所有旅程都存在，應呼叫 updateDoc

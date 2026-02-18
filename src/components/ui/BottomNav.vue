@@ -47,8 +47,8 @@ const navItems = computed(() => {
     {
       id: "settings",
       label: "更多",
-      path: tripId ? `/trip/${tripId}/settings` : "/",
-      disabled: !tripId,
+      path: tripId ? `/settings/${tripId}` : "/settings",
+      disabled: false,
     },
   ];
 });

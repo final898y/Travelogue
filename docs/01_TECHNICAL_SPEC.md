@@ -717,7 +717,7 @@ ExpenseForm.vue           # 記帳表單
 #### 關鍵元件
 
 ```
-JournalView.vue           # 主頁面
+CollectionView.vue        # 主頁面
 └── JournalGrid          # 瀑布流佈局
     └── JournalCard      # 日誌卡片
 

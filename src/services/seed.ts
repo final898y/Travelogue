@@ -6,7 +6,6 @@ import {
   deleteDoc,
   updateDoc,
   doc,
-  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Trip, Expense, ResearchCollection } from "../types/trip";
@@ -44,7 +43,12 @@ const seedTrips: Partial<Trip>[] = [
     ],
     preparation: [
       { id: "p1", title: "辦理日幣換匯", isCompleted: true, category: "財務" },
-      { id: "p2", title: "購買西瓜卡 (Suica)", isCompleted: false, category: "交通" },
+      {
+        id: "p2",
+        title: "購買西瓜卡 (Suica)",
+        isCompleted: false,
+        category: "交通",
+      },
       { id: "p3", title: "打包春季衣物", isCompleted: false, category: "行李" },
     ],
     plans: [
@@ -488,16 +492,48 @@ const seedTrips: Partial<Trip>[] = [
 // 子集合範例資料
 const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
   "2024 東京賞櫻之旅": [
-    { date: "2024-03-20", category: "Food", amount: 4500, currency: "JPY", description: "六歌仙燒肉" },
-    { date: "2024-03-20", category: "Transport", amount: 1500, currency: "JPY", description: "Suica 加值" },
-    { date: "2024-03-21", category: "Food", amount: 3200, currency: "JPY", description: "今半壽喜燒" },
+    {
+      date: "2024-03-20",
+      category: "Food",
+      amount: 4500,
+      currency: "JPY",
+      description: "六歌仙燒肉",
+    },
+    {
+      date: "2024-03-20",
+      category: "Transport",
+      amount: 1500,
+      currency: "JPY",
+      description: "Suica 加值",
+    },
+    {
+      date: "2024-03-21",
+      category: "Food",
+      amount: 3200,
+      currency: "JPY",
+      description: "今半壽喜燒",
+    },
   ],
 };
 
-const collectionSeeds: Record<string, Omit<ResearchCollection, "id" | "createdAt">[]> = {
+const collectionSeeds: Record<
+  string,
+  Omit<ResearchCollection, "id" | "createdAt">[]
+> = {
   "2024 東京賞櫻之旅": [
-    { title: "2024東京櫻花預測", url: "https://example.com/sakura", source: "web", category: "景點", note: "注意滿開時間" },
-    { title: "Threads 上熱門的新宿美食", url: "https://threads.net/tokyo-food", source: "threads", category: "美食" },
+    {
+      title: "2024東京櫻花預測",
+      url: "https://example.com/sakura",
+      source: "web",
+      category: "景點",
+      note: "注意滿開時間",
+    },
+    {
+      title: "Threads 上熱門的新宿美食",
+      url: "https://threads.net/tokyo-food",
+      source: "threads",
+      category: "美食",
+    },
   ],
 };
 

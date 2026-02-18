@@ -16,18 +16,18 @@ export interface Trip {
   coverImage: string;
   countdown?: number;
   status: TripStatus;
-  
+
   // 嵌入式資料 (量小且緊密相關)
   plans?: DailyPlan[];
   bookings?: Booking[];
   preparation?: ChecklistItem[];
-  
+
   // 子集合資料 (僅作為類型參考，實際由 store 分別抓取)
   // expenses: Expense[];
   // collections: ResearchCollection[];
-  
-  createdAt?: any;
-  updatedAt?: any;
+
+  createdAt?: { seconds: number; nanoseconds: number };
+  updatedAt?: { seconds: number; nanoseconds: number };
 }
 
 /**
@@ -73,7 +73,12 @@ export interface ActivityOption {
 /**
  * 預訂相關 (Embedded)
  */
-export type BookingType = "flight" | "hotel" | "transport" | "activity" | "other";
+export type BookingType =
+  | "flight"
+  | "hotel"
+  | "transport"
+  | "activity"
+  | "other";
 
 export interface Booking {
   id: string;
@@ -107,14 +112,19 @@ export interface Expense {
   currency: string;
   description: string;
   payer?: string;
-  createdAt?: any;
+  createdAt?: { seconds: number; nanoseconds: number };
 }
 
 /**
  * 資料收集 (Sub-collection)
  * 用於行前收集網路文章、Threads、IG 等
  */
-export type CollectionSource = "threads" | "instagram" | "web" | "youtube" | "other";
+export type CollectionSource =
+  | "threads"
+  | "instagram"
+  | "web"
+  | "youtube"
+  | "other";
 
 export interface ResearchCollection {
   id: string;
@@ -124,7 +134,7 @@ export interface ResearchCollection {
   note?: string;
   imageUrl?: string;
   category?: string; // 例如：美食、景點、購物清單
-  createdAt: any;
+  createdAt: { seconds: number; nanoseconds: number };
 }
 
 export interface DateItem {
