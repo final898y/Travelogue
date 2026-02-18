@@ -8,6 +8,17 @@
 
 ### [2026-02-18]
 
+#### `TBD` - docs(firebase): 優化 Hosting 配置並補全部署文件
+
+- **Firebase Hosting 優化**:
+  - 在 `firebase.json` 加入 `rewrites` 規則，將所有路徑導向 `index.html`，解決 SPA 在線上環境重新整理出現 404 的問題。
+  - 更新 `README.md`，詳細說明路由重寫 (Rewrites) 邏輯與目的。
+- **部署文件與 SOP**:
+  - 在 `README.md` 新增「部署流程 (Deployment)」章節，規範建置、驗證與上線的標準作業程序。
+  - 補充 Firebase Auth 自訂網域授權的關鍵提醒，確保跨網域登入功能的穩定性。
+- **代碼品質維護**:
+  - 執行全站測試與格式化檢查，確保配置變更不影響現有邏輯。
+
 #### `TBD` - feat(auth): 實作 Firebase Authentication 與白名單資安防護
 
 - **身分驗證實作**:

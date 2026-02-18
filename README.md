@@ -43,28 +43,77 @@ npm run test
 
 ## Firebase 設定 (Firebase Setup)
 
-本專案使用 Firebase 作為後端服務，包含驗證 (Auth) 與資料庫 (Firestore)。詳細配置請參考 [docs/FIREBASE_CONFIG.md](./docs/FIREBASE_CONFIG.md)。
+本專案使用 Firebase 作為全方位後端服務。詳細配置請參考 [docs/FIREBASE_CONFIG.md](./docs/FIREBASE_CONFIG.md)。
 
-### 1. 驗證與白名單 (Auth & Whitelist)
+### 1. 身份驗證 (Authentication)
 
-為確保資料安全性，專案實作了 **Google 登入** 與 **Email 白名單** 機制：
+專案實作了基於 **Google 登入** 與 **Email 白名單** 的安全存取機制：
 
-- **登入方式**: 僅支援 Google 帳號登入。
-- **白名單機制**: 只有 Email 存在於 Firestore `whitelist` 集合中的使用者才能存取資料。
-- **設定方式**:
-  1. 在 Firestore 建立 `whitelist` 集合。
-  2. 新增文件，其 **Document ID** 必須為使用者的 **Email (全小寫)**。
+- **驗證供應商**: Google Auth (`GoogleAuthProvider`)。
+- **登入交互**: 使用 `signInWithPopup` 彈窗模式。
+- **白名單校驗**:
+  - 登入後會比對 Firestore `whitelist` 集合。
+  - **Document ID** 必須為使用者 **Email 的全小寫** 格式（例如：`user@example.com`）。
+  - 若不在白名單內，系統將強制執行 `signOut` 並提示錯誤。
 
-### 2. 安全性規則 (Security Rules)
+### 2. 託管 (Hosting)
 
-請務必在 Firebase Console 部署以下核心規則：
+- **專案 ID**: `travelogue-prod-ebaff`
+- **部署目錄**: `dist` (經由 Vite 建置)
+- **預設網域**: [https://travelogue-prod-ebaff.web.app](https://travelogue-prod-ebaff.web.app)
+- **配置檔案**: `firebase.json`
+- **路由重寫 (Rewrites)**: 已配置所有路徑導向 `index.html`，以支援 Vue Router 的 History 模式（解決上線後重新整理頁面出現 404 的問題）。
 
-- **白名單檢查**: 透過 `exists()` 函式確認 `request.auth.token.email` 是否在白名單中。
-- **共享存取**: 只要通過白名單驗證的使用者，即可讀取與編輯旅程資料。
+> [!IMPORTANT]
+> **自訂網域提醒**:
+> 若您綁定了自訂網域（例如 `www.yourdomain.com`），除了在 Hosting 介面設定外，**務必**前往 **Firebase Console > Authentication > Settings > Authorized domains** 將該網域加入授權清單，否則 Google 登入功能會因安全性限制而失效。
 
-### 3. 資料結構概覽 (Data Schema)
+---
 
-- `/whitelist/{email}`: 存放授權成員。
+## 部署流程 (Deployment)
+
+每當完成開發並準備將變更推送至線上環境時，請依序執行以下步驟：
+
+### 1. 執行本地驗證
+
+確保所有程式碼符合規範且測試通過：
+
+```powershell
+npm.cmd run test; npm.cmd run lint; npm.cmd run format
+```
+
+### 2. 進行 Vite 建置
+
+將 Vue 專案編譯為靜態檔案並輸出至 `dist/` 目錄：
+
+```powershell
+npm.cmd run build
+```
+
+### 3. 部署至 Firebase
+
+將 `dist/` 目錄內容與 `firebase.json` 配置上傳至 Firebase Hosting：
+
+```powershell
+# 確保已登入 Firebase
+firebase login
+
+# 執行部署
+firebase deploy --only hosting
+```
+
+---
+
+### 3. 安全性規則 (Security Rules)
+
+請在 Firebase Console 部署以下核心規則以確保資料安全：
+
+- **白名單檢查**: 透過 `exists()` 函式確認 `request.auth.token.email` 是否存在於白名單集合中。
+- **資料存取**: 僅限通過白名單驗證的使用者讀取與編輯。
+
+### 4. 資料結構概覽 (Data Schema)
+
+- `/whitelist/{email}`: 存放授權成員名單。
 - `/trips/{tripId}`: 旅程主資訊。
   - `/schedules`: 行程安排 (按 `date`, `time` 排序)。
   - `/expenses`: 記帳資料 (按 `date` 排序)。
