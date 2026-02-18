@@ -79,7 +79,7 @@ export const useTripStore = defineStore("trip", () => {
     });
   };
 
-  const addExpense = async (tripId: string, expense: Omit<Expense, "id">) => {
+  const addExpense = async (tripId: string, expense: Omit<Expense, "id" | "createdAt">) => {
     const expensesRef = collection(db, "trips", tripId, "expenses");
     return await addDoc(expensesRef, {
       ...expense,
@@ -105,7 +105,7 @@ export const useTripStore = defineStore("trip", () => {
 
   const addCollection = async (
     tripId: string,
-    item: Omit<ResearchCollection, "id">,
+    item: Omit<ResearchCollection, "id" | "createdAt">,
   ) => {
     const collectionsRef = collection(db, "trips", tripId, "collections");
     return await addDoc(collectionsRef, {

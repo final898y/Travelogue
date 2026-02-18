@@ -1,10 +1,12 @@
-# 🌿 Travelogue
+# Travelogue
 
 > 溫馨自然風格的旅遊規劃 PWA。旨在提供一個療癒、簡約且實用的旅遊規劃工具。
 
+**線上展示**: [https://travelogue-prod-ebaff.web.app/](https://travelogue-prod-ebaff.web.app/)
+
 ---
 
-## 🚀 快速啟動 (Quick Start)
+## 快速啟動 (Quick Start)
 
 ### 1. 環境需求
 
@@ -26,7 +28,7 @@ npm run test
 
 ---
 
-## 🛠️ 技術棧 (Tech Stack)
+## 技術棧 (Tech Stack)
 
 - **前端框架**: [Vue 3 (Composition API)](https://vuejs.org/)
 - **狀態管理**: [Pinia](https://pinia.vuejs.org/)
@@ -39,7 +41,7 @@ npm run test
 
 ---
 
-## 🔥 Firebase 設定 (Firebase Setup)
+## Firebase 設定 (Firebase Setup)
 
 本專案使用 Firebase 作為後端服務，包含驗證 (Auth) 與資料庫 (Firestore)。詳細配置請參考 [docs/FIREBASE_CONFIG.md](./docs/FIREBASE_CONFIG.md)。
 
@@ -70,7 +72,7 @@ npm run test
 
 ---
 
-## 📁 專案結構 (Folder Structure)
+## 專案結構 (Folder Structure)
 
 ```
 src/
@@ -91,7 +93,7 @@ docs/                # 專案開發文件與日誌
 
 ---
 
-## 🎨 設計系統 (Design System)
+## 設計系統 (Design System)
 
 詳見 [docs/04_DESIGN_SYSTEM.md](./docs/04_DESIGN_SYSTEM.md)。
 
@@ -101,7 +103,7 @@ docs/                # 專案開發文件與日誌
 
 ---
 
-## ✨ 目前實作項目
+## 目前實作項目
 
 根據 [docs/COMMIT_LOG.md](./docs/COMMIT_LOG.md) 紀錄：
 
@@ -114,7 +116,7 @@ docs/                # 專案開發文件與日誌
 
 ---
 
-## 📜 開發規範
+## 開發規範
 
 本專案對 AI Agent 設有嚴格的行為規範，詳見 [AGENTS.md](./AGENTS.md)。
 
@@ -128,7 +130,7 @@ docs/                # 專案開發文件與日誌
 
 ---
 
-## 📅 開發進度
+## 開發進度
 
 詳見 [docs/COMMIT_LOG.md](./docs/COMMIT_LOG.md) 以獲取完整的變更日誌。
 詳見 [docs/00_PROJECT_ROADMAP.md](./docs/00_PROJECT_ROADMAP.md) 以獲取開發路線圖。

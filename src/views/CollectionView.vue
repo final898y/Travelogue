@@ -58,10 +58,7 @@ const handleAddCollection = async () => {
   if (!newCollection.value.title || !newCollection.value.url) return;
 
   try {
-    await tripStore.addCollection(tripId, {
-      ...newCollection.value,
-      createdAt: new Date(),
-    });
+    await tripStore.addCollection(tripId, newCollection.value);
     isModalOpen.value = false;
     newCollection.value = {
       title: "",

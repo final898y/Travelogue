@@ -30,3 +30,6 @@ dist-ssr
 
 # Design System
 design-system/
+
+# Firebase
+.firebase/
