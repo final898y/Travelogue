@@ -61,6 +61,7 @@ export type Activity = z.infer<typeof ActivitySchema>;
  * 每日行程 Schema
  */
 export const DailyPlanSchema = z.object({
+  tripId: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
   activities: z.array(ActivitySchema),
 });
@@ -118,8 +119,7 @@ export const TripSchema = z.object({
   countdown: z.number().optional(),
   status: TripStatusSchema,
 
-  // 嵌入式資料
-  plans: z.array(DailyPlanSchema).optional(),
+  // 嵌入式資料 (移除了 plans)
   bookings: z.array(BookingSchema).optional(),
   preparation: z.array(ChecklistItemSchema).optional(),
 

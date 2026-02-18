@@ -1,22 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { onMounted, onUnmounted, computed, toRefs, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
-import type { Expense } from "../types/trip";
 
 const route = useRoute();
 const tripStore = useTripStore();
+const { currentTripExpenses: expenses } = toRefs(tripStore);
 const tripId = route.params.id as string;
 
-const expenses = ref<Expense[]>([]);
 const currency = ref("TWD");
 let unsubscribe: (() => void) | null = null;
 
 onMounted(() => {
   if (tripId) {
-    unsubscribe = tripStore.subscribeToExpenses(tripId, (data) => {
-      expenses.value = data;
-    });
+    unsubscribe = tripStore.subscribeToExpenses(tripId);
   }
 });
 

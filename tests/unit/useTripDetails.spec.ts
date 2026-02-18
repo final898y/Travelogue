@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ref } from "vue";
 import { useTripDetails } from "../../src/composables/useTripDetails";
-import type { Trip } from "../../src/types/trip";
+import type { Trip, DailyPlan } from "../../src/types/trip";
 
 describe("useTripDetails Composable", () => {
   const mockTrip: Trip = {
@@ -12,37 +12,43 @@ describe("useTripDetails Composable", () => {
     days: 3,
     coverImage: "test.jpg",
     status: "upcoming",
-    plans: [
-      {
-        date: "2024-03-20",
-        activities: [
-          {
-            time: "09:00",
-            title: "活動 A",
-            category: "sight",
-            coordinates: { lat: 35.6895, lng: 139.6917 },
-            address: "東京都新宿區",
-          },
-        ],
-      },
-      {
-        date: "2024-03-21",
-        activities: [
-          {
-            time: "12:00",
-            title: "活動 B",
-            category: "food",
-            address: "東京都台東區",
-          },
-        ],
-      },
-    ],
   };
+
+  const mockPlans: DailyPlan[] = [
+    {
+      tripId: "trip-1",
+      date: "2024-03-20",
+      activities: [
+        {
+          id: "a1",
+          time: "09:00",
+          title: "活動 A",
+          category: "sight",
+          coordinates: { lat: 35.6895, lng: 139.6917 },
+          address: "東京都新宿區",
+        },
+      ],
+    },
+    {
+      tripId: "trip-1",
+      date: "2024-03-21",
+      activities: [
+        {
+          id: "a2",
+          time: "12:00",
+          title: "活動 B",
+          category: "food",
+          address: "東京都台東區",
+        },
+      ],
+    },
+  ];
 
   it("應正確生成日期列表", () => {
     const trip = ref<Trip | undefined>(mockTrip);
+    const plans = ref<DailyPlan[]>(mockPlans);
     const selectedDate = ref("2024-03-20");
-    const { dates } = useTripDetails(trip, selectedDate);
+    const { dates } = useTripDetails(trip, plans, selectedDate);
 
     expect(dates.value).toHaveLength(3);
     expect(dates.value[0].fullDate).toBe("2024-03-20");
@@ -52,8 +58,9 @@ describe("useTripDetails Composable", () => {
 
   it("應根據 selectedDate 正確計算 currentDayIndex", () => {
     const trip = ref<Trip | undefined>(mockTrip);
+    const plans = ref<DailyPlan[]>(mockPlans);
     const selectedDate = ref("2024-03-20");
-    const { currentDayIndex } = useTripDetails(trip, selectedDate);
+    const { currentDayIndex } = useTripDetails(trip, plans, selectedDate);
 
     expect(currentDayIndex.value).toBe(1);
 
@@ -66,8 +73,9 @@ describe("useTripDetails Composable", () => {
 
   it("應根據日期過濾正確的活動項目", () => {
     const trip = ref<Trip | undefined>(mockTrip);
+    const plans = ref<DailyPlan[]>(mockPlans);
     const selectedDate = ref("2024-03-20");
-    const { scheduleItems } = useTripDetails(trip, selectedDate);
+    const { scheduleItems } = useTripDetails(trip, plans, selectedDate);
 
     expect(scheduleItems.value).toHaveLength(1);
     expect(scheduleItems.value[0].title).toBe("活動 A");
@@ -80,22 +88,21 @@ describe("useTripDetails Composable", () => {
   });
 
   it("應確保活動項目按照時間順序排列", () => {
-    const tripWithUnsortedActivities: Trip = {
-      ...mockTrip,
-      plans: [
-        {
-          date: "2024-03-20",
-          activities: [
-            { time: "12:00", title: "午餐", category: "food" },
-            { time: "08:00", title: "早餐", category: "food" },
-            { time: "18:00", title: "晚餐", category: "food" },
-          ],
-        },
-      ],
-    };
-    const trip = ref<Trip | undefined>(tripWithUnsortedActivities);
+    const trip = ref<Trip | undefined>(mockTrip);
+    const unsortedPlans: DailyPlan[] = [
+      {
+        tripId: "trip-1",
+        date: "2024-03-20",
+        activities: [
+          { id: "a1", time: "12:00", title: "午餐", category: "food" },
+          { id: "a2", time: "08:00", title: "早餐", category: "food" },
+          { id: "a3", time: "18:00", title: "晚餐", category: "food" },
+        ],
+      },
+    ];
+    const plans = ref<DailyPlan[]>(unsortedPlans);
     const selectedDate = ref("2024-03-20");
-    const { scheduleItems } = useTripDetails(trip, selectedDate);
+    const { scheduleItems } = useTripDetails(trip, plans, selectedDate);
 
     expect(scheduleItems.value[0].time).toBe("08:00");
     expect(scheduleItems.value[1].time).toBe("12:00");
@@ -104,8 +111,9 @@ describe("useTripDetails Composable", () => {
 
   it("當 trip 為 undefined 時應回傳空資料", () => {
     const trip = ref<Trip | undefined>(undefined);
+    const plans = ref<DailyPlan[]>([]);
     const selectedDate = ref("");
-    const { dates, scheduleItems } = useTripDetails(trip, selectedDate);
+    const { dates, scheduleItems } = useTripDetails(trip, plans, selectedDate);
 
     expect(dates.value).toEqual([]);
     expect(scheduleItems.value).toEqual([]);

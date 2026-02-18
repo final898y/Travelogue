@@ -3,7 +3,7 @@
  * ScheduleView (Page)
  * The main view for a trip's schedule.
  */
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, toRefs } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { useTripDetails } from "../composables/useTripDetails";
@@ -17,6 +17,7 @@ import type { Activity } from "../types/trip";
 const router = useRouter();
 const route = useRoute();
 const tripStore = useTripStore();
+const { currentTripPlans } = toRefs(tripStore);
 
 const tripId = route.params.id as string;
 const trip = computed(() =>
@@ -30,6 +31,7 @@ const currentActivity = ref<Partial<Activity> | null>(null);
 // 使用 Composable 處理邏輯
 const { dates, currentDayIndex, scheduleItems } = useTripDetails(
   trip,
+  currentTripPlans,
   selectedDate,
 );
 
@@ -38,14 +40,26 @@ const daysToTrip = ref(15);
 const weather = { temp: 22, condition: "晴天", icon: "☀️" };
 const isSaving = ref(false);
 
+let unsubscribePlans: (() => void) | null = null;
+
 // Set initial date when trip is loaded
 onMounted(async () => {
   if (tripStore.trips.length === 0) {
-    await tripStore.fetchTrips();
+    // 若直接進入此頁面，啟動訂閱以獲取旅程清單
+    tripStore.subscribeToTrips();
   }
   if (trip.value && !selectedDate.value) {
     selectedDate.value = trip.value.startDate;
   }
+
+  // 監聽行程子集合
+  if (tripId) {
+    unsubscribePlans = tripStore.subscribeToPlans(tripId);
+  }
+});
+
+onUnmounted(() => {
+  if (unsubscribePlans) unsubscribePlans();
 });
 
 const goBack = () => {

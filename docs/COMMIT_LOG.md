@@ -26,6 +26,26 @@
     - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
     - 修復 Zod `format()` 過時警告，改用 `flatten()` 優化錯誤日誌輸出。
 
+## [<日期 YYYY-MM-DD>] refactor(database): 行程資料架構重構為子集合 (Sub-collection)
+
+- Hash: `TBD`
+- 改動方向: 將 `plans` 陣列從 `trips` 主文件中抽離，獨立存儲於子集合以優化效能與擴展性。
+- 具體內容:
+  - **資料架構重設計**:
+    - 修改 `src/types/trip.ts`，將 `plans` 從 `TripSchema` 移除，改為獨立的 `DailyPlan` 子集合。
+    - 在 `DailyPlanSchema` 中加入 `tripId` 欄位，強化跨集合查詢能力。
+  - **Store 與狀態管理優化**:
+    - 更新 `tripStore.ts` 支援 `subscribeToPlans` 即時監聽子集合變化。
+    - 重構 `updateTripActivity` 與 `deleteTripActivity`，實作子集合文件的動態建立與原子化更新。
+    - 優化 Store 邏輯：消除物件 Mutation 副作用、補強 Auth 安全檢查、統一子集合監聽風格。
+  - **資料流適配**:
+    - 更新 `useTripDetails` composable，改為接收獨立的 `plans` 狀態，維持 UI 反應性。
+    - 調整 `ScheduleView.vue` 生命週期，進入頁面時啟動特定旅程的行程監聽。
+    - 更新 `ExpenseView` 與 `CollectionView` 以適應統一的監聽 State 模式。
+  - **種子資料與測試更新**:
+    - 重構 `seed.ts` 將行程資料完全抽離主文件陣列，並實作子集合自動導入邏輯。
+    - 重寫 `tripStore.spec.ts` 與更新 `useTripDetails.spec.ts` 以符合新的參數結構與訂閱模式。
+
 ### [2026-02-18]
 
 #### `af4a0d5` - feat(logic): 導入 Zod 資料校驗並優化 UI 型別分離架構

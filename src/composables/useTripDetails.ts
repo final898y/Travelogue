@@ -1,8 +1,9 @@
 import { computed, type Ref } from "vue";
-import type { Trip, DateItem, Activity } from "../types/trip";
+import type { Trip, DateItem, Activity, DailyPlan } from "../types/trip";
 
 export function useTripDetails(
   trip: Ref<Trip | undefined>,
+  plans: Ref<DailyPlan[]>,
   selectedDate: Ref<string>,
 ) {
   // 動態計算行程日期列表
@@ -44,10 +45,10 @@ export function useTripDetails(
     return diffDays + 1;
   });
 
-  // 根據選中日期過濾活動
+  // 根據選中日期過濾活動 (從 plans 陣列中過濾)
   const scheduleItems = computed<Activity[]>(() => {
-    if (!trip.value || !selectedDate.value) return [];
-    const plan = trip.value.plans?.find((p) => p.date === selectedDate.value);
+    if (!selectedDate.value) return [];
+    const plan = plans.value.find((p) => p.date === selectedDate.value);
     const activities = plan?.activities || [];
 
     // 依照時間 (time) 進行排序

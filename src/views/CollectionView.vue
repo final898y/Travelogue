@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from "vue";
+import { onMounted, onUnmounted, ref, computed, toRefs } from "vue";
 import { useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
-import type { ResearchCollection, CollectionSource } from "../types/trip";
+import type { CollectionSource } from "../types/trip";
 
 const route = useRoute();
 const tripStore = useTripStore();
+const { currentTripCollections: collections } = toRefs(tripStore);
 const tripId = route.params.id as string;
 
-const collections = ref<ResearchCollection[]>([]);
 const activeFilter = ref<CollectionSource | "all">("all");
 const isModalOpen = ref(false);
 
-const newCollection = ref<Omit<ResearchCollection, "id" | "createdAt">>({
+const newCollection = ref({
   title: "",
   url: "",
-  source: "web",
+  source: "web" as CollectionSource,
   note: "",
   category: "未分類",
 });
@@ -24,9 +24,7 @@ let unsubscribe: (() => void) | null = null;
 
 onMounted(() => {
   if (tripId) {
-    unsubscribe = tripStore.subscribeToCollections(tripId, (data) => {
-      collections.value = data;
-    });
+    unsubscribe = tripStore.subscribeToCollections(tripId);
   }
 });
 

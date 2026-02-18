@@ -115,7 +115,7 @@ firebase deploy --only hosting
 
 - `/whitelist/{email}`: 存放授權成員名單。
 - `/trips/{tripId}`: 旅程主資訊。
-  - `/schedules`: 行程安排 (按 `date`, `time` 排序)。
+  - `/plans`: 行程安排 (按 `date`, `time` 排序)。
   - `/expenses`: 記帳資料 (按 `date` 排序)。
   - `/collections`: 景點與美食收藏。
 
