@@ -8,21 +8,27 @@
 
 ### [2026-02-19]
 
-#### `TBD` - feat(expense): 實作記帳分帳功能與獨立 ExpenseStore
+#### `TBD` - perf(build): 實作分包優化與大型第三方庫抽離
 
-- **記帳與分帳功能實作**:
-  - 更新 `ExpenseSchema` 以支援 `payer` (付款人) 與 `splitWith` (均分參與者) 欄位。
-  - 建立 `expenseStore.ts` 獨立管理支出子集合，實作完整的 CRUD 邏輯。
-  - 建立 `ExpenseForm.vue` 組件，支援動態選擇分帳人員、指定付款人與每人應付金額試算。
-  - 重構 `ExpenseView.vue`，整合 `BaseBottomSheet` 並加入「分帳結算匯總」面板，自動計算成員間的結餘。
-- **架構與測試優化**:
-  - 遷移 `tripStore.ts` 中的記帳邏輯至專屬 Store，提升職責分離。
-  - 新增 `expenseStore.spec.ts` 單元測試，驗證支出管理與型別過濾。
-  - 更新 `seed.ts` 中的 `expenseSeeds` 以符合新的資料規範。
-- **工程規範**:
-  - 清理過時的型別導入項與未使用變數。
-  - 全站 11 個測試檔案、44 個測試案例全數通過。
+- **Vite 打包優化**:
+  - 在 `vite.config.ts` 實作 `manualChunks` 分包策略。
+  - 將 `firebase`、`zod` 以及 `vue` 核心套件抽離成獨立的 Vendor Chunks。
+  - `index.js` 體積從 634kB 減少至 49kB，顯著提升首屏載入速度與瀏覽器快取效率。
+- **工程配置更新**:
+  - 更新 `.gitignore` 排除 `bundle-stats.html` 分析檔案。
+  - 修正 `ExpenseView.vue` 中的 TypeScript 型別警告。
+- **驗證狀態**:
   - 通過完整 `test`, `lint`, `format`, `build` 驗證流程。
+
+#### `4d90483` - refactor(ui): 全站遷移至 lucide-vue-next 圖示系統並優化一致性
+
+- **圖示系統升級**:
+  - 建立 `src/assets/icons.ts` 統一管理專案圖示。
+  - 將全站核心與表單組件中的硬編碼 SVG 與表情符號替換為 Lucide 組件。
+  - 統一空狀態提示樣式，使用組件化圖示替代 Emoji。
+- **架構清理**:
+  - 完成全站圖示遷移，大幅減少組件模板體積。
+  - 通過完整 `test`, `lint`, `format`, `build` 驗證。
 
 #### `72588d6` - test(stores): 補全所有 Store 單元測試並優化架構
 
@@ -62,7 +68,7 @@
   - 加入來源過濾器 (Filters) 與點擊編輯功能。
 - **工程規範與型別安全**:
   - 嚴格遵守 Zod Schema 校驗與 TypeScript 型別定義。
-  - 修正 `collectionStore` 中的 lint 錯誤，移除 `any` 並優化解構賦值。
+  - 修正 `collectionStore` 中的 lint 錯誤，移除 `any` 並優化解構賦值.
   - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
 
 #### `8cf9492` - feat(booking): 實作預訂行程的新增、編輯與刪除功能
@@ -123,7 +129,7 @@
     - 修改 `tripStore.ts` 實作 `updateTripActivity` 與 `deleteTripActivity`，支援 Firestore 步同步與本地 Pinia 狀態反應式更新。
   - **UI/UX 優化**:
     - 修正 `useTripDetails` 排序邏輯，強制所有行程活動依照 `time` (HH:mm) 欄位進行排序.
-    - 優化 `TimelineItem` 與 `ActivityOptionItem` 的點擊區域，區分「開啟地圖」與「開啟編輯」，防止行動端誤觸。
+    - 優化 `TimelineItem` 與 `ActivityOptionItem` 的點擊區域，區分「開啟地圖」與「開啟編輯」，防止行動端 誤觸。
   - **工程規範**:
     - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
     - 修復 Zod `format()` 過時警告，改用 `flatten()` 優化錯誤日誌輸出。
@@ -141,7 +147,7 @@
     - 重構 `updateTripActivity` 與 `deleteTripActivity`，實作子集合文件的動態建立與原子化更新。
     - 優化 Store 邏輯：消除物件 Mutation 副作用、補強 Auth 安全檢查、統一子集合監聽風格。
   - **資料流適配**:
-    - 更新 `useTripDetails` composable，改為接收獨立的 `plans` 狀態，維持 UI 反應性。
+    - 更新 `useTripDetails` composable，改為接收獨立的 `plans` 狀態，維持 UI 反應性.
     - 調整 `ScheduleView.vue` 生命週期，進入頁面時啟動特定旅程的行程監聽。
     - 更新 `ExpenseView` 與 `CollectionView` 以適應統一的監聽 State 模式。
   - **種子資料與測試更新**:
@@ -238,7 +244,7 @@
   - 移除測試代碼中的所有 `any`，改用官方 `DocumentData` 與自定義 Mock 介面。
 - **測試覆蓋**:
   - 新增 `useTripDetails.spec.ts` 驗證動態日期計算與活動過濾。
-  - 新增 `firebase.spec.ts` 驗證 SDK 初始化。
+  - 新增 `firebase.spec.ts` 驗證 SDK 初始化.
   - 新增 `seed.spec.ts` 驗證資料導入與更新邏輯。
 
 #### `67648e7` - feat(schedule): 實作動態行程讀取與 Firebase 持久化優化
@@ -299,7 +305,7 @@
 
 #### `8c6dfbf` - feat(router): 建立 Vue Router 系統並重構頁面架構
 
-- **改動方向**: 導正專案架構以符合 Phase 0 里程碑規範。
+- **改動方向**: 導正專案架構以符合 Phase 0 里里程碑規範。
 - **具體內容**:
   - 安裝 `vue-router@4` 並配置 `History Mode`。
   - 建立 `src/views` 與 `src/router` 資料夾，實現頁面與組件分離。

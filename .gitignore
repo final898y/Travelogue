@@ -33,3 +33,6 @@ design-system/
 
 # Firebase
 .firebase/
+
+# Build analysis
+bundle-stats.html
