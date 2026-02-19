@@ -3,18 +3,21 @@
  * TripForm (Component)
  * Handles creating a new trip.
  */
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import { Check } from "../../assets/icons";
 import type { Trip } from "../../types/trip";
 
 const emit = defineEmits<{
   (e: "save", trip: Omit<Trip, "id" | "userId" | "createdAt">): void;
   (e: "cancel"): void;
+  (e: "update:dirty", isDirty: boolean): void;
 }>();
 
-// 預設值：今天與明天
+// 預設值與初始狀態
 const today = new Date().toISOString().split("T")[0]!;
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0]!;
+const initialCoverImage =
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop";
 
 interface TripFormData {
   title: string;
@@ -28,10 +31,23 @@ const formData = reactive<TripFormData>({
   title: "",
   startDate: today,
   endDate: tomorrow,
-  coverImage:
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",
+  coverImage: initialCoverImage,
   status: "upcoming",
 });
+
+// 偵測是否已修改
+watch(
+  formData,
+  (newVal) => {
+    const isDirty =
+      newVal.title !== "" ||
+      newVal.startDate !== today ||
+      newVal.endDate !== tomorrow ||
+      newVal.coverImage !== initialCoverImage;
+    emit("update:dirty", isDirty);
+  },
+  { deep: true },
+);
 
 // 自動計算天數
 const daysCount = computed(() => {

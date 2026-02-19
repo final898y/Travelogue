@@ -15,6 +15,7 @@ const tripId = route.params.id as string;
 const activeTab = ref("todo");
 const trip = ref<Trip | null>(null);
 const isSheetOpen = ref(false);
+const isFormDirty = ref(false);
 const currentItem = ref<Partial<ChecklistItem> | null>(null);
 const isSaving = ref(false);
 
@@ -39,6 +40,7 @@ const goBack = () => {
 };
 
 const openEditSheet = (item?: ChecklistItem) => {
+  isFormDirty.value = false;
   currentItem.value = item
     ? { ...item }
     : {
@@ -46,6 +48,11 @@ const openEditSheet = (item?: ChecklistItem) => {
         isCompleted: false,
       };
   isSheetOpen.value = true;
+};
+
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
 };
 
 const handleToggle = async (id: string) => {
@@ -70,7 +77,7 @@ const handleSaveItem = async (updatedItem: ChecklistItem) => {
     isSaving.value = true;
     await tripStore.updateTripPreparationItem(tripId, updatedItem);
     await fetchTripData();
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("儲存項目失敗:", error);
     alert("儲存失敗");
@@ -88,7 +95,7 @@ const handleDeleteItem = async () => {
     isSaving.value = true;
     await tripStore.deleteTripPreparationItem(tripId, currentItem.value.id);
     await fetchTripData();
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("刪除項目失敗:", error);
     alert("刪除失敗");
@@ -240,13 +247,15 @@ const handleDeleteItem = async () => {
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :title="currentItem?.id ? '編輯項目' : '新增項目'"
-      @close="isSheetOpen = false"
+      :has-unsaved-changes="isFormDirty"
+      @close="handleCloseSheet"
     >
       <PreparationForm
         v-if="currentItem"
         :initial-data="currentItem"
         @save="handleSaveItem"
         @delete="handleDeleteItem"
+        @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 

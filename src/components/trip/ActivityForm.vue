@@ -3,7 +3,7 @@
  * ActivityForm (Component)
  * Handles viewing and editing activity details.
  */
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import {
   Landmark,
   Utensils,
@@ -19,7 +19,7 @@ const props = defineProps<{
   initialData: Partial<Activity>;
 }>();
 
-const emit = defineEmits(["save", "cancel", "delete"]);
+const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 // 建立局部狀態副本以供編輯
 const formData = reactive<Partial<Activity>>({
@@ -32,6 +32,29 @@ const formData = reactive<Partial<Activity>>({
   note: "",
   ...props.initialData,
 });
+
+// 監聽變動以通知父組件是否有未儲存的變更
+watch(
+  formData,
+  (newVal) => {
+    // 簡單比較，如果與初始值不同則視為 dirty
+    // 注意：這裡使用 JSON 序列化來做深層比較
+    const isDirty =
+      JSON.stringify(newVal) !==
+      JSON.stringify({
+        time: "09:00",
+        title: "",
+        subtitle: "",
+        location: "",
+        category: "sight",
+        address: "",
+        note: "",
+        ...props.initialData,
+      });
+    emit("update:dirty", isDirty);
+  },
+  { deep: true },
+);
 
 const isEditMode = computed(() => !!props.initialData.id);
 

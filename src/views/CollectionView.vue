@@ -26,6 +26,7 @@ const tripId = route.params.id as string;
 
 const activeFilter = ref<CollectionSource | "all">("all");
 const isSheetOpen = ref(false);
+const isFormDirty = ref(false);
 const currentCollection = ref<Partial<Collection> | null>(null);
 const isSaving = ref(false);
 
@@ -51,10 +52,16 @@ const goBack = () => {
 };
 
 const openEditSheet = (item?: Collection) => {
+  isFormDirty.value = false;
   currentCollection.value = item
     ? { ...item }
     : { source: "web", category: "未分類" };
   isSheetOpen.value = true;
+};
+
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
 };
 
 const handleSaveCollection = async (updatedItem: Collection) => {
@@ -71,7 +78,7 @@ const handleSaveCollection = async (updatedItem: Collection) => {
     } else {
       await collectionStore.addCollection(tripId, updatedItem);
     }
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("儲存收集失敗:", error);
     alert("儲存失敗，請稍後再試");
@@ -88,7 +95,7 @@ const handleDeleteCollection = async () => {
   try {
     isSaving.value = true;
     await collectionStore.deleteCollection(tripId, currentCollection.value.id);
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("刪除收集失敗:", error);
     alert("刪除失敗，請稍後再試");
@@ -204,13 +211,15 @@ const handleDeleteCollection = async () => {
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :title="currentCollection?.id ? '編輯收集' : '新增收集'"
-      @close="isSheetOpen = false"
+      :has-unsaved-changes="isFormDirty"
+      @close="handleCloseSheet"
     >
       <CollectionForm
         v-if="currentCollection"
         :initial-data="currentCollection"
         @save="handleSaveCollection"
         @delete="handleDeleteCollection"
+        @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 

@@ -8,7 +8,18 @@
 
 ### [2026-02-19]
 
-#### `TBD` - perf(build): 實作分包優化與大型第三方庫抽離
+#### `TBD` - feat(ui): 全面整合 BaseBottomSheet 手勢關閉與未儲存警告
+
+- **所有視圖整合**:
+  - 更新 `PlanView`, `BookingView`, `ExpenseView`, `CollectionView`, `PreparationView` 實作髒值 (dirty check) 監控。
+  - 將各表單組件 (`ActivityForm`, `BookingForm`, `ExpenseForm`, `CollectionForm`, `PreparationForm`) 的變動狀態傳遞予 `BaseBottomSheet` 之 `:has-unsaved-changes` 屬性。
+  - 確保使用者在有變動的情境下，透過「滑動關閉」、「背景點擊」或「ESC」觸發 handleClose 時皆會彈出確認對話框，提升資料安全性。
+- **組件更新**:
+  - 在所有對應表單組件實作 `watch(formData, ..., { deep: true })` 並發送 `update:dirty` 事件。
+- **建置驗證**:
+  - 通過 TypeScript 全域檢查與 `npm run build` 編譯。
+
+#### `9452bb4` - perf(build): 實作分包優化與大型第三方庫抽離
 
 - **Vite 打包優化**:
   - 在 `vite.config.ts` 實作 `manualChunks` 分包策略。

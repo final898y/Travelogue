@@ -3,7 +3,7 @@
  * CollectionForm (Component)
  * Handles creating and editing travel research items.
  */
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import {
   Globe,
   AtSign,
@@ -17,7 +17,7 @@ const props = defineProps<{
   initialData: Partial<Collection>;
 }>();
 
-const emit = defineEmits(["save", "cancel", "delete"]);
+const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const isEditMode = computed(() => !!props.initialData.id);
 
@@ -31,6 +31,26 @@ const formData = reactive<Partial<Collection>>({
   imageUrl: "",
   ...props.initialData,
 });
+
+// 監聽變動以通知父組件是否有未儲存的變更
+watch(
+  formData,
+  (newVal) => {
+    const isDirty =
+      JSON.stringify(newVal) !==
+      JSON.stringify({
+        title: "",
+        url: "",
+        source: "web",
+        category: "未分類",
+        note: "",
+        imageUrl: "",
+        ...props.initialData,
+      });
+    emit("update:dirty", isDirty);
+  },
+  { deep: true },
+);
 
 const sources: { value: CollectionSource; label: string; icon: string }[] = [
   { value: "web", label: "網頁", icon: "globe" },

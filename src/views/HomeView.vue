@@ -16,6 +16,7 @@ const authStore = useAuthStore();
 const isSeeding = ref(false);
 const isSheetOpen = ref(false);
 const isAdding = ref(false);
+const isFormDirty = ref(false);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -37,6 +38,7 @@ const navigateToTrip = (tripId: number | string) => {
 };
 
 const openAddSheet = () => {
+  isFormDirty.value = false;
   isSheetOpen.value = true;
 };
 
@@ -48,6 +50,7 @@ const handleSaveTrip = async (
   try {
     isAdding.value = true;
     const newTripId = await tripStore.addTrip(tripData);
+    isFormDirty.value = false;
     isSheetOpen.value = false;
     // 成功後自動導航至新旅程的行程頁面
     navigateToTrip(newTripId);
@@ -181,10 +184,15 @@ const handleSeed = async () => {
     <!-- Add Trip Sheet -->
     <BaseBottomSheet
       :is-open="isSheetOpen"
+      :has-unsaved-changes="isFormDirty"
       title="規劃新的旅程"
       @close="isSheetOpen = false"
     >
-      <TripForm @save="handleSaveTrip" @cancel="isSheetOpen = false" />
+      <TripForm
+        @save="handleSaveTrip"
+        @cancel="isSheetOpen = false"
+        @update:dirty="isFormDirty = $event"
+      />
     </BaseBottomSheet>
 
     <!-- Global Loading Overlay -->

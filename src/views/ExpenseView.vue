@@ -27,6 +27,7 @@ const tripId = route.params.id as string;
 
 const currency = ref("TWD");
 const isSheetOpen = ref(false);
+const isFormDirty = ref(false);
 const currentExpense = ref<Partial<Expense> | null>(null);
 const isSaving = ref(false);
 
@@ -116,6 +117,7 @@ const goBack = () => {
 };
 
 const openEditSheet = (item?: Expense) => {
+  isFormDirty.value = false;
   currentExpense.value = item
     ? { ...item }
     : {
@@ -129,6 +131,11 @@ const openEditSheet = (item?: Expense) => {
   isSheetOpen.value = true;
 };
 
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
+};
+
 const handleSaveExpense = async (updatedItem: Expense) => {
   if (!tripId || isSaving.value) return;
 
@@ -139,7 +146,7 @@ const handleSaveExpense = async (updatedItem: Expense) => {
     } else {
       await expenseStore.addExpense(tripId, updatedItem);
     }
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("儲存支出失敗:", error);
     alert("儲存失敗");
@@ -156,7 +163,7 @@ const handleDeleteExpense = async () => {
   try {
     isSaving.value = true;
     await expenseStore.deleteExpense(tripId, currentExpense.value.id);
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("刪除支出失敗:", error);
     alert("刪除失敗");
@@ -321,13 +328,15 @@ const handleDeleteExpense = async () => {
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :title="currentExpense?.id ? '編輯支出' : '新增支出'"
-      @close="isSheetOpen = false"
+      :has-unsaved-changes="isFormDirty"
+      @close="handleCloseSheet"
     >
       <ExpenseForm
         v-if="currentExpense"
         :initial-data="currentExpense"
         @save="handleSaveExpense"
         @delete="handleDeleteExpense"
+        @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 

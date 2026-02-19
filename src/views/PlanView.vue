@@ -29,6 +29,7 @@ const trip = computed(() =>
 
 const selectedDate = ref("");
 const isSheetOpen = ref(false);
+const isFormDirty = ref(false);
 const currentActivity = ref<Partial<Activity> | null>(null);
 
 // 使用 Composable 處理邏輯
@@ -70,6 +71,7 @@ const goBack = () => {
 };
 
 const openEditSheet = (activity?: Activity) => {
+  isFormDirty.value = false;
   if (activity) {
     currentActivity.value = { ...activity };
   } else {
@@ -106,6 +108,11 @@ const openEditSheet = (activity?: Activity) => {
   isSheetOpen.value = true;
 };
 
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
+};
+
 const handleSaveActivity = async (updatedActivity: Activity) => {
   if (!tripId || !selectedDate.value || isSaving.value) return;
 
@@ -116,7 +123,7 @@ const handleSaveActivity = async (updatedActivity: Activity) => {
       selectedDate.value,
       updatedActivity,
     );
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("儲存活動失敗:", error);
     alert("儲存失敗，請稍後再試");
@@ -143,7 +150,7 @@ const handleDeleteActivity = async () => {
       selectedDate.value,
       currentActivity.value.id,
     );
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("刪除活動失敗:", error);
     alert("刪除失敗，請稍後再試");
@@ -206,13 +213,15 @@ const handleDeleteActivity = async () => {
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :title="currentActivity?.title ? '編輯行程' : '新增行程'"
-      @close="isSheetOpen = false"
+      :has-unsaved-changes="isFormDirty"
+      @close="handleCloseSheet"
     >
       <ActivityForm
         v-if="currentActivity"
         :initial-data="currentActivity"
         @save="handleSaveActivity"
         @delete="handleDeleteActivity"
+        @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 

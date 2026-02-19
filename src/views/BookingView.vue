@@ -14,6 +14,7 @@ const tripId = route.params.id as string;
 
 const trip = ref<Trip | null>(null);
 const isSheetOpen = ref(false);
+const isFormDirty = ref(false);
 const currentBooking = ref<Partial<Booking> | null>(null);
 const isSaving = ref(false);
 
@@ -32,10 +33,16 @@ const goBack = () => {
 };
 
 const openEditSheet = (booking?: Booking) => {
+  isFormDirty.value = false;
   currentBooking.value = booking
     ? { ...booking }
     : { type: "flight", isConfirmed: true };
   isSheetOpen.value = true;
+};
+
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
 };
 
 const handleSaveBooking = async (updatedBooking: Booking) => {
@@ -45,7 +52,7 @@ const handleSaveBooking = async (updatedBooking: Booking) => {
     isSaving.value = true;
     await tripStore.updateTripBooking(tripId, updatedBooking);
     await fetchTripData(); // 重新獲取資料以更新 UI
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("儲存預訂失敗:", error);
     alert("儲存失敗，請稍後再試");
@@ -63,7 +70,7 @@ const handleDeleteBooking = async () => {
     isSaving.value = true;
     await tripStore.deleteTripBooking(tripId, currentBooking.value.id);
     await fetchTripData();
-    isSheetOpen.value = false;
+    handleCloseSheet();
   } catch (error) {
     console.error("刪除預訂失敗:", error);
     alert("刪除失敗，請稍後再試");
@@ -212,13 +219,15 @@ const handleDeleteBooking = async () => {
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :title="currentBooking?.id ? '編輯預訂' : '新增預訂'"
-      @close="isSheetOpen = false"
+      :has-unsaved-changes="isFormDirty"
+      @close="handleCloseSheet"
     >
       <BookingForm
         v-if="currentBooking"
         :initial-data="currentBooking"
         @save="handleSaveBooking"
         @delete="handleDeleteBooking"
+        @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 

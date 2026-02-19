@@ -3,7 +3,7 @@
  * ExpenseForm (Component)
  * Handles creating and editing expense items with splitting logic.
  */
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import {
   Utensils,
   Car,
@@ -20,7 +20,7 @@ const props = defineProps<{
   tripMembers?: string[]; // 假設從 Trip 取得成員名單，若無則手動輸入
 }>();
 
-const emit = defineEmits(["save", "cancel", "delete"]);
+const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const isEditMode = computed(() => !!props.initialData.id);
 
@@ -35,6 +35,27 @@ const formData = reactive<Partial<Expense>>({
   splitWith: ["我"], // 預設均分者包含自己
   ...props.initialData,
 });
+
+// 監聽變動以通知父組件是否有未儲存的變更
+watch(
+  formData,
+  (newVal) => {
+    const isDirty =
+      JSON.stringify(newVal) !==
+      JSON.stringify({
+        date: new Date().toISOString().split("T")[0],
+        category: "Food",
+        amount: 0,
+        currency: "TWD",
+        description: "",
+        payer: "我", // 預設付款人
+        splitWith: ["我"], // 預設均分者包含自己
+        ...props.initialData,
+      });
+    emit("update:dirty", isDirty);
+  },
+  { deep: true },
+);
 
 const categories = [
   { value: "Food", label: "餐飲美食", icon: "utensils" },
