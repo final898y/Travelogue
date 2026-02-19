@@ -8,7 +8,23 @@
 
 ### [2026-02-19]
 
-#### `TBD` - test(stores): 補全所有 Store 單元測試並優化架構
+#### `TBD` - feat(expense): 實作記帳分帳功能與獨立 ExpenseStore
+
+- **記帳與分帳功能實作**:
+  - 更新 `ExpenseSchema` 以支援 `payer` (付款人) 與 `splitWith` (均分參與者) 欄位。
+  - 建立 `expenseStore.ts` 獨立管理支出子集合，實作完整的 CRUD 邏輯。
+  - 建立 `ExpenseForm.vue` 組件，支援動態選擇分帳人員、指定付款人與每人應付金額試算。
+  - 重構 `ExpenseView.vue`，整合 `BaseBottomSheet` 並加入「分帳結算匯總」面板，自動計算成員間的結餘。
+- **架構與測試優化**:
+  - 遷移 `tripStore.ts` 中的記帳邏輯至專屬 Store，提升職責分離。
+  - 新增 `expenseStore.spec.ts` 單元測試，驗證支出管理與型別過濾。
+  - 更新 `seed.ts` 中的 `expenseSeeds` 以符合新的資料規範。
+- **工程規範**:
+  - 清理過時的型別導入項與未使用變數。
+  - 全站 11 個測試檔案、44 個測試案例全數通過。
+  - 通過完整 `test`, `lint`, `format`, `build` 驗證流程。
+
+#### `72588d6` - test(stores): 補全所有 Store 單元測試並優化架構
 
 - **測試系統升級**:
   - 重新編寫 `tripStore.spec.ts`，專注於旅程列表與預訂管理。
@@ -29,7 +45,7 @@
   - 重構 `PreparationView.vue`，整合 `BaseBottomSheet` 實作與 `PlanView` 一致的 FAB 新增流程與編輯體驗。
 - **UI/UX 優化**:
   - 區分「待辦」與「行李」分頁顯示，並支援點擊項目快速切換完成狀態。
-  - 導入 Optimistic UI 概念，切換完成狀態時立即反應並同步至資料庫。
+  - 導入 Optimistic UI 概念，切換完成狀態時立即反應並同步至資料庫.
   - 補全返回按鈕與全域 Loading 遮罩。
 - **工程規範**:
   - 修正 `tripStore.ts` 中缺失的型別導入，確保編譯無誤。
@@ -106,7 +122,7 @@
     - 更新 `seed.ts` 種子資料，為所有範例活動補上唯一 ID，並同步更新 Zod 驗證邏輯。
     - 修改 `tripStore.ts` 實作 `updateTripActivity` 與 `deleteTripActivity`，支援 Firestore 步同步與本地 Pinia 狀態反應式更新。
   - **UI/UX 優化**:
-    - 修正 `useTripDetails` 排序邏輯，強制所有行程活動依照 `time` (HH:mm) 欄位進行排序。
+    - 修正 `useTripDetails` 排序邏輯，強制所有行程活動依照 `time` (HH:mm) 欄位進行排序.
     - 優化 `TimelineItem` 與 `ActivityOptionItem` 的點擊區域，區分「開啟地圖」與「開啟編輯」，防止行動端誤觸。
   - **工程規範**:
     - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
@@ -207,7 +223,7 @@
   - 修正 `BottomNav.vue` 的動態路由連結，解決無效 `/schedule` 路徑導致的警告。
 - **文件與測試**:
   - 更新 `README.md`，補齊資料夾結構、實作項目清單及技術棧說明。
-  - 新增 `mapUtils.spec.ts` 驗證防禦性連結生成邏輯。
+  - 新增 `mapUtils.spec.ts` 驗證防禦性連結生成邏輯.
 
 #### `85e35ae` - refactor(logic): 重構行程管理架構並強化型別安全與測試
 

@@ -146,10 +146,11 @@ export const ExpenseSchema = z.object({
   id: z.string(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式須為 YYYY-MM-DD"),
   category: z.string(),
-  amount: z.number(),
+  amount: z.number().positive("金額必須大於 0"),
   currency: z.string(),
-  description: z.string(),
-  payer: z.string().optional(),
+  description: z.string().min(1, "描述不可為空"),
+  payer: z.string().min(1, "需指定付款人"), // 付款人的 UID 或名稱
+  splitWith: z.array(z.string()).min(1, "至少需有一人參與分帳"), // 參與分帳者的 UID 或名稱列表
   createdAt: z
     .object({
       seconds: z.number(),

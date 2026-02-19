@@ -550,6 +550,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 4500,
       currency: "JPY",
       description: "六歌仙燒肉",
+      payer: "我",
+      splitWith: ["我", "夥伴A", "夥伴B"],
     },
     {
       date: "2024-03-20",
@@ -557,6 +559,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 1500,
       currency: "JPY",
       description: "Suica 加值",
+      payer: "我",
+      splitWith: ["我"],
     },
     {
       date: "2024-03-21",
@@ -564,6 +568,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 3200,
       currency: "JPY",
       description: "今半壽喜燒",
+      payer: "夥伴A",
+      splitWith: ["我", "夥伴A", "夥伴B"],
     },
   ],
 };

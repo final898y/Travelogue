@@ -15,16 +15,13 @@ import { db, auth } from "../services/firebase";
 import { z } from "zod";
 import {
   TripSchema,
-  ExpenseSchema,
   type Trip,
-  type Expense,
   type Booking,
   type ChecklistItem,
 } from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
-  const currentTripExpenses = ref<Expense[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -96,36 +93,6 @@ export const useTripStore = defineStore("trip", () => {
       }
     }
     return null;
-  };
-
-  /**
-   * 監聽記帳資料
-   */
-  const subscribeToExpenses = (tripId: string) => {
-    const expensesRef = collection(db, "trips", tripId, "expenses");
-    const q = query(expensesRef, orderBy("date", "desc"));
-    return onSnapshot(q, (snapshot) => {
-      const rawData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      currentTripExpenses.value = validateAndFilter<Expense>(
-        ExpenseSchema,
-        rawData,
-      );
-    });
-  };
-
-  const addExpense = async (
-    tripId: string,
-    expense: Omit<Expense, "id" | "createdAt">,
-  ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
-    const expensesRef = collection(db, "trips", tripId, "expenses");
-    return await addDoc(expensesRef, {
-      ...expense,
-      createdAt: Timestamp.now(),
-    });
   };
 
   // Add a new trip
@@ -261,13 +228,10 @@ export const useTripStore = defineStore("trip", () => {
 
   return {
     trips,
-    currentTripExpenses,
     loading,
     error,
     subscribeToTrips,
     fetchTripById,
-    subscribeToExpenses,
-    addExpense,
     addTrip,
     updateTripBooking,
     deleteTripBooking,
