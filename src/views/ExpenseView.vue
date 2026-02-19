@@ -5,6 +5,18 @@ import { storeToRefs } from "pinia";
 import { useExpenseStore } from "../stores/expenseStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import ExpenseForm from "../components/trip/ExpenseForm.vue";
+import {
+  ChevronLeft,
+  Users,
+  Plus,
+  Utensils,
+  Car,
+  Bed,
+  Landmark,
+  ShoppingBag,
+  MoreHorizontal,
+  Wallet,
+} from "../assets/icons";
 import type { Expense } from "../types/trip";
 
 const route = useRoute();
@@ -76,13 +88,13 @@ const categories = computed(() => {
     Shopping: "bg-coral-red/60",
     Other: "bg-forest-100",
   };
-  const icons: Record<string, string> = {
-    Food: "🍜",
-    Transport: "🚗",
-    Hotel: "🏨",
-    Sight: "🏛️",
-    Shopping: "🛍️",
-    Other: "📦",
+  const icons: Record<string, typeof Utensils> = {
+    Food: Utensils,
+    Transport: Car,
+    Hotel: Bed,
+    Sight: Landmark,
+    Shopping: ShoppingBag,
+    Other: MoreHorizontal,
   };
 
   return Object.entries(categoryMap.value).map(([name, amount]) => ({
@@ -163,19 +175,7 @@ const handleDeleteExpense = async () => {
           @click="goBack"
           class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeft :size="24" :stroke-width="2.5" />
         </button>
         <h1 class="text-2xl font-rounded font-bold text-forest-800">
           記帳帳本
@@ -228,23 +228,7 @@ const handleDeleteExpense = async () => {
       <!-- Settlement Summary (Split Logic) -->
       <section v-if="settlementSummary.length > 0" class="space-y-3">
         <h3 class="text-sm font-bold text-forest-800 flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-users"
-          >
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
+          <Users :size="16" />
           分帳結算匯總
         </h3>
         <div class="grid grid-cols-2 gap-3">
@@ -280,6 +264,9 @@ const handleDeleteExpense = async () => {
           v-if="expenses.length === 0"
           class="py-12 text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100"
         >
+          <div class="text-forest-200 mb-2 flex justify-center">
+            <Wallet :size="40" stroke-width="1.5" />
+          </div>
           <p class="text-gray-500">尚無支出記錄</p>
         </div>
 
@@ -291,9 +278,14 @@ const handleDeleteExpense = async () => {
             class="card-base !p-4 flex items-center gap-4 cursor-pointer hover:shadow-soft-md active:scale-[0.98] transition-all"
           >
             <div
-              class="w-10 h-10 rounded-xl bg-cream flex items-center justify-center text-xl shadow-inner"
+              class="w-10 h-10 rounded-xl bg-cream flex items-center justify-center text-forest-400 shadow-inner"
             >
-              {{ categories.find((c) => c.name === tx.category)?.icon || "💰" }}
+              <component
+                :is="
+                  categories.find((c) => c.name === tx.category)?.icon || Wallet
+                "
+                :size="20"
+              />
             </div>
             <div class="flex-1 min-w-0">
               <h4 class="font-bold text-forest-800 truncate">
@@ -322,21 +314,7 @@ const handleDeleteExpense = async () => {
       @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-earth-400 text-white rounded-2xl shadow-soft-lg hover:bg-earth-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="lucide lucide-plus"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
+      <Plus :size="28" :stroke-width="2.5" />
     </button>
 
     <!-- Edit Expense Sheet -->

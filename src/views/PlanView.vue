@@ -13,6 +13,7 @@ import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
 import TimelineItem from "../components/trip/TimelineItem.vue";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import ActivityForm from "../components/trip/ActivityForm.vue";
+import { Map, Plus } from "../assets/icons";
 import type { Activity } from "../types/trip";
 
 const router = useRouter();
@@ -178,24 +179,7 @@ const handleDeleteActivity = async () => {
         <button
           class="text-forest-400 text-xs font-bold hover:text-forest-600 transition-colors flex items-center gap-1 cursor-pointer"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-map"
-          >
-            <path
-              d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"
-            />
-            <path d="M15 5.764v15" />
-            <path d="M9 3.236v15" />
-          </svg>
+          <Map :size="16" />
           查看地圖
         </button>
       </div>
@@ -215,21 +199,7 @@ const handleDeleteActivity = async () => {
       @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="lucide lucide-plus"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
+      <Plus :size="28" :stroke-width="2.5" />
     </button>
 
     <!-- Edit Activity Sheet -->

@@ -4,6 +4,13 @@
  * Handles creating and editing travel research items.
  */
 import { reactive, computed } from "vue";
+import {
+  Globe,
+  AtSign,
+  Instagram,
+  Youtube,
+  MoreHorizontal,
+} from "../../assets/icons";
 import type { Collection, CollectionSource } from "../../types/trip";
 
 const props = defineProps<{
@@ -69,91 +76,11 @@ const handleSave = () => {
           "
         >
           <div class="text-forest-400">
-            <svg
-              v-if="src.icon === 'globe'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-globe"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2a14.5 14.5 0 0 0 0 20" />
-              <path d="M2 12h20" />
-            </svg>
-            <svg
-              v-if="src.icon === 'at-sign'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-at-sign"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
-            </svg>
-            <svg
-              v-if="src.icon === 'instagram'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-instagram"
-            >
-              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-            </svg>
-            <svg
-              v-if="src.icon === 'youtube'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-youtube"
-            >
-              <path
-                d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"
-              />
-              <path d="m10 15 5-3-5-3z" />
-            </svg>
-            <svg
-              v-if="src.icon === 'more-horizontal'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-more-horizontal"
-            >
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-              <circle cx="5" cy="12" r="1" />
-            </svg>
+            <Globe v-if="src.icon === 'globe'" :size="20" />
+            <AtSign v-if="src.icon === 'at-sign'" :size="20" />
+            <Instagram v-if="src.icon === 'instagram'" :size="20" />
+            <Youtube v-if="src.icon === 'youtube'" :size="20" />
+            <MoreHorizontal v-if="src.icon === 'more-horizontal'" :size="20" />
           </div>
           <span class="text-[10px] font-bold text-forest-600">{{
             src.label

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import PreparationForm from "../components/trip/PreparationForm.vue";
+import { ChevronLeft, Plus, Pencil, Check, FileText } from "../assets/icons";
 import type { Trip, ChecklistItem } from "../types/trip";
 
 const route = useRoute();
@@ -55,7 +56,6 @@ const handleToggle = async (id: string) => {
     if (localItem) localItem.isCompleted = !localItem.isCompleted;
 
     await tripStore.togglePreparationItem(tripId, id);
-    // 不一定要重新 fetch，因為 onSnapshot 會處理，但在這裏我們用 fetchTripById 模式
     // 為確保資料同步，仍建議 fetch
     await fetchTripData();
   } catch (error) {
@@ -107,19 +107,7 @@ const handleDeleteItem = async () => {
           @click="goBack"
           class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeft :size="24" :stroke-width="2.5" />
         </button>
         <h1 class="text-2xl font-rounded font-bold text-forest-800">
           準備清單
@@ -165,20 +153,7 @@ const handleDeleteItem = async () => {
                 : 'border-forest-200 bg-white'
             "
           >
-            <svg
-              v-if="todo.isCompleted"
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+            <Check v-if="todo.isCompleted" :size="16" :stroke-width="3" />
           </button>
           <div @click="openEditSheet(todo)" class="flex-1 cursor-pointer">
             <h4
@@ -196,23 +171,7 @@ const handleDeleteItem = async () => {
             @click="openEditSheet(todo)"
             class="opacity-0 group-hover:opacity-100 text-forest-200 transition-all"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-pencil"
-            >
-              <path
-                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-              />
-              <path d="m15 5 4 4" />
-            </svg>
+            <Pencil :size="16" />
           </button>
         </div>
       </div>
@@ -234,20 +193,7 @@ const handleDeleteItem = async () => {
                 : 'border-forest-200 bg-white'
             "
           >
-            <svg
-              v-if="item.isCompleted"
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+            <Check v-if="item.isCompleted" :size="16" :stroke-width="3" />
           </button>
           <h4
             @click="openEditSheet(item)"
@@ -260,23 +206,7 @@ const handleDeleteItem = async () => {
             @click="openEditSheet(item)"
             class="opacity-0 group-hover:opacity-100 text-forest-200 transition-all"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-pencil"
-            >
-              <path
-                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-              />
-              <path d="m15 5 4 4" />
-            </svg>
+            <Pencil :size="16" />
           </button>
         </div>
       </div>
@@ -290,9 +220,9 @@ const handleDeleteItem = async () => {
         class="py-12 flex flex-col items-center text-center"
       >
         <div
-          class="w-20 h-20 bg-forest-50 rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner"
+          class="w-20 h-20 bg-forest-50 rounded-full flex items-center justify-center text-forest-200 mb-4 shadow-inner"
         >
-          📝
+          <FileText :size="40" stroke-width="1.5" />
         </div>
         <p class="text-gray-400 text-sm mt-1 font-medium">清單還是空的</p>
       </div>
@@ -303,21 +233,7 @@ const handleDeleteItem = async () => {
       @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="lucide lucide-plus"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
+      <Plus :size="28" :stroke-width="2.5" />
     </button>
 
     <!-- Edit Item Sheet -->

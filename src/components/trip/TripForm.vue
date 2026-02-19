@@ -4,6 +4,7 @@
  * Handles creating a new trip.
  */
 import { reactive, computed } from "vue";
+import { Check } from "../../assets/icons";
 import type { Trip } from "../../types/trip";
 
 const emit = defineEmits<{
@@ -131,19 +132,7 @@ const coverImages = [
             v-if="formData.coverImage === img"
             class="absolute inset-0 bg-forest-400/20 flex items-center justify-center"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <Check :size="16" :stroke-width="3" color="white" />
           </div>
         </button>
       </div>

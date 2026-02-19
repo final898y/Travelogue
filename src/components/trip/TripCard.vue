@@ -5,6 +5,7 @@
  * Adheres to UI/UX Pro Max guidelines: SVG icons, cursor-pointer, smooth transitions.
  */
 import type { TripUI } from "../../types/trip-ui";
+import { MoreHorizontal, Calendar, Clock } from "../../assets/icons";
 
 defineProps<TripUI>();
 </script>
@@ -50,67 +51,21 @@ defineProps<TripUI>();
         >
           {{ title }}
         </h3>
-        <!-- More Actions Button (Lucide-like SVG) -->
         <button
           class="p-1 text-forest-200 hover:text-forest-400 hover:bg-forest-50 rounded-full transition-all cursor-pointer"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-more-horizontal"
-          >
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="19" cy="12" r="1" />
-            <circle cx="5" cy="12" r="1" />
-          </svg>
+          <MoreHorizontal :size="20" />
         </button>
       </div>
 
       <!-- Date & Duration Info -->
       <div class="flex items-center text-gray-500 text-sm gap-3 font-medium">
         <div class="flex items-center gap-1.5 text-forest-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-calendar"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+          <Calendar :size="14" />
           <span class="text-xs">{{ startDate }} - {{ endDate }}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-clock"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
+          <Clock :size="14" />
           <span class="text-xs">{{ days }} Days</span>
         </div>
       </div>

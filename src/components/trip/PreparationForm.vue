@@ -4,6 +4,15 @@
  * Handles creating and editing checklist items.
  */
 import { reactive, computed } from "vue";
+import {
+  Briefcase,
+  FileText,
+  CreditCard,
+  Pill,
+  Smartphone,
+  CheckSquare,
+  Plus,
+} from "../../assets/icons";
 import type { ChecklistItem } from "../../types/trip";
 
 const props = defineProps<{
@@ -58,111 +67,12 @@ const handleSave = () => {
           "
         >
           <div class="text-forest-400">
-            <svg
-              v-if="cat.icon === 'briefcase'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-briefcase"
-            >
-              <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
-              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-            </svg>
-            <svg
-              v-if="cat.icon === 'file-text'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-file-text"
-            >
-              <path
-                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
-              />
-              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-              <path d="M10 9H8" />
-              <path d="M16 13H8" />
-              <path d="M16 17H8" />
-            </svg>
-            <svg
-              v-if="cat.icon === 'credit-card'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-credit-card"
-            >
-              <rect width="20" height="14" x="2" y="5" rx="2" />
-              <line x1="2" y1="10" x2="22" y2="10" />
-            </svg>
-            <svg
-              v-if="cat.icon === 'pill'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-pill"
-            >
-              <path
-                d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"
-              />
-              <path d="m8.5 8.5 7 7" />
-            </svg>
-            <svg
-              v-if="cat.icon === 'smartphone'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-smartphone"
-            >
-              <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
-              <path d="M12 18h.01" />
-            </svg>
-            <svg
-              v-if="cat.icon === 'check-square'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-check-square"
-            >
-              <polyline points="9 11 12 14 22 4" />
-              <path
-                d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
-              />
-            </svg>
+            <Briefcase v-if="cat.icon === 'briefcase'" :size="20" />
+            <FileText v-if="cat.icon === 'file-text'" :size="20" />
+            <CreditCard v-if="cat.icon === 'credit-card'" :size="20" />
+            <Pill v-if="cat.icon === 'pill'" :size="20" />
+            <Smartphone v-if="cat.icon === 'smartphone'" :size="20" />
+            <CheckSquare v-if="cat.icon === 'check-square'" :size="20" />
           </div>
           <span class="text-[10px] font-bold text-forest-600">{{
             cat.label
@@ -192,21 +102,7 @@ const handleSave = () => {
         <div
           class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-forest-400"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v8" />
-            <path d="M8 12h8" />
-          </svg>
+          <Plus :size="20" />
         </div>
         <div>
           <p class="text-xs font-bold text-forest-800">新增後將自動同步</p>

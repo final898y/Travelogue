@@ -4,6 +4,15 @@
  * Handles viewing and editing activity details.
  */
 import { reactive, computed } from "vue";
+import {
+  Landmark,
+  Utensils,
+  Car,
+  Bed,
+  MapPin,
+  Plus,
+  X,
+} from "../../assets/icons";
 import type { Activity } from "../../types/trip";
 
 const props = defineProps<{
@@ -69,81 +78,10 @@ const removeOption = (idx: number) => {
           "
         >
           <div :class="cat.color">
-            <svg
-              v-if="cat.value === 'sight'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-landmark"
-            >
-              <line x1="3" y1="22" x2="21" y2="22" />
-              <line x1="6" y1="18" x2="6" y2="11" />
-              <line x1="10" y1="18" x2="10" y2="11" />
-              <line x1="14" y1="18" x2="14" y2="11" />
-              <line x1="18" y1="18" x2="18" y2="11" />
-              <polygon points="12 2 20 7 4 7 12 2" />
-            </svg>
-            <svg
-              v-if="cat.value === 'food'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-utensils"
-            >
-              <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-              <path d="M7 2v20" />
-              <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-            </svg>
-            <svg
-              v-if="cat.value === 'transport'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-car"
-            >
-              <path
-                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"
-              />
-              <circle cx="7" cy="17" r="2" />
-              <path d="M9 17h6" />
-              <circle cx="17" cy="17" r="2" />
-            </svg>
-            <svg
-              v-if="cat.value === 'hotel'"
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-bed"
-            >
-              <path d="M2 4v16" />
-              <path d="M2 8h18a2 2 0 0 1 2 2v10" />
-              <path d="M2 17h20" />
-              <path d="M6 8v9" />
-            </svg>
+            <Landmark v-if="cat.value === 'sight'" :size="20" />
+            <Utensils v-if="cat.value === 'food'" :size="20" />
+            <Car v-if="cat.value === 'transport'" :size="20" />
+            <Bed v-if="cat.value === 'hotel'" :size="20" />
           </div>
           <span class="text-[10px] font-bold text-forest-600">{{
             cat.label
@@ -204,21 +142,10 @@ const removeOption = (idx: number) => {
             placeholder="搜尋地點或手動輸入"
             class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
           />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-map-pin absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
-          >
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
+          <MapPin
+            :size="16"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
+          />
         </div>
       </div>
 
@@ -246,20 +173,7 @@ const removeOption = (idx: number) => {
             type="button"
             class="text-[10px] font-bold text-forest-400 hover:text-forest-600 flex items-center gap-1 transition-colors"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="M12 5v14" />
-            </svg>
+            <Plus :size="14" :stroke-width="2.5" />
             新增方案
           </button>
         </div>
@@ -285,20 +199,7 @@ const removeOption = (idx: number) => {
               @click="removeOption(idx)"
               class="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-white border border-red-50 text-red-300 flex items-center justify-center hover:text-red-500 hover:border-red-100 shadow-sm transition-all opacity-0 group-hover:opacity-100"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
+              <X :size="12" :stroke-width="3" />
             </button>
 
             <div class="space-y-2">

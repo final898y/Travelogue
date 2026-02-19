@@ -5,6 +5,17 @@ import { storeToRefs } from "pinia";
 import { useCollectionStore } from "../stores/collectionStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import CollectionForm from "../components/trip/CollectionForm.vue";
+import {
+  ChevronLeft,
+  AtSign,
+  Instagram,
+  Globe,
+  Youtube,
+  MoreHorizontal,
+  Plus,
+  MapPin,
+  Bookmark,
+} from "../assets/icons";
 import type { Collection, CollectionSource } from "../types/trip";
 
 const route = useRoute();
@@ -96,19 +107,7 @@ const handleDeleteCollection = async () => {
           @click="goBack"
           class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeft :size="24" :stroke-width="2.5" />
         </button>
         <h1 class="text-2xl font-rounded font-bold text-forest-800">
           資料收集
@@ -139,7 +138,9 @@ const handleDeleteCollection = async () => {
         v-if="filteredCollections.length === 0"
         class="py-20 text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100"
       >
-        <div class="text-4xl mb-3">🔖</div>
+        <div class="text-forest-200 mb-2 flex justify-center">
+          <Bookmark :size="40" stroke-width="1.5" />
+        </div>
         <p class="text-gray-500 font-medium">
           還沒有收集任何資料<br />點擊下方按鈕開始記錄
         </p>
@@ -154,91 +155,11 @@ const handleDeleteCollection = async () => {
         >
           <div class="flex justify-between items-start mb-2">
             <div class="text-forest-400">
-              <svg
-                v-if="item.source === 'threads'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-at-sign"
-              >
-                <circle cx="12" cy="12" r="4" />
-                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
-              </svg>
-              <svg
-                v-if="item.source === 'instagram'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-instagram"
-              >
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-              </svg>
-              <svg
-                v-if="item.source === 'web'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-globe"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a14.5 14.5 0 0 0 0 20" />
-                <path d="M2 12h20" />
-              </svg>
-              <svg
-                v-if="item.source === 'youtube'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-youtube"
-              >
-                <path
-                  d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"
-                />
-                <path d="m10 15 5-3-5-3z" />
-              </svg>
-              <svg
-                v-if="item.source === 'other'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-more-horizontal"
-              >
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="19" cy="12" r="1" />
-                <circle cx="5" cy="12" r="1" />
-              </svg>
+              <AtSign v-if="item.source === 'threads'" :size="20" />
+              <Instagram v-if="item.source === 'instagram'" :size="20" />
+              <Globe v-if="item.source === 'web'" :size="20" />
+              <Youtube v-if="item.source === 'youtube'" :size="20" />
+              <MoreHorizontal v-if="item.source === 'other'" :size="20" />
             </div>
             <a
               :href="item.url"
@@ -246,23 +167,7 @@ const handleDeleteCollection = async () => {
               @click.stop
               class="text-forest-200 hover:text-forest-500 transition-colors p-1"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-                />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
+              <MapPin :size="18" />
             </a>
           </div>
           <h3
@@ -292,21 +197,7 @@ const handleDeleteCollection = async () => {
       @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="lucide lucide-plus"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
+      <Plus :size="28" :stroke-width="2.5" />
     </button>
 
     <!-- Edit Collection Sheet -->

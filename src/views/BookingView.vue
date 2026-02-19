@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import BookingForm from "../components/trip/BookingForm.vue";
+import { ChevronLeft, Plane, Bed, Ticket, Plus } from "../assets/icons";
 import type { Trip, Booking } from "../types/trip";
 
 const route = useRoute();
@@ -82,19 +83,7 @@ const handleDeleteBooking = async () => {
             @click="goBack"
             class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+            <ChevronLeft :size="24" :stroke-width="2.5" />
           </button>
           <h1 class="text-2xl font-rounded font-bold text-forest-800">
             預訂行程
@@ -109,7 +98,9 @@ const handleDeleteBooking = async () => {
         v-if="bookings.length === 0"
         class="py-20 text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100"
       >
-        <div class="text-4xl mb-3">🎫</div>
+        <div class="text-forest-200 mb-2 flex justify-center">
+          <Ticket :size="40" stroke-width="1.5" />
+        </div>
         <p class="text-gray-500 font-medium">還沒有任何預訂資料</p>
       </div>
 
@@ -137,18 +128,11 @@ const handleDeleteBooking = async () => {
                 <div
                   class="w-full border-t-2 border-dashed border-forest-200 relative"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
+                  <Plane
+                    :size="20"
                     fill="currentColor"
                     class="text-forest-400 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-90"
-                  >
-                    <path
-                      d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
-                    />
-                  </svg>
+                  />
                 </div>
               </div>
               <div class="text-center flex-1">
@@ -184,46 +168,12 @@ const handleDeleteBooking = async () => {
         </div>
 
         <div v-else class="p-6">
-          <div class="flex items-start gap-4">
+          <div class="items-start flex gap-4">
             <div
               class="w-12 h-12 bg-lavender/20 rounded-xl flex items-center justify-center text-lavender flex-shrink-0"
             >
-              <svg
-                v-if="booking.type === 'hotel'"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M2 20h20" />
-                <path d="M7 20v-5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v5" />
-                <path d="M11 17h2" />
-                <path d="M12 4v4" />
-                <path d="M15 8H9a2 2 0 0 0-2 2v10" />
-                <path d="M17 10v10" />
-                <path d="M9 4h6" />
-              </svg>
-              <svg
-                v-else
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="1" y="3" width="22" height="18" rx="2" ry="2" />
-                <line x1="1" y1="9" x2="23" y2="9" />
-                <line x1="1" y1="15" x2="23" y2="15" />
-              </svg>
+              <Bed v-if="booking.type === 'hotel'" :size="24" />
+              <Ticket v-else :size="24" />
             </div>
             <div class="flex-1">
               <h3 class="font-bold text-forest-800">{{ booking.title }}</h3>
@@ -255,21 +205,7 @@ const handleDeleteBooking = async () => {
       @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="lucide lucide-plus"
-      >
-        <path d="M5 12h14" />
-        <path d="M12 5v14" />
-      </svg>
+      <Plus :size="28" :stroke-width="2.5" />
     </button>
 
     <!-- Edit Booking Sheet -->
