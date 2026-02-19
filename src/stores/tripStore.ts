@@ -3,12 +3,10 @@ import { ref } from "vue";
 import {
   collection,
   query,
-  getDocs,
   getDoc,
   doc,
   addDoc,
   updateDoc,
-  where,
   orderBy,
   onSnapshot,
   Timestamp,
@@ -17,11 +15,8 @@ import { db, auth } from "../services/firebase";
 import { z } from "zod";
 import {
   TripSchema,
-  DailyPlanSchema,
   ExpenseSchema,
   type Trip,
-  type DailyPlan,
-  type Activity,
   type Expense,
   type Booking,
   type ChecklistItem,
@@ -29,7 +24,6 @@ import {
 
 export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
-  const currentTripPlans = ref<DailyPlan[]>([]);
   const currentTripExpenses = ref<Expense[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -57,22 +51,6 @@ export const useTripStore = defineStore("trip", () => {
       }
       return acc;
     }, []);
-  };
-
-  /**
-   * 輔助函式：取得或建立特定日期的 Plan 文件
-   */
-  const getOrCreatePlanDoc = async (tripId: string, date: string) => {
-    const plansRef = collection(db, "trips", tripId, "plans");
-    const q = query(plansRef, where("date", "==", date));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) {
-      return { id: null, plan: { tripId, date, activities: [] } as DailyPlan };
-    }
-
-    const firstDoc = snapshot.docs[0]!;
-    return { id: firstDoc.id, plan: firstDoc.data() as DailyPlan };
   };
 
   // Real-time listener for all trips
@@ -118,74 +96,6 @@ export const useTripStore = defineStore("trip", () => {
       }
     }
     return null;
-  };
-
-  /**
-   * 監聽特定旅程的行程 (Plans 子集合)
-   */
-  const subscribeToPlans = (tripId: string) => {
-    const plansRef = collection(db, "trips", tripId, "plans");
-    const q = query(plansRef, orderBy("date", "asc"));
-    return onSnapshot(q, (snapshot) => {
-      const rawData = snapshot.docs.map((doc) => ({
-        tripId, // 確保 tripId 存在以通過 Schema 驗證
-        ...doc.data(),
-      }));
-      currentTripPlans.value = validateAndFilter<DailyPlan>(
-        DailyPlanSchema,
-        rawData,
-      );
-    });
-  };
-
-  /**
-   * 更新行程中的活動 (子集合模式)
-   */
-  const updateTripActivity = async (
-    tripId: string,
-    date: string,
-    activity: Activity,
-  ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
-
-    const { id: docId, plan } = await getOrCreatePlanDoc(tripId, date);
-    const activities = [...plan.activities];
-
-    // 建立活動副本，避免 Mutation 副作用
-    const activityToSave = activity.id
-      ? { ...activity }
-      : { ...activity, id: crypto.randomUUID() };
-
-    const idx = activities.findIndex((a) => a.id === activityToSave.id);
-    if (idx !== -1) {
-      activities[idx] = activityToSave;
-    } else {
-      activities.push(activityToSave);
-    }
-
-    if (docId) {
-      await updateDoc(doc(db, "trips", tripId, "plans", docId), { activities });
-    } else {
-      const plansRef = collection(db, "trips", tripId, "plans");
-      await addDoc(plansRef, { tripId, date, activities });
-    }
-  };
-
-  /**
-   * 刪除行程中的活動 (子集合模式)
-   */
-  const deleteTripActivity = async (
-    tripId: string,
-    date: string,
-    activityId: string,
-  ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
-
-    const { id: docId, plan } = await getOrCreatePlanDoc(tripId, date);
-    if (!docId) return;
-
-    const activities = plan.activities.filter((a) => a.id !== activityId);
-    await updateDoc(doc(db, "trips", tripId, "plans", docId), { activities });
   };
 
   /**
@@ -351,15 +261,11 @@ export const useTripStore = defineStore("trip", () => {
 
   return {
     trips,
-    currentTripPlans,
     currentTripExpenses,
     loading,
     error,
     subscribeToTrips,
     fetchTripById,
-    subscribeToPlans,
-    updateTripActivity,
-    deleteTripActivity,
     subscribeToExpenses,
     addExpense,
     addTrip,

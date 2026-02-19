@@ -6,6 +6,7 @@
 import { ref, computed, onMounted, onUnmounted, toRefs } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
+import { usePlanStore } from "../stores/planStore";
 import { useTripDetails } from "../composables/useTripDetails";
 import PlanHeader from "../components/ui/PlanHeader.vue";
 import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
@@ -17,7 +18,8 @@ import type { Activity } from "../types/trip";
 const router = useRouter();
 const route = useRoute();
 const tripStore = useTripStore();
-const { currentTripPlans } = toRefs(tripStore);
+const planStore = usePlanStore();
+const { currentTripPlans } = toRefs(planStore);
 
 const tripId = route.params.id as string;
 const trip = computed(() =>
@@ -54,7 +56,7 @@ onMounted(async () => {
 
   // 監聽行程子集合
   if (tripId) {
-    unsubscribePlans = tripStore.subscribeToPlans(tripId);
+    unsubscribePlans = planStore.subscribeToPlans(tripId);
   }
 });
 
@@ -108,7 +110,7 @@ const handleSaveActivity = async (updatedActivity: Activity) => {
 
   try {
     isSaving.value = true;
-    await tripStore.updateTripActivity(
+    await planStore.updateTripActivity(
       tripId,
       selectedDate.value,
       updatedActivity,
@@ -135,7 +137,7 @@ const handleDeleteActivity = async () => {
 
   try {
     isSaving.value = true;
-    await tripStore.deleteTripActivity(
+    await planStore.deleteTripActivity(
       tripId,
       selectedDate.value,
       currentActivity.value.id,

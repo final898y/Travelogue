@@ -8,7 +8,20 @@
 
 ### [2026-02-19]
 
-#### `TBD` - feat(preparation): 實作準備清單的新增、編輯、刪除與狀態切換
+#### `TBD` - test(stores): 補全所有 Store 單元測試並優化架構
+
+- **測試系統升級**:
+  - 重新編寫 `tripStore.spec.ts`，專注於旅程列表與預訂管理。
+  - 新增 `planStore.spec.ts`，完整覆蓋行程活動的 CRUD 邏輯。
+  - 新增 `collectionStore.spec.ts`，驗證資料收集的原子化更新與過濾邏輯。
+- **架構清理**:
+  - 完成 `tripStore.ts` 的職責分離，移除計畫與收集相關的過時代碼。
+  - 清理未使用的 Firebase 導入項，確保生產環境編譯無誤。
+- **驗證狀態**:
+  - 10 個測試檔案，共 40 個測試案例全數通過。
+  - 通過完整 `test`, `lint`, `format`, `build` 驗證流程。
+
+#### `fd47db5` - feat(preparation): 實作準備清單的新增、編輯、刪除與狀態切換
 
 - **準備清單功能實作**:
   - 在 `tripStore.ts` 實作 `updateTripPreparationItem`、`deleteTripPreparationItem` 與 `togglePreparationItem` 方法。
@@ -82,7 +95,7 @@
 ## [<日期 YYYY-MM-DD>] feat(schedule): 實作行程編輯與備選方案管理功能
 
 - Hash: `TBD`
-- 改動方向: 建立完整的行程活動編輯系統，並強化資料一致性與排序邏輯。
+- 改動方向: 建立完整的行程活動編輯系統，並強化資料一致性與排序邏輯.
 - 具體內容:
   - **編輯功能實作**:
     - 建立 `BaseBottomSheet.vue` 通用底部抽屜組件，支援行動端手勢感與背景遮罩。
