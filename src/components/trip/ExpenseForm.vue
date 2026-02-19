@@ -13,14 +13,18 @@ import {
   MoreHorizontal,
   Check,
 } from "../../assets/icons";
-import type { Expense } from "../../types/trip";
+import { useAuthStore } from "../../stores/authStore";
+import type { Expense, TripMember } from "../../types/trip";
 
 const props = defineProps<{
   initialData: Partial<Expense>;
-  tripMembers?: string[]; // 假設從 Trip 取得成員名單，若無則手動輸入
+  tripMembers?: TripMember[]; // 接收 TripMember 物件陣列
 }>();
 
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
+
+const authStore = useAuthStore();
+const currentUserEmail = authStore.user?.email || "me";
 
 const isEditMode = computed(() => !!props.initialData.id);
 
@@ -31,8 +35,8 @@ const formData = reactive<Partial<Expense>>({
   amount: 0,
   currency: "TWD",
   description: "",
-  payer: "我", // 預設付款人
-  splitWith: ["我"], // 預設均分者包含自己
+  payer: currentUserEmail, // 預設付款人 ID
+  splitWith: [currentUserEmail], // 預設均分者 ID 包含自己
   ...props.initialData,
 });
 
@@ -48,8 +52,8 @@ watch(
         amount: 0,
         currency: "TWD",
         description: "",
-        payer: "我", // 預設付款人
-        splitWith: ["我"], // 預設均分者包含自己
+        payer: currentUserEmail,
+        splitWith: [currentUserEmail],
         ...props.initialData,
       });
     emit("update:dirty", isDirty);
@@ -78,20 +82,22 @@ const handleSave = () => {
   emit("save", { ...formData });
 };
 
-const toggleSplitMember = (member: string) => {
+const toggleSplitMember = (memberId: string) => {
   if (!formData.splitWith) formData.splitWith = [];
-  const idx = formData.splitWith.indexOf(member);
+  const idx = formData.splitWith.indexOf(memberId);
   if (idx > -1) {
     if (formData.splitWith.length > 1) {
       formData.splitWith.splice(idx, 1);
     }
   } else {
-    formData.splitWith.push(member);
+    formData.splitWith.push(memberId);
   }
 };
 
 // 預設成員列表（若 tripMembers 未提供）
-const members = computed(() => props.tripMembers || ["我", "夥伴A", "夥伴B"]);
+const members = computed(
+  () => props.tripMembers || [{ id: currentUserEmail, name: "我" }],
+);
 
 // 計算每人平均
 const perPersonAmount = computed(() => {
@@ -120,7 +126,7 @@ const perPersonAmount = computed(() => {
             type="number"
             inputmode="decimal"
             placeholder="0.00"
-            class="w-full p-4 pl-10 rounded-2xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-2xl font-rounded font-bold shadow-sm"
+            class="w-full p-4 rounded-2xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-2xl font-rounded font-bold shadow-sm pl-10"
           />
           <span
             class="absolute left-4 top-1/2 -translate-y-1/2 text-forest-200 font-bold"
@@ -153,7 +159,7 @@ const perPersonAmount = computed(() => {
           :key="cat.value"
           @click="formData.category = cat.value"
           type="button"
-          class="flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all active:scale-95"
+          class="flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all active:scale-95 cursor-pointer"
           :class="
             formData.category === cat.value
               ? 'border-forest-400 bg-forest-50 shadow-soft-sm'
@@ -206,17 +212,17 @@ const perPersonAmount = computed(() => {
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
             v-for="m in members"
-            :key="m"
-            @click="formData.payer = m"
+            :key="m.id"
+            @click="formData.payer = m.id"
             type="button"
-            class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap"
+            class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
             :class="
-              formData.payer === m
-                ? 'bg-forest-500 text-white'
-                : 'bg-forest-50 text-forest-400'
+              formData.payer === m.id
+                ? 'bg-forest-500 text-white shadow-soft-sm'
+                : 'bg-forest-50 text-forest-400 hover:bg-forest-100'
             "
           >
-            {{ m }}
+            {{ m.name }}
           </button>
         </div>
       </div>
@@ -228,22 +234,22 @@ const perPersonAmount = computed(() => {
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
             v-for="m in members"
-            :key="m"
-            @click="toggleSplitMember(m)"
+            :key="m.id"
+            @click="toggleSplitMember(m.id)"
             type="button"
-            class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1"
+            class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer"
             :class="
-              formData.splitWith?.includes(m)
-                ? 'bg-earth-400 text-white'
-                : 'bg-earth-50 text-earth-300'
+              formData.splitWith?.includes(m.id)
+                ? 'bg-earth-400 text-white shadow-soft-sm'
+                : 'bg-earth-50 text-earth-300 hover:bg-earth-100'
             "
           >
             <Check
-              v-if="formData.splitWith?.includes(m)"
+              v-if="formData.splitWith?.includes(m.id)"
               :size="12"
               :stroke-width="3"
             />
-            {{ m }}
+            {{ m.name }}
           </button>
         </div>
       </div>
@@ -251,7 +257,7 @@ const perPersonAmount = computed(() => {
       <!-- Settlement Preview -->
       <div
         v-if="formData.amount && formData.amount > 0"
-        class="p-4 bg-forest-50 rounded-2xl space-y-2"
+        class="p-4 bg-forest-50 rounded-2xl space-y-2 border border-forest-100/50 shadow-inner"
       >
         <div
           class="flex justify-between items-center text-xs font-bold text-forest-600"
@@ -260,7 +266,7 @@ const perPersonAmount = computed(() => {
           <span>每人需支付</span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="text-[10px] text-forest-400"
+          <span class="text-[10px] text-forest-400 font-medium"
             >共 {{ formData.splitWith?.length }} 人均分</span
           >
           <span class="text-lg font-rounded font-bold text-forest-800"
@@ -275,7 +281,7 @@ const perPersonAmount = computed(() => {
     <div class="pt-4 flex flex-col gap-3">
       <button
         @click="handleSave"
-        class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
+        class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all cursor-pointer"
       >
         {{ isEditMode ? "儲存變更" : "新增支出" }}
       </button>
@@ -283,7 +289,7 @@ const perPersonAmount = computed(() => {
       <button
         v-if="isEditMode"
         @click="emit('delete')"
-        class="w-full py-4 rounded-2xl bg-white border border-red-50 text-red-400 text-sm font-bold hover:bg-red-50 transition-all"
+        class="w-full py-4 rounded-2xl bg-white border border-red-50 text-red-400 text-sm font-bold hover:bg-red-50 transition-all cursor-pointer"
       >
         刪除此紀錄
       </button>

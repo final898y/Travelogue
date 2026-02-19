@@ -3,6 +3,8 @@ import { onMounted, onUnmounted, computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useExpenseStore } from "../stores/expenseStore";
+import { useTripStore } from "../stores/tripStore";
+import { useAuthStore } from "../stores/authStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import ExpenseForm from "../components/trip/ExpenseForm.vue";
 import {
@@ -22,8 +24,20 @@ import type { Expense } from "../types/trip";
 const route = useRoute();
 const router = useRouter();
 const expenseStore = useExpenseStore();
+const tripStore = useTripStore();
+const authStore = useAuthStore();
 const { expenses } = storeToRefs(expenseStore);
 const tripId = route.params.id as string;
+
+const currentTrip = computed(() =>
+  tripStore.trips.find((t) => t.id === tripId),
+);
+const tripMembers = computed(() => currentTrip.value?.members || []);
+const currentUserEmail = authStore.user?.email || "me";
+
+const getMemberName = (id: string) => {
+  return tripMembers.value.find((m) => m.id === id)?.name || id;
+};
 
 const currency = ref("TWD");
 const isSheetOpen = ref(false);
@@ -58,14 +72,14 @@ const settlementSummary = computed(() => {
     balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
 
     // 每個參與者債務增加 (欠錢)
-    exp.splitWith?.forEach((member) => {
-      balances[member] = (balances[member] || 0) - perPerson;
+    exp.splitWith?.forEach((memberId) => {
+      balances[memberId] = (balances[memberId] || 0) - perPerson;
     });
   });
 
   return Object.entries(balances)
-    .map(([name, balance]) => ({
-      name,
+    .map(([id, balance]) => ({
+      name: getMemberName(id),
       balance: Math.round(balance * 100) / 100,
     }))
     .sort((a, b) => b.balance - a.balance);
@@ -125,8 +139,8 @@ const openEditSheet = (item?: Expense) => {
         category: "Food",
         amount: 0,
         currency: "TWD",
-        payer: "我",
-        splitWith: ["我"],
+        payer: currentUserEmail,
+        splitWith: tripMembers.value.map((m) => m.id),
       };
   isSheetOpen.value = true;
 };
@@ -300,7 +314,7 @@ const handleDeleteExpense = async () => {
               </h4>
               <p class="text-[10px] text-gray-400 font-medium">
                 {{ formatDate(tx.date) }} • {{ tx.category }} •
-                {{ tx.payer }} 付款
+                {{ getMemberName(tx.payer) }} 付款
               </p>
             </div>
             <div class="text-right">
@@ -334,6 +348,7 @@ const handleDeleteExpense = async () => {
       <ExpenseForm
         v-if="currentExpense"
         :initial-data="currentExpense"
+        :trip-members="tripMembers"
         @save="handleSaveExpense"
         @delete="handleDeleteExpense"
         @update:dirty="isFormDirty = $event"

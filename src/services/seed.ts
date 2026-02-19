@@ -63,6 +63,10 @@ const seedTrips: Partial<Trip>[] = [
     coverImage:
       "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop",
     status: "ongoing",
+    members: [
+      { id: "me", name: "我" },
+      { id: "p1", name: "夥伴A" },
+    ],
     bookings: [
       {
         id: "b3",
@@ -86,6 +90,7 @@ const seedTrips: Partial<Trip>[] = [
     coverImage:
       "https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=800&auto=format&fit=crop",
     status: "finished",
+    members: [{ id: "me", name: "我" }],
     bookings: [],
     preparation: [],
   },
@@ -550,8 +555,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 4500,
       currency: "JPY",
       description: "六歌仙燒肉",
-      payer: "我",
-      splitWith: ["我", "夥伴A", "夥伴B"],
+      payer: "me",
+      splitWith: ["me", "p1", "p2"],
     },
     {
       date: "2024-03-20",
@@ -559,8 +564,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 1500,
       currency: "JPY",
       description: "Suica 加值",
-      payer: "我",
-      splitWith: ["我"],
+      payer: "me",
+      splitWith: ["me"],
     },
     {
       date: "2024-03-21",
@@ -568,8 +573,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 3200,
       currency: "JPY",
       description: "今半壽喜燒",
-      payer: "夥伴A",
-      splitWith: ["我", "夥伴A", "夥伴B"],
+      payer: "p1",
+      splitWith: ["me", "p1", "p2"],
     },
   ],
 };

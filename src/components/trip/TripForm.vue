@@ -3,9 +3,10 @@
  * TripForm (Component)
  * Handles creating or editing a trip.
  */
-import { reactive, computed, watch } from "vue";
-import { Check } from "../../assets/icons";
-import type { Trip } from "../../types/trip";
+import { reactive, computed, watch, ref } from "vue";
+import { Check, UserPlus, X } from "../../assets/icons";
+import { useAuthStore } from "../../stores/authStore";
+import type { Trip, TripMember } from "../../types/trip";
 
 const props = defineProps<{
   initialData?: Partial<Trip>;
@@ -16,6 +17,9 @@ const emit = defineEmits<{
   (e: "cancel"): void;
   (e: "update:dirty", isDirty: boolean): void;
 }>();
+
+const authStore = useAuthStore();
+const currentUserEmail = authStore.user?.email || "me";
 
 // 預設值與初始狀態
 const today = new Date().toISOString().split("T")[0]!;
@@ -29,6 +33,7 @@ interface TripFormData {
   endDate: string;
   coverImage: string;
   status: "ongoing" | "upcoming" | "finished";
+  members: TripMember[];
 }
 
 const formData = reactive<TripFormData>({
@@ -37,7 +42,27 @@ const formData = reactive<TripFormData>({
   endDate: props.initialData?.endDate || tomorrow,
   coverImage: props.initialData?.coverImage || defaultCoverImage,
   status: props.initialData?.status || "upcoming",
+  members: props.initialData?.members || [{ id: currentUserEmail, name: "我" }],
 });
+
+const newMemberName = ref("");
+
+const addMember = () => {
+  const name = newMemberName.value.trim();
+  if (!name) return;
+  if (formData.members.some((m) => m.name === name)) {
+    return alert("旅伴名稱重複");
+  }
+  // 生成簡單唯一 ID
+  const newId = `member_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  formData.members.push({ id: newId, name });
+  newMemberName.value = "";
+};
+
+const removeMember = (id: string) => {
+  if (id === currentUserEmail) return; // 不能刪除自己
+  formData.members = formData.members.filter((m) => m.id !== id);
+};
 
 const isEditing = computed(() => !!props.initialData?.id);
 
@@ -53,13 +78,19 @@ watch(
         newVal.endDate !== (props.initialData.endDate || tomorrow) ||
         newVal.coverImage !==
           (props.initialData.coverImage || defaultCoverImage) ||
-        newVal.status !== (props.initialData.status || "upcoming");
+        newVal.status !== (props.initialData.status || "upcoming") ||
+        JSON.stringify(newVal.members) !==
+          JSON.stringify(
+            props.initialData.members || [{ id: currentUserEmail, name: "我" }],
+          );
     } else {
       isDirty =
         newVal.title !== "" ||
         newVal.startDate !== today ||
         newVal.endDate !== tomorrow ||
-        newVal.coverImage !== defaultCoverImage;
+        newVal.coverImage !== defaultCoverImage ||
+        newVal.members.length > 1 ||
+        newVal.members?.[0]?.id !== currentUserEmail;
     }
     emit("update:dirty", isDirty);
   },
@@ -158,6 +189,49 @@ const coverImages = [
       <span class="text-sm font-bold text-forest-800">{{ daysCount }} 天</span>
     </div>
 
+    <!-- Member Management -->
+    <div class="space-y-3">
+      <label class="text-xs font-bold text-forest-300 uppercase tracking-wider"
+        >旅伴名單 ({{ formData.members.length }})</label
+      >
+      <div class="flex gap-2">
+        <div class="relative flex-1">
+          <input
+            v-model="newMemberName"
+            type="text"
+            placeholder="輸入旅伴姓名"
+            class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+            @keyup.enter="addMember"
+          />
+        </div>
+        <button
+          @click="addMember"
+          type="button"
+          class="px-4 bg-forest-50 text-forest-500 rounded-xl hover:bg-forest-100 transition-colors cursor-pointer"
+        >
+          <UserPlus :size="20" />
+        </button>
+      </div>
+
+      <!-- Member Tags -->
+      <div class="flex flex-wrap gap-2">
+        <div
+          v-for="member in formData.members"
+          :key="member.id"
+          class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-forest-100 text-xs font-bold text-forest-600 shadow-soft-sm"
+        >
+          <span>{{ member.name }}</span>
+          <button
+            v-if="member.id !== currentUserEmail"
+            @click="removeMember(member.id)"
+            class="text-forest-300 hover:text-red-400 p-0.5 cursor-pointer"
+          >
+            <X :size="14" :stroke-width="2.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Cover Image Selection -->
     <div class="space-y-3">
       <label class="text-xs font-bold text-forest-300 uppercase"
@@ -168,7 +242,7 @@ const coverImages = [
           v-for="img in coverImages"
           :key="img"
           @click="formData.coverImage = img"
-          class="aspect-square rounded-xl overflow-hidden border-2 transition-all relative"
+          class="aspect-square rounded-xl overflow-hidden border-2 transition-all relative cursor-pointer"
           :class="
             formData.coverImage === img
               ? 'border-forest-400 scale-95'
@@ -190,7 +264,7 @@ const coverImages = [
     <div class="pt-4">
       <button
         @click="handleSave"
-        class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
+        class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all cursor-pointer"
       >
         {{ isEditing ? "儲存變更" : "開啟新旅程" }}
       </button>

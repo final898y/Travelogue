@@ -93,7 +93,9 @@ describe("BaseBottomSheet.vue", () => {
   });
 
   it("有未儲存變更時，關閉應觸發確認對話框", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockImplementation(() => false); // 模擬取消
+    const confirmSpy = vi
+      .spyOn(window, "confirm")
+      .mockImplementation(() => false); // 模擬取消
     const wrapper = mount(BaseBottomSheet, {
       props: {
         isOpen: true,

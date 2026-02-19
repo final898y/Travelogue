@@ -29,6 +29,7 @@ export {
   CheckSquare,
   ShoppingBag,
   Users,
+  UserPlus,
   Search,
   Calendar,
   X,

@@ -26,9 +26,14 @@ describe("ActivityForm.vue", () => {
     expect((timeInput.element as HTMLInputElement).value).toBe("09:00");
 
     // 檢查按鈕
-    expect(wrapper.find("button.bg-forest-400").text()).toContain("新增行程活動");
+    expect(wrapper.find("button.bg-forest-400").text()).toContain(
+      "新增行程活動",
+    );
     // 刪除按鈕不應存在
-    expect(wrapper.findAll("button").filter(b => b.text().includes("刪除此行程")).length).toBe(0);
+    expect(
+      wrapper.findAll("button").filter((b) => b.text().includes("刪除此行程"))
+        .length,
+    ).toBe(0);
   });
 
   it("應正確填入初始資料 (編輯模式)", () => {
@@ -47,7 +52,7 @@ describe("ActivityForm.vue", () => {
 
     const titleInput = wrapper.find("input[placeholder='例如：東京鐵塔']");
     expect((titleInput.element as HTMLInputElement).value).toBe("午餐");
-    
+
     // 檢查類別選取狀態 (food 對應第二個按鈕)
     // 我們檢查 class 是否包含選取樣式
     const foodBtn = wrapper.findAll(".grid.grid-cols-4 button")[1];
@@ -55,7 +60,10 @@ describe("ActivityForm.vue", () => {
 
     expect(wrapper.find("button.bg-forest-400").text()).toContain("儲存變更");
     // 刪除按鈕應存在
-    expect(wrapper.findAll("button").filter(b => b.text().includes("刪除此行程")).length).toBe(1);
+    expect(
+      wrapper.findAll("button").filter((b) => b.text().includes("刪除此行程"))
+        .length,
+    ).toBe(1);
   });
 
   it("切換類別應更新 formData", async () => {
@@ -66,7 +74,7 @@ describe("ActivityForm.vue", () => {
     const buttons = wrapper.findAll(".grid.grid-cols-4 button");
     // 點擊第三個 (交通)
     await buttons[2].trigger("click");
-    
+
     // 檢查是否有 dirty update (因為預設是 sight)
     expect(wrapper.emitted("update:dirty")).toBeTruthy();
     expect(wrapper.emitted("update:dirty")![0][0]).toBe(true);
@@ -79,10 +87,10 @@ describe("ActivityForm.vue", () => {
     });
 
     await wrapper.find("button.bg-forest-400").trigger("click");
-    
+
     expect(alertSpy).toHaveBeenCalledWith("請輸入活動標題");
     expect(wrapper.emitted("save")).toBeFalsy();
-    
+
     alertSpy.mockRestore();
   });
 
@@ -114,7 +122,9 @@ describe("ActivityForm.vue", () => {
       },
     });
 
-    const deleteBtn = wrapper.findAll("button").find(b => b.text().includes("刪除此行程"));
+    const deleteBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("刪除此行程"));
     await deleteBtn?.trigger("click");
 
     expect(wrapper.emitted("delete")).toBeTruthy();

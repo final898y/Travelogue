@@ -40,11 +40,11 @@ describe("HorizontalDatePicker.vue", () => {
       },
     });
     const buttons = wrapper.findAll("button");
-    
+
     // First button (not selected)
     expect(buttons[0].classes()).not.toContain("bg-forest-400");
     expect(buttons[0].classes()).toContain("bg-white");
-    
+
     // Second button (selected)
     expect(buttons[1].classes()).toContain("bg-forest-400");
     expect(buttons[1].classes()).not.toContain("bg-white");
@@ -57,10 +57,10 @@ describe("HorizontalDatePicker.vue", () => {
         modelValue: "2024-03-20",
       },
     });
-    
+
     const buttons = wrapper.findAll("button");
     await buttons[2].trigger("click"); // Click 3rd date
-    
+
     expect(wrapper.emitted("update:modelValue")).toBeTruthy();
     expect(wrapper.emitted("update:modelValue")![0][0]).toBe("2024-03-22");
   });

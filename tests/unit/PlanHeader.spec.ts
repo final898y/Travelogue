@@ -17,7 +17,7 @@ describe("PlanHeader.vue", () => {
     const wrapper = mount(PlanHeader, {
       props: defaultProps,
     });
-    
+
     expect(wrapper.text()).toContain("東京賞櫻");
     expect(wrapper.text()).toContain("距離出發還有 5 天");
   });
@@ -26,7 +26,7 @@ describe("PlanHeader.vue", () => {
     const wrapper = mount(PlanHeader, {
       props: defaultProps,
     });
-    
+
     expect(wrapper.text()).toContain("18°C");
     expect(wrapper.text()).toContain("Sunny");
   });
@@ -35,12 +35,12 @@ describe("PlanHeader.vue", () => {
     const wrapper = mount(PlanHeader, {
       props: defaultProps,
     });
-    
+
     // Back button is the first button in the template based on structure
     // structure: button(back) -> div(flex) -> buttons(actions)
-    const backBtn = wrapper.find("button"); 
+    const backBtn = wrapper.find("button");
     await backBtn.trigger("click");
-    
+
     expect(wrapper.emitted("click-back")).toBeTruthy();
   });
 });

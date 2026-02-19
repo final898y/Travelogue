@@ -106,6 +106,15 @@ export const ChecklistItemSchema = z.object({
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 
 /**
+ * 旅程成員 Schema
+ */
+export const TripMemberSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+});
+export type TripMember = z.infer<typeof TripMemberSchema>;
+
+/**
  * 核心旅程 Schema (Main Document)
  */
 export const TripSchema = z.object({
@@ -118,6 +127,7 @@ export const TripSchema = z.object({
   coverImage: z.string().url().or(z.string().optional()),
   countdown: z.number().optional(),
   status: TripStatusSchema,
+  members: z.array(TripMemberSchema).optional(),
 
   // 嵌入式資料
   bookings: z.array(BookingSchema).optional(),
