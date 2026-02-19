@@ -19,19 +19,19 @@ import {
   TripSchema,
   DailyPlanSchema,
   ExpenseSchema,
-  ResearchCollectionSchema,
+  CollectionSchema,
   type Trip,
   type DailyPlan,
   type Activity,
   type Expense,
-  type ResearchCollection,
+  type Collection,
 } from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
   const currentTripPlans = ref<DailyPlan[]>([]);
   const currentTripExpenses = ref<Expense[]>([]);
-  const currentTripCollections = ref<ResearchCollection[]>([]);
+  const currentTripCollections = ref<Collection[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -230,8 +230,8 @@ export const useTripStore = defineStore("trip", () => {
         id: doc.id,
         ...doc.data(),
       }));
-      currentTripCollections.value = validateAndFilter<ResearchCollection>(
-        ResearchCollectionSchema,
+      currentTripCollections.value = validateAndFilter<Collection>(
+        CollectionSchema,
         rawData,
       );
     });
@@ -239,7 +239,7 @@ export const useTripStore = defineStore("trip", () => {
 
   const addCollection = async (
     tripId: string,
-    item: Omit<ResearchCollection, "id" | "createdAt">,
+    item: Omit<Collection, "id" | "createdAt">,
   ) => {
     if (!auth.currentUser) throw new Error("User not logged in");
     const collectionsRef = collection(db, "trips", tripId, "collections");

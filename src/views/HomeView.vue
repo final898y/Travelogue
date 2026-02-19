@@ -27,7 +27,7 @@ const navigateToTrip = (tripId: number | string) => {
     console.error("導航失敗：tripId 缺失");
     return;
   }
-  router.push({ name: "schedule", params: { id: tripId } });
+  router.push({ name: "plan", params: { id: tripId } });
 };
 
 const handleAddTrip = async () => {

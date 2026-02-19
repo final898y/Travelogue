@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * ScheduleView (Page)
- * The main view for a trip's schedule.
+ * PlanView (Page)
+ * The main view for a trip's plan.
  */
 import { ref, computed, onMounted, onUnmounted, toRefs } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { useTripDetails } from "../composables/useTripDetails";
-import ScheduleHeader from "../components/ui/ScheduleHeader.vue";
+import PlanHeader from "../components/ui/PlanHeader.vue";
 import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
 import TimelineItem from "../components/trip/TimelineItem.vue";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
@@ -29,7 +29,7 @@ const isSheetOpen = ref(false);
 const currentActivity = ref<Partial<Activity> | null>(null);
 
 // 使用 Composable 處理邏輯
-const { dates, currentDayIndex, scheduleItems } = useTripDetails(
+const { dates, currentDayIndex, planItems } = useTripDetails(
   trip,
   currentTripPlans,
   selectedDate,
@@ -122,7 +122,7 @@ const handleDeleteActivity = async () => {
   <div class="min-h-screen pb-24 bg-cream-light animate-fade-in">
     <!-- Header -->
     <div class="px-6 pt-6">
-      <ScheduleHeader
+      <PlanHeader
         :title="tripTitle"
         :days-to-trip="daysToTrip"
         :weather="weather"
@@ -168,7 +168,7 @@ const handleDeleteActivity = async () => {
 
       <div class="relative">
         <TimelineItem
-          v-for="(item, index) in scheduleItems"
+          v-for="(item, index) in planItems"
           :key="item.id || index"
           v-bind="item"
           @click-item="openEditSheet(item)"

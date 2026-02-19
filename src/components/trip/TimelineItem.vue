@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * TimelineItem Component
- * Represents a single activity on the schedule.
+ * Represents a single activity on the plan.
  */
 import type { ActivityUI } from "../../types/trip-ui";
 import { getGoogleMapsUrl } from "../../utils/mapUtils";

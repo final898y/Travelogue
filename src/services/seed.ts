@@ -8,12 +8,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type {
-  Trip,
-  Expense,
-  ResearchCollection,
-  DailyPlan,
-} from "../types/trip";
+import type { Trip, Expense, Collection, DailyPlan } from "../types/trip";
 
 type ExistingTrip = Trip & { id: string };
 
@@ -573,26 +568,24 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
   ],
 };
 
-const collectionSeeds: Record<
-  string,
-  Omit<ResearchCollection, "id" | "createdAt">[]
-> = {
-  "2024 東京賞櫻之旅": [
-    {
-      title: "2024東京櫻花預測",
-      url: "https://example.com/sakura",
-      source: "web",
-      category: "景點",
-      note: "注意滿開時間",
-    },
-    {
-      title: "Threads 上熱門的新宿美食",
-      url: "https://threads.net/tokyo-food",
-      source: "threads",
-      category: "美食",
-    },
-  ],
-};
+const collectionSeeds: Record<string, Omit<Collection, "id" | "createdAt">[]> =
+  {
+    "2024 東京賞櫻之旅": [
+      {
+        title: "2024東京櫻花預測",
+        url: "https://example.com/sakura",
+        source: "web",
+        category: "景點",
+        note: "注意滿開時間",
+      },
+      {
+        title: "Threads 上熱門的新宿美食",
+        url: "https://threads.net/tokyo-food",
+        source: "threads",
+        category: "美食",
+      },
+    ],
+  };
 
 /**
  * 導入種子資料至 Firestore

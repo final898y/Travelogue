@@ -75,16 +75,16 @@ describe("useTripDetails Composable", () => {
     const trip = ref<Trip | undefined>(mockTrip);
     const plans = ref<DailyPlan[]>(mockPlans);
     const selectedDate = ref("2024-03-20");
-    const { scheduleItems } = useTripDetails(trip, plans, selectedDate);
+    const { planItems } = useTripDetails(trip, plans, selectedDate);
 
-    expect(scheduleItems.value).toHaveLength(1);
-    expect(scheduleItems.value[0].title).toBe("活動 A");
+    expect(planItems.value).toHaveLength(1);
+    expect(planItems.value[0].title).toBe("活動 A");
 
     selectedDate.value = "2024-03-21";
-    expect(scheduleItems.value[0].title).toBe("活動 B");
+    expect(planItems.value[0].title).toBe("活動 B");
 
     selectedDate.value = "2024-03-22"; // 沒計畫的日期
-    expect(scheduleItems.value).toHaveLength(0);
+    expect(planItems.value).toHaveLength(0);
   });
 
   it("應確保活動項目按照時間順序排列", () => {
@@ -102,20 +102,20 @@ describe("useTripDetails Composable", () => {
     ];
     const plans = ref<DailyPlan[]>(unsortedPlans);
     const selectedDate = ref("2024-03-20");
-    const { scheduleItems } = useTripDetails(trip, plans, selectedDate);
+    const { planItems } = useTripDetails(trip, plans, selectedDate);
 
-    expect(scheduleItems.value[0].time).toBe("08:00");
-    expect(scheduleItems.value[1].time).toBe("12:00");
-    expect(scheduleItems.value[2].time).toBe("18:00");
+    expect(planItems.value[0].time).toBe("08:00");
+    expect(planItems.value[1].time).toBe("12:00");
+    expect(planItems.value[2].time).toBe("18:00");
   });
 
   it("當 trip 為 undefined 時應回傳空資料", () => {
     const trip = ref<Trip | undefined>(undefined);
     const plans = ref<DailyPlan[]>([]);
     const selectedDate = ref("");
-    const { dates, scheduleItems } = useTripDetails(trip, plans, selectedDate);
+    const { dates, planItems } = useTripDetails(trip, plans, selectedDate);
 
     expect(dates.value).toEqual([]);
-    expect(scheduleItems.value).toEqual([]);
+    expect(planItems.value).toEqual([]);
   });
 });

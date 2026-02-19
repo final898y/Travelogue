@@ -32,15 +32,15 @@ describe("BottomNav.vue", () => {
     });
 
     const links = wrapper.findAll("a");
-    const scheduleLink = links.find((l) => l.text().includes("行程"));
+    const planLink = links.find((l) => l.text().includes("行程"));
 
-    expect(scheduleLink).toBeDefined();
-    expect(scheduleLink?.classes()).toContain("opacity-30");
+    expect(planLink).toBeDefined();
+    expect(planLink?.classes()).toContain("opacity-30");
   });
 
   it("當在特定旅程頁面時，連結應包含正確的 ID 且不禁用", () => {
     mockRoute.params.id = "trip-123";
-    mockRoute.path = "/schedule/trip-123";
+    mockRoute.path = "/plan/trip-123";
 
     const wrapper = mount(BottomNav, {
       global: {

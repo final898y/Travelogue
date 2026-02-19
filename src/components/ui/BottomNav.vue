@@ -15,15 +15,15 @@ const navItems = computed(() => {
   return [
     { id: "home", label: "首頁", path: "/" },
     {
-      id: "schedule",
+      id: "plan",
       label: "行程",
-      path: tripId ? `/schedule/${tripId}` : "/",
+      path: tripId ? `/plan/${tripId}` : "/",
       disabled: !tripId,
     },
     {
-      id: "bookings",
+      id: "booking",
       label: "預訂",
-      path: tripId ? `/trip/${tripId}/bookings` : "/",
+      path: tripId ? `/trip/${tripId}/booking` : "/",
       disabled: !tripId,
     },
     {
@@ -39,15 +39,15 @@ const navItems = computed(() => {
       disabled: !tripId,
     },
     {
-      id: "planning",
+      id: "preparation",
       label: "準備",
-      path: tripId ? `/trip/${tripId}/planning` : "/",
+      path: tripId ? `/trip/${tripId}/preparation` : "/",
       disabled: !tripId,
     },
     {
-      id: "settings",
+      id: "setting",
       label: "更多",
-      path: tripId ? `/settings/${tripId}` : "/settings",
+      path: tripId ? `/setting/${tripId}` : "/setting",
       disabled: false,
     },
   ];
@@ -56,12 +56,12 @@ const navItems = computed(() => {
 const activeTab = computed(() => {
   const path = route.path;
   if (path === "/") return "home";
-  if (path.startsWith("/schedule")) return "schedule";
-  if (path.includes("/bookings")) return "bookings";
+  if (path.startsWith("/plan")) return "plan";
+  if (path.includes("/booking")) return "booking";
   if (path.includes("/expense")) return "expense";
   if (path.includes("/collection")) return "collection";
-  if (path.includes("/planning")) return "planning";
-  if (path.includes("/settings")) return "settings";
+  if (path.includes("/preparation")) return "preparation";
+  if (path.includes("/setting")) return "setting";
   return "";
 });
 </script>
@@ -103,8 +103,8 @@ const activeTab = computed(() => {
             <polyline points="9 22 9 12 15 12 15 22" />
           </template>
 
-          <!-- Schedule Icon -->
-          <template v-if="item.id === 'schedule'">
+          <!-- Plan Icon -->
+          <template v-if="item.id === 'plan'">
             <path
               d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
             />
@@ -113,8 +113,8 @@ const activeTab = computed(() => {
             <path d="M12 11v1" />
           </template>
 
-          <!-- Bookings Icon -->
-          <template v-if="item.id === 'bookings'">
+          <!-- Booking Icon -->
+          <template v-if="item.id === 'booking'">
             <path d="M3 10h18" />
             <path d="M7 15h0" />
             <path d="M11 15h0" />
@@ -134,16 +134,16 @@ const activeTab = computed(() => {
             <line x1="9" y1="21" x2="9" y2="9" />
           </template>
 
-          <!-- Planning Icon -->
-          <template v-if="item.id === 'planning'">
+          <!-- Preparation Icon -->
+          <template v-if="item.id === 'preparation'">
             <polyline points="9 11 12 14 22 4" />
             <path
               d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
             />
           </template>
 
-          <!-- Settings (More) Icon -->
-          <template v-if="item.id === 'settings'">
+          <!-- Setting (More) Icon -->
+          <template v-if="item.id === 'setting'">
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />

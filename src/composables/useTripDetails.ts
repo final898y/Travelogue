@@ -46,7 +46,7 @@ export function useTripDetails(
   });
 
   // 根據選中日期過濾活動 (從 plans 陣列中過濾)
-  const scheduleItems = computed<Activity[]>(() => {
+  const planItems = computed<Activity[]>(() => {
     if (!selectedDate.value) return [];
     const plan = plans.value.find((p) => p.date === selectedDate.value);
     const activities = plan?.activities || [];
@@ -62,6 +62,6 @@ export function useTripDetails(
   return {
     dates,
     currentDayIndex,
-    scheduleItems,
+    planItems,
   };
 }

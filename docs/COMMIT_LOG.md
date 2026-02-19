@@ -6,6 +6,24 @@
 
 ## 📅 提交歷史
 
+### [2026-02-19]
+
+#### `TBD` - refactor(terminology): 統一全站專案用語並優化視圖命名
+
+- **用語統一與重命名**:
+  - 將「行程 (Schedule)」統一改稱為「計畫 (Plan)」，包含 `ScheduleView.vue` 重命名為 `PlanView.vue`，及 `ScheduleHeader.vue` 重命名為 `PlanHeader.vue`。
+  - 將「行前規劃 (Planning)」重新命名為「準備清單 (Preparation)」，`PlanningView.vue` 改為 `PreparationView.vue` 以符合實際功能定義。
+  - 規範化複數命名：`BookingsView.vue` 改為 `BookingView.vue`，`SettingsView.vue` 改為 `SettingView.vue`。
+- **架構與型別同步**:
+  - 更新 `src/router/index.ts` 以反映新的視圖路徑與組件名稱。
+  - 同步修改 `tripStore.ts`、`useTripDetails.ts` 與 `trip.ts` 中的相關變數與型別定義。
+  - 更新 `BottomNav.vue` 的導航連結，確保路徑指向正確。
+- **測試與文件更新**:
+  - 重構 `tests/unit/BottomNav.spec.ts` 與 `tests/unit/useTripDetails.spec.ts` 以適應新的組件名稱。
+  - 更新 `README.md` 中的專案結構說明與功能描述。
+- **工程規範**:
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程，確保重命名後無任何引用錯誤或編譯失敗。
+
 ## [<日期 YYYY-MM-DD>] feat(schedule): 實作行程編輯與備選方案管理功能
 
 - Hash: `TBD`

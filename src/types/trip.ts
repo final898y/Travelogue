@@ -119,7 +119,7 @@ export const TripSchema = z.object({
   countdown: z.number().optional(),
   status: TripStatusSchema,
 
-  // 嵌入式資料 (移除了 plans)
+  // 嵌入式資料
   bookings: z.array(BookingSchema).optional(),
   preparation: z.array(ChecklistItemSchema).optional(),
 
@@ -171,7 +171,7 @@ export const CollectionSourceSchema = z.enum([
 ]);
 export type CollectionSource = z.infer<typeof CollectionSourceSchema>;
 
-export const ResearchCollectionSchema = z.object({
+export const CollectionSchema = z.object({
   id: z.string(),
   title: z.string(),
   url: z.string().url(),
@@ -184,7 +184,7 @@ export const ResearchCollectionSchema = z.object({
     nanoseconds: z.number(),
   }),
 });
-export type ResearchCollection = z.infer<typeof ResearchCollectionSchema>;
+export type Collection = z.infer<typeof CollectionSchema>;
 
 /**
  * 輔助 UI 型別

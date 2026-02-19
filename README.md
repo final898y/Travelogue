@@ -115,7 +115,7 @@ firebase deploy --only hosting
 
 - `/whitelist/{email}`: 存放授權成員名單。
 - `/trips/{tripId}`: 旅程主資訊。
-  - `/plans`: 行程安排 (按 `date`, `time` 排序)。
+  - `/plans`: 行程安排 (按 `date` 排序)。
   - `/expenses`: 記帳資料 (按 `date` 排序)。
   - `/collections`: 景點與美食收藏。
 
@@ -158,7 +158,7 @@ docs/                # 專案開發文件與日誌
 
 - **Firebase 整合**: 實作 Firestore 即時資料同步與離線快取 (IndexedDB)。
 - **旅程管理系統**: 支援多日行程規劃、日期驅動的活動排列、備選方案 (Options) 結構化展示。
-- **動態路由**: 實作動態行程頁面 (`/schedule/:id`) 與導航保護。
+- **動態路由**: 實作動態行程頁面 (`/plan/:id`) 與導航保護。
 - **地圖導航工具**: 實作防禦性 Google Maps 連結生成器，優先支援 Place ID 與精確座標。
 - **自動化測試**: 核心邏輯 (Composables)、狀態管理 (Stores) 與工具函式均具備測試覆蓋。
 - **UI/UX 實作**: 基於「手帳風格」與「行動優先」原則實作的導覽系統與行程列表。

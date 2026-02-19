@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ScheduleHeader Component
+ * PlanHeader Component
  * Displays trip title, countdown, and current weather.
  */
 interface Props {
