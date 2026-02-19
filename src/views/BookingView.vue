@@ -1,30 +1,107 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
-import type { Trip } from "../types/trip";
+import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
+import BookingForm from "../components/trip/BookingForm.vue";
+import type { Trip, Booking } from "../types/trip";
 
 const route = useRoute();
+const router = useRouter();
 const tripStore = useTripStore();
 const tripId = route.params.id as string;
 
 const trip = ref<Trip | null>(null);
+const isSheetOpen = ref(false);
+const currentBooking = ref<Partial<Booking> | null>(null);
+const isSaving = ref(false);
 
-onMounted(async () => {
+const fetchTripData = async () => {
   if (tripId) {
     trip.value = await tripStore.fetchTripById(tripId);
   }
-});
+};
+
+onMounted(fetchTripData);
 
 const bookings = computed(() => trip.value?.bookings || []);
+
+const goBack = () => {
+  router.push("/");
+};
+
+const openEditSheet = (booking?: Booking) => {
+  currentBooking.value = booking
+    ? { ...booking }
+    : { type: "flight", isConfirmed: true };
+  isSheetOpen.value = true;
+};
+
+const handleSaveBooking = async (updatedBooking: Booking) => {
+  if (!tripId || isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+    await tripStore.updateTripBooking(tripId, updatedBooking);
+    await fetchTripData(); // 重新獲取資料以更新 UI
+    isSheetOpen.value = false;
+  } catch (error) {
+    console.error("儲存預訂失敗:", error);
+    alert("儲存失敗，請稍後再試");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const handleDeleteBooking = async () => {
+  if (!tripId || !currentBooking.value?.id || isSaving.value) return;
+
+  if (!confirm("確定要刪除此預訂資訊嗎？")) return;
+
+  try {
+    isSaving.value = true;
+    await tripStore.deleteTripBooking(tripId, currentBooking.value.id);
+    await fetchTripData();
+    isSheetOpen.value = false;
+  } catch (error) {
+    console.error("刪除預訂失敗:", error);
+    alert("刪除失敗，請稍後再試");
+  } finally {
+    isSaving.value = false;
+  }
+};
 </script>
 
 <template>
-  <div class="min-h-screen pb-32 animate-fade-in">
-    <!-- Bookings Content -->
-    <header class="px-6 pt-8 pb-4">
-      <h1 class="text-2xl font-rounded font-bold text-forest-800">預訂行程</h1>
-      <p class="text-gray-500 text-sm">管理你的機票、住宿與票券</p>
+  <div class="min-h-screen pb-32 animate-fade-in bg-cream-light/30">
+    <!-- Header -->
+    <header class="px-6 pt-8 pb-4 flex justify-between items-start">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <button
+            @click="goBack"
+            class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 class="text-2xl font-rounded font-bold text-forest-800">
+            預訂行程
+          </h1>
+        </div>
+        <p class="text-gray-500 text-sm ml-8">管理你的機票、住宿與票券</p>
+      </div>
     </header>
 
     <main class="px-6 space-y-6 mt-4">
@@ -39,7 +116,8 @@ const bookings = computed(() => trip.value?.bookings || []);
       <div
         v-for="booking in bookings"
         :key="booking.id"
-        class="card-base !p-0 overflow-hidden"
+        @click="openEditSheet(booking as Booking)"
+        class="card-base !p-0 overflow-hidden cursor-pointer hover:shadow-soft-lg active:scale-[0.98] transition-all"
       >
         <div v-if="booking.type === 'flight'" class="flex flex-col">
           <div
@@ -171,5 +249,51 @@ const bookings = computed(() => trip.value?.bookings || []);
         </div>
       </div>
     </main>
+
+    <!-- FAB: Add Item -->
+    <button
+      @click="openEditSheet()"
+      class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-plus"
+      >
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </svg>
+    </button>
+
+    <!-- Edit Booking Sheet -->
+    <BaseBottomSheet
+      :is-open="isSheetOpen"
+      :title="currentBooking?.id ? '編輯預訂' : '新增預訂'"
+      @close="isSheetOpen = false"
+    >
+      <BookingForm
+        v-if="currentBooking"
+        :initial-data="currentBooking"
+        @save="handleSaveBooking"
+        @delete="handleDeleteBooking"
+      />
+    </BaseBottomSheet>
+
+    <!-- Global Loading Overlay -->
+    <div
+      v-if="isSaving"
+      class="fixed inset-0 bg-white/50 backdrop-blur-sm z-[200] flex items-center justify-center"
+    >
+      <div
+        class="w-12 h-12 border-4 border-forest-100 border-t-forest-400 rounded-full animate-spin"
+      ></div>
+    </div>
   </div>
 </template>

@@ -25,6 +25,7 @@ import {
   type Activity,
   type Expense,
   type Collection,
+  type Booking,
 } from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
@@ -263,6 +264,50 @@ export const useTripStore = defineStore("trip", () => {
     return docRef.id;
   };
 
+  /**
+   * 更新預訂資訊 (Trip 主文件中的 bookings 陣列)
+   */
+  const updateTripBooking = async (tripId: string, booking: Booking) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const tripRef = doc(db, "trips", tripId);
+    const tripSnap = await getDoc(tripRef);
+    if (!tripSnap.exists()) throw new Error("Trip not found");
+
+    const tripData = tripSnap.data() as Trip;
+    const bookings = [...(tripData.bookings || [])];
+
+    // 建立預訂副本並處理 ID
+    const bookingToSave = booking.id
+      ? { ...booking }
+      : ({ ...booking, id: crypto.randomUUID() } as Booking);
+
+    const idx = bookings.findIndex((b: Booking) => b.id === bookingToSave.id);
+    if (idx !== -1) {
+      bookings[idx] = bookingToSave;
+    } else {
+      bookings.push(bookingToSave);
+    }
+
+    await updateDoc(tripRef, { bookings });
+  };
+
+  /**
+   * 刪除預訂資訊
+   */
+  const deleteTripBooking = async (tripId: string, bookingId: string) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const tripRef = doc(db, "trips", tripId);
+    const tripSnap = await getDoc(tripRef);
+    if (!tripSnap.exists()) throw new Error("Trip not found");
+
+    const tripData = tripSnap.data() as Trip;
+    const bookings = (tripData.bookings || []).filter(
+      (b: Booking) => b.id !== bookingId,
+    );
+
+    await updateDoc(tripRef, { bookings });
+  };
+
   return {
     trips,
     currentTripPlans,
@@ -280,5 +325,7 @@ export const useTripStore = defineStore("trip", () => {
     subscribeToCollections,
     addCollection,
     addTrip,
+    updateTripBooking,
+    deleteTripBooking,
   };
 });

@@ -8,7 +8,20 @@
 
 ### [2026-02-19]
 
-#### `TBD` - feat(home): 實作新增旅程功能並優化首頁互動
+#### `TBD` - feat(booking): 實作預訂行程的新增、編輯與刪除功能
+
+- **預訂管理功能實作**:
+  - 在 `tripStore.ts` 實作 `updateTripBooking` 與 `deleteTripBooking` 方法，管理主文件中的 `bookings` 陣列。
+  - 建立 `BookingForm.vue` 組件，支援機票、住宿、交通等預訂類型的輸入，並統一使用 Lucide SVG 圖示替代表情符號。
+  - 重構 `BookingView.vue`，整合 `BaseBottomSheet` 實作互動式編輯流程。
+- **UI/UX 優化**:
+  - 將「新增預訂」按鈕調整為右下角懸浮按鈕 (FAB)，與 `PlanView.vue` 保持一致的互動模式。
+  - 提升預訂卡片的互動性，點擊即可開啟編輯。
+- **型別安全與規範**:
+  - 移除 `tripStore.ts` 中的 `any` 型別，確保預訂處理邏輯的型別安全性。
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+
+#### `69c7121` `feat(home)` - 實作新增旅程功能並優化首頁互動
 
 - **新增旅程功能實作**:
   - 建立 `TripForm.vue` 組件，支援旅程標題、起訖日期、天數自動計算與封面圖選擇。
