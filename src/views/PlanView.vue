@@ -67,7 +67,39 @@ const goBack = () => {
 };
 
 const openEditSheet = (activity?: Activity) => {
-  currentActivity.value = activity ? { ...activity } : { time: "09:00" };
+  if (activity) {
+    currentActivity.value = { ...activity };
+  } else {
+    // 新增模式：根據現有活動推算預設時間
+    let defaultTime = "09:00";
+    const items = planItems.value;
+    if (items && items.length > 0) {
+      const lastActivity = items[items.length - 1];
+      if (lastActivity && lastActivity.time) {
+        try {
+          const parts = lastActivity.time.split(":").map(Number);
+          if (
+            parts.length >= 1 &&
+            typeof parts[0] === "number" &&
+            !isNaN(parts[0])
+          ) {
+            const hours = parts[0];
+            const minutes =
+              parts.length >= 2 &&
+              typeof parts[1] === "number" &&
+              !isNaN(parts[1])
+                ? parts[1]
+                : 0;
+            const nextHour = (hours + 1) % 24;
+            defaultTime = `${String(nextHour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+          }
+        } catch (e) {
+          console.warn("解析最後活動時間失敗，使用預設值 09:00", e);
+        }
+      }
+    }
+    currentActivity.value = { time: defaultTime };
+  }
   isSheetOpen.value = true;
 };
 

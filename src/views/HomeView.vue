@@ -5,11 +5,16 @@ import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
 import { importSeedData } from "../services/seed";
 import TripCard from "../components/trip/TripCard.vue";
+import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
+import TripForm from "../components/trip/TripForm.vue";
+import type { Trip } from "../types/trip";
 
 const router = useRouter();
 const tripStore = useTripStore();
 const authStore = useAuthStore();
 const isSeeding = ref(false);
+const isSheetOpen = ref(false);
+const isAdding = ref(false);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -30,21 +35,26 @@ const navigateToTrip = (tripId: number | string) => {
   router.push({ name: "plan", params: { id: tripId } });
 };
 
-const handleAddTrip = async () => {
-  if (!authStore.user) return;
-  // Quick test: Add a dummy trip to Firebase
+const openAddSheet = () => {
+  isSheetOpen.value = true;
+};
+
+const handleSaveTrip = async (
+  tripData: Omit<Trip, "id" | "userId" | "createdAt">,
+) => {
+  if (!authStore.user || isAdding.value) return;
+
   try {
-    await tripStore.addTrip({
-      title: "新的冒險旅程",
-      startDate: "2024-05-01",
-      endDate: "2024-05-05",
-      days: 5,
-      coverImage:
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",
-      status: "upcoming",
-    });
-  } catch {
+    isAdding.value = true;
+    const newTripId = await tripStore.addTrip(tripData);
+    isSheetOpen.value = false;
+    // 成功後自動導航至新旅程的行程頁面
+    navigateToTrip(newTripId);
+  } catch (error) {
+    console.error("新增旅程失敗:", error);
     alert("新增失敗，請檢查 Firebase 設定或網絡連接。");
+  } finally {
+    isAdding.value = false;
   }
 };
 const handleSeed = async () => {
@@ -106,7 +116,7 @@ const handleSeed = async () => {
           {{ isSeeding ? "導入中..." : "初始化資料" }}
         </button>
         <button
-          @click="handleAddTrip"
+          @click="openAddSheet"
           class="w-10 h-10 flex items-center justify-center bg-forest-400 text-white rounded-full shadow-soft hover:bg-forest-500 active:scale-90 transition-all cursor-pointer"
         >
           <svg
@@ -199,7 +209,7 @@ const handleSeed = async () => {
 
       <!-- Quick Action Card -->
       <section
-        @click="handleAddTrip"
+        @click="openAddSheet"
         class="card-base bg-forest-50 border-2 border-dashed border-forest-200 !shadow-none py-8 flex flex-col items-center justify-center text-center space-y-3 cursor-pointer hover:bg-forest-100 transition-all"
       >
         <div
@@ -227,5 +237,24 @@ const handleSeed = async () => {
         </p>
       </section>
     </main>
+
+    <!-- Add Trip Sheet -->
+    <BaseBottomSheet
+      :is-open="isSheetOpen"
+      title="規劃新的旅程"
+      @close="isSheetOpen = false"
+    >
+      <TripForm @save="handleSaveTrip" @cancel="isSheetOpen = false" />
+    </BaseBottomSheet>
+
+    <!-- Global Loading Overlay -->
+    <div
+      v-if="isAdding"
+      class="fixed inset-0 bg-white/50 backdrop-blur-sm z-[200] flex items-center justify-center"
+    >
+      <div
+        class="w-12 h-12 border-4 border-forest-100 border-t-forest-400 rounded-full animate-spin"
+      ></div>
+    </div>
   </div>
 </template>

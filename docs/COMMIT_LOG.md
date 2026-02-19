@@ -8,7 +8,21 @@
 
 ### [2026-02-19]
 
-#### `TBD` - refactor(terminology): 統一全站專案用語並優化視圖命名
+#### `TBD` - feat(home): 實作新增旅程功能並優化首頁互動
+
+- **新增旅程功能實作**:
+  - 建立 `TripForm.vue` 組件，支援旅程標題、起訖日期、天數自動計算與封面圖選擇。
+  - 在 `HomeView.vue` 整合 `BaseBottomSheet` 與 `TripForm`，提供流暢的新增體驗。
+  - 實作 `handleSaveTrip` 邏輯，串接 `tripStore.addTrip` 並於成功後自動導航至新旅程。
+- **UI/UX 優化**:
+  - 統一「新增旅程」的點擊入口（Header 按鈕與底部卡片）。
+  - 加入全域 Loading 遮罩，提升非同步操作時的視覺回饋。
+- **工程規範**:
+  - 嚴格遵循 `TripSchema` 型別規範。
+  - 修正 `TripForm` 中的 TypeScript 型別推導錯誤，確保生產環境編譯成功。
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+
+#### `2afe7a4` - refactor(terminology): 統一全站專案用語並優化視圖命名
 
 - **用語統一與重命名**:
   - 將「行程 (Schedule)」統一改稱為「計畫 (Plan)」，包含 `ScheduleView.vue` 重命名為 `PlanView.vue`，及 `ScheduleHeader.vue` 重命名為 `PlanHeader.vue`。

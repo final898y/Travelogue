@@ -3,7 +3,7 @@
  * ActivityForm (Component)
  * Handles viewing and editing activity details.
  */
-import { reactive } from "vue";
+import { reactive, computed } from "vue";
 import type { Activity } from "../../types/trip";
 
 const props = defineProps<{
@@ -23,6 +23,8 @@ const formData = reactive<Partial<Activity>>({
   note: "",
   ...props.initialData,
 });
+
+const isEditMode = computed(() => !!props.initialData.id);
 
 const categories = [
   { value: "sight", label: "景點", color: "text-forest-400" },
@@ -330,11 +332,11 @@ const removeOption = (idx: number) => {
         @click="handleSave"
         class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
       >
-        儲存變更
+        {{ isEditMode ? "儲存變更" : "新增行程活動" }}
       </button>
 
       <button
-        v-if="initialData.title"
+        v-if="isEditMode"
         @click="emit('delete')"
         class="w-full py-4 rounded-2xl bg-white border border-red-50 text-red-400 text-sm font-bold hover:bg-red-50 transition-all"
       >
