@@ -1,11 +1,15 @@
 <script setup lang="ts">
 /**
  * TripForm (Component)
- * Handles creating a new trip.
+ * Handles creating or editing a trip.
  */
 import { reactive, computed, watch } from "vue";
 import { Check } from "../../assets/icons";
 import type { Trip } from "../../types/trip";
+
+const props = defineProps<{
+  initialData?: Partial<Trip>;
+}>();
 
 const emit = defineEmits<{
   (e: "save", trip: Omit<Trip, "id" | "userId" | "createdAt">): void;
@@ -16,7 +20,7 @@ const emit = defineEmits<{
 // 預設值與初始狀態
 const today = new Date().toISOString().split("T")[0]!;
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0]!;
-const initialCoverImage =
+const defaultCoverImage =
   "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop";
 
 interface TripFormData {
@@ -28,22 +32,35 @@ interface TripFormData {
 }
 
 const formData = reactive<TripFormData>({
-  title: "",
-  startDate: today,
-  endDate: tomorrow,
-  coverImage: initialCoverImage,
-  status: "upcoming",
+  title: props.initialData?.title || "",
+  startDate: props.initialData?.startDate || today,
+  endDate: props.initialData?.endDate || tomorrow,
+  coverImage: props.initialData?.coverImage || defaultCoverImage,
+  status: props.initialData?.status || "upcoming",
 });
+
+const isEditing = computed(() => !!props.initialData?.id);
 
 // 偵測是否已修改
 watch(
   formData,
   (newVal) => {
-    const isDirty =
-      newVal.title !== "" ||
-      newVal.startDate !== today ||
-      newVal.endDate !== tomorrow ||
-      newVal.coverImage !== initialCoverImage;
+    let isDirty = false;
+    if (props.initialData?.id) {
+      isDirty =
+        newVal.title !== (props.initialData.title || "") ||
+        newVal.startDate !== (props.initialData.startDate || today) ||
+        newVal.endDate !== (props.initialData.endDate || tomorrow) ||
+        newVal.coverImage !==
+          (props.initialData.coverImage || defaultCoverImage) ||
+        newVal.status !== (props.initialData.status || "upcoming");
+    } else {
+      isDirty =
+        newVal.title !== "" ||
+        newVal.startDate !== today ||
+        newVal.endDate !== tomorrow ||
+        newVal.coverImage !== defaultCoverImage;
+    }
     emit("update:dirty", isDirty);
   },
   { deep: true },
@@ -120,6 +137,21 @@ const coverImages = [
       </div>
     </div>
 
+    <!-- Status Selection (Visible only when editing) -->
+    <div v-if="isEditing" class="space-y-2">
+      <label class="text-xs font-bold text-forest-300 uppercase"
+        >旅程狀態</label
+      >
+      <select
+        v-model="formData.status"
+        class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm appearance-none"
+      >
+        <option value="upcoming">即將到來 (Upcoming)</option>
+        <option value="ongoing">進行中 (Ongoing)</option>
+        <option value="finished">已結束 (Finished)</option>
+      </select>
+    </div>
+
     <!-- Days Info Badge -->
     <div class="p-3 bg-forest-50 rounded-xl flex items-center justify-between">
       <span class="text-xs font-medium text-forest-600">預計總天數</span>
@@ -160,7 +192,7 @@ const coverImages = [
         @click="handleSave"
         class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
       >
-        開啟新旅程
+        {{ isEditing ? "儲存變更" : "開啟新旅程" }}
       </button>
     </div>
   </div>

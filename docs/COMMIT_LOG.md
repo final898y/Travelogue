@@ -8,7 +8,21 @@
 
 ### [2026-02-19]
 
-#### `TBD` - feat(ui): 全面整合 BaseBottomSheet 手勢關閉與未儲存警告
+#### `TBD` - feat(home): 實作旅程編輯與刪除功能並優化互動體驗
+
+- **功能增強**:
+  - 在 `tripStore.ts` 實作 `updateTrip` 與 `deleteTrip` 方法，補全旅程生命週期管理。
+  - 在 `TripCard.vue` 整合 `MoreHorizontal` 下拉選單，支援「編輯」與「刪除」操作。
+  - 實作「編輯模式」：`TripForm.vue` 支援傳入 `initialData` 並動態切換標題、按鈕文字與狀態選擇器（Ongoing, Upcoming, Finished）。
+- **UI/UX 優化**:
+  - 實作選單開啟時的動態 `z-index` 提升，防止選單被鄰近卡片遮擋。
+  - 採用與 `PlanView` 一致的 `BaseBottomSheet` 整合邏輯，包含未儲存變更警告與手勢關閉。
+  - 優化事件冒泡處理，確保點擊選單按鈕時不會觸發卡片的導航行為。
+- **工程規範**:
+  - 嚴格對齊專案各視圖間的 `BaseBottomSheet` 使用模式與命名慣例 (`isSaving`, `handleCloseSheet`)。
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+
+#### `7f89761` - feat(ui): 全面整合 BaseBottomSheet 手勢關閉與未儲存警告
 
 - **所有視圖整合**:
   - 更新 `PlanView`, `BookingView`, `ExpenseView`, `CollectionView`, `PreparationView` 實作髒值 (dirty check) 監控。

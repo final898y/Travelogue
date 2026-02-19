@@ -109,6 +109,26 @@ export const useTripStore = defineStore("trip", () => {
     return docRef.id;
   };
 
+  // Update an existing trip
+  const updateTrip = async (
+    tripId: string,
+    tripData: Partial<Omit<Trip, "id" | "userId" | "createdAt">>,
+  ) => {
+    if (!auth.currentUser) throw new Error("User must be logged in");
+    const docRef = doc(db, "trips", tripId);
+    await updateDoc(docRef, tripData);
+  };
+
+  // Delete a trip
+  const deleteTrip = async (tripId: string) => {
+    if (!auth.currentUser) throw new Error("User must be logged in");
+    // TODO: Ideally also delete sub-collections like 'activities' and 'expenses'
+    // For now, we just delete the main document
+    const docRef = doc(db, "trips", tripId);
+    const { deleteDoc } = await import("firebase/firestore");
+    await deleteDoc(docRef);
+  };
+
   /**
    * 更新預訂資訊 (Trip 主文件中的 bookings 陣列)
    */
@@ -233,6 +253,8 @@ export const useTripStore = defineStore("trip", () => {
     subscribeToTrips,
     fetchTripById,
     addTrip,
+    updateTrip,
+    deleteTrip,
     updateTripBooking,
     deleteTripBooking,
     updateTripPreparationItem,

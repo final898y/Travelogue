@@ -15,8 +15,9 @@ const tripStore = useTripStore();
 const authStore = useAuthStore();
 const isSeeding = ref(false);
 const isSheetOpen = ref(false);
-const isAdding = ref(false);
+const isSaving = ref(false);
 const isFormDirty = ref(false);
+const editingTrip = ref<Trip | null>(null);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -38,27 +39,59 @@ const navigateToTrip = (tripId: number | string) => {
 };
 
 const openAddSheet = () => {
+  editingTrip.value = null;
   isFormDirty.value = false;
   isSheetOpen.value = true;
+};
+
+const handleEditTrip = (tripId: string | number) => {
+  const trip = tripStore.trips.find((t) => t.id === tripId);
+  if (trip) {
+    editingTrip.value = { ...trip };
+    isFormDirty.value = false;
+    isSheetOpen.value = true;
+  }
+};
+
+const handleDeleteTrip = async (tripId: string | number) => {
+  if (confirm("確定要刪除這趟旅程嗎？此動作無法復原。")) {
+    try {
+      isSaving.value = true;
+      await tripStore.deleteTrip(tripId.toString());
+    } catch (error) {
+      console.error("刪除旅程失敗:", error);
+      alert("刪除失敗，請稍後再試。");
+    } finally {
+      isSaving.value = false;
+    }
+  }
+};
+
+const handleCloseSheet = () => {
+  isSheetOpen.value = false;
+  isFormDirty.value = false;
 };
 
 const handleSaveTrip = async (
   tripData: Omit<Trip, "id" | "userId" | "createdAt">,
 ) => {
-  if (!authStore.user || isAdding.value) return;
+  if (!authStore.user || isSaving.value) return;
 
   try {
-    isAdding.value = true;
-    const newTripId = await tripStore.addTrip(tripData);
-    isFormDirty.value = false;
-    isSheetOpen.value = false;
-    // 成功後自動導航至新旅程的行程頁面
-    navigateToTrip(newTripId);
+    isSaving.value = true;
+    if (editingTrip.value) {
+      await tripStore.updateTrip(editingTrip.value.id, tripData);
+    } else {
+      const newTripId = await tripStore.addTrip(tripData);
+      // 成功後自動導航至新旅程的行程頁面 (僅限新增)
+      navigateToTrip(newTripId);
+    }
+    handleCloseSheet();
   } catch (error) {
-    console.error("新增旅程失敗:", error);
-    alert("新增失敗，請檢查 Firebase 設定或網絡連接。");
+    console.error("儲存旅程失敗:", error);
+    alert("儲存失敗，請檢查 Firebase 設定或網絡連接。");
   } finally {
-    isAdding.value = false;
+    isSaving.value = false;
   }
 };
 const handleSeed = async () => {
@@ -149,6 +182,8 @@ const handleSeed = async () => {
             :key="trip.id"
             v-bind="trip"
             @click="navigateToTrip(trip.id)"
+            @edit="handleEditTrip"
+            @delete="handleDeleteTrip"
           />
         </div>
 
@@ -181,23 +216,24 @@ const handleSeed = async () => {
       </section>
     </main>
 
-    <!-- Add Trip Sheet -->
+    <!-- Add/Edit Trip Sheet -->
     <BaseBottomSheet
       :is-open="isSheetOpen"
       :has-unsaved-changes="isFormDirty"
-      title="規劃新的旅程"
-      @close="isSheetOpen = false"
+      :title="editingTrip ? '編輯旅程' : '規劃新的旅程'"
+      @close="handleCloseSheet"
     >
       <TripForm
+        :initial-data="editingTrip || undefined"
         @save="handleSaveTrip"
-        @cancel="isSheetOpen = false"
+        @cancel="handleCloseSheet"
         @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
 
     <!-- Global Loading Overlay -->
     <div
-      v-if="isAdding"
+      v-if="isSaving"
       class="fixed inset-0 bg-white/50 backdrop-blur-sm z-[200] flex items-center justify-center"
     >
       <div
