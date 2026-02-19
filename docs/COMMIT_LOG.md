@@ -6,6 +6,20 @@
 
 ## 📅 提交歷史
 
+## [2026-02-19]
+
+### `TBD` - test(ui/trip): 補全核心 UI 組件與業務表單的單元測試
+
+- **測試覆蓋擴展**:
+  - 新增 `BaseCard.spec.ts`, `BaseBottomSheet.spec.ts`, `PlanHeader.spec.ts`, `HorizontalDatePicker.spec.ts` 完整涵蓋基礎 UI 及其互動邏輯。
+  - 新增 `TripForm.spec.ts` 與 `ActivityForm.spec.ts` 驗證旅程與活動編輯表單的複雜業務邏輯、天數計算與資料驗證。
+- **互動與相容性優化**:
+  - 實作 `window.confirm` 與 `window.alert` 的 Vitest Spies 模擬，確保表單驗證失敗時的視覺回饋正確觸發。
+  - 修正 Tailwind CSS 含有斜線 (`/`) 的類別在 `jsdom` 選擇器中的相容性問題，改用更穩定的選擇器策略。
+- **驗證成果**:
+  - 新增 6 個測試檔案，共 30 個測試案例全數通過。
+  - 核心組件與複雜表單的測試覆蓋率顯著提升，符合企業級工程標準。
+
 ### [2026-02-19]
 
 #### `TBD` - feat(home): 實作旅程編輯與刪除功能並優化互動體驗
