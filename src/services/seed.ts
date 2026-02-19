@@ -24,6 +24,11 @@ const seedTrips: Partial<Trip>[] = [
     coverImage:
       "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?q=80&w=800&auto=format&fit=crop",
     status: "upcoming",
+    members: [
+      { id: "final898y@gmail.com", name: "我" },
+      { id: "p1", name: "夥伴A" },
+      { id: "p2", name: "夥伴B" },
+    ],
     bookings: [
       {
         id: "b1",
@@ -555,8 +560,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 4500,
       currency: "JPY",
       description: "六歌仙燒肉",
-      payer: "me",
-      splitWith: ["me", "p1", "p2"],
+      payer: "final898y@gmail.com",
+      splitWith: ["final898y@gmail.com", "p1", "p2"],
     },
     {
       date: "2024-03-20",
@@ -564,8 +569,8 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       amount: 1500,
       currency: "JPY",
       description: "Suica 加值",
-      payer: "me",
-      splitWith: ["me"],
+      payer: "final898y@gmail.com",
+      splitWith: ["final898y@gmail.com"],
     },
     {
       date: "2024-03-21",
@@ -574,7 +579,7 @@ const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
       currency: "JPY",
       description: "今半壽喜燒",
       payer: "p1",
-      splitWith: ["me", "p1", "p2"],
+      splitWith: ["final898y@gmail.com", "p1", "p2"],
     },
   ],
 };

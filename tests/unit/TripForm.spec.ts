@@ -133,9 +133,10 @@ describe("TripForm.vue", () => {
 
   it("應能新增與刪除旅伴", async () => {
     const wrapper = mount(TripForm);
+    const expectedDefaultName = "test"; // derived from test@example.com
 
-    // 初始應只有 "我"
-    expect(wrapper.text()).toContain("我");
+    // 初始應只有預設旅伴名稱
+    expect(wrapper.text()).toContain(expectedDefaultName);
 
     // 模擬輸入新旅伴
     const input = wrapper.find("input[placeholder='輸入旅伴姓名']");
@@ -147,7 +148,7 @@ describe("TripForm.vue", () => {
     await userPlusBtn.click();
     await nextTick();
 
-    // 檢查標籤數量 (原本 1 個 "我"，現在應有 2 個)
+    // 檢查標籤數量 (原本 1 個，現在應有 2 個)
     const tags = wrapper.findAll(".rounded-full.bg-white.border-forest-100");
     expect(tags.length).toBe(2);
     expect(tags.some((t) => t.text().includes("夥伴X"))).toBe(true);

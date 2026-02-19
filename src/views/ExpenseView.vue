@@ -7,6 +7,7 @@ import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import ExpenseForm from "../components/trip/ExpenseForm.vue";
+import MemberForm from "../components/trip/MemberForm.vue";
 import {
   ChevronLeft,
   Users,
@@ -18,8 +19,9 @@ import {
   ShoppingBag,
   MoreHorizontal,
   Wallet,
+  Pencil,
 } from "../assets/icons";
-import type { Expense } from "../types/trip";
+import type { Expense, TripMember } from "../types/trip";
 
 const route = useRoute();
 const router = useRouter();
@@ -36,26 +38,50 @@ const tripMembers = computed(() => currentTrip.value?.members || []);
 const currentUserEmail = authStore.user?.email || "me";
 
 const getMemberName = (id: string) => {
-  return tripMembers.value.find((m) => m.id === id)?.name || id;
+  const member = tripMembers.value.find((m) => m.id === id);
+  if (member) return member.name;
+  return `已移除旅伴 (${id.startsWith("member_") ? id.slice(-4) : id.split("@")[0]})`;
 };
 
 const currency = ref("TWD");
 const isSheetOpen = ref(false);
+const isMemberSheetOpen = ref(false);
 const isFormDirty = ref(false);
+const isMemberFormDirty = ref(false);
 const currentExpense = ref<Partial<Expense> | null>(null);
 const isSaving = ref(false);
 
-let unsubscribe: (() => void) | null = null;
+let unsubscribeExpenses: (() => void) | null = null;
+let unsubscribeTrip: (() => void) | null = null;
 
 onMounted(() => {
   if (tripId) {
-    unsubscribe = expenseStore.subscribeToExpenses(tripId);
+    unsubscribeExpenses = expenseStore.subscribeToExpenses(tripId);
+    unsubscribeTrip = tripStore.subscribeToTrip(tripId, () => {
+      // 旅程資料更新時的額外邏輯（若需要）
+    });
   }
 });
 
 onUnmounted(() => {
-  if (unsubscribe) unsubscribe();
+  if (unsubscribeExpenses) unsubscribeExpenses();
+  if (unsubscribeTrip) unsubscribeTrip();
 });
+
+const handleSaveMembers = async (newMembers: TripMember[]) => {
+  if (!tripId || isSaving.value) return;
+  try {
+    isSaving.value = true;
+    await tripStore.updateTrip(tripId, { members: newMembers });
+    isMemberSheetOpen.value = false;
+    isMemberFormDirty.value = false;
+  } catch (error) {
+    console.error("更新旅伴失敗:", error);
+    alert("儲存失敗");
+  } finally {
+    isSaving.value = false;
+  }
+};
 
 const totalExpense = computed(() => {
   return expenses.value.reduce((sum, item) => sum + item.amount, 0);
@@ -248,10 +274,18 @@ const handleDeleteExpense = async () => {
 
       <!-- Settlement Summary (Split Logic) -->
       <section v-if="settlementSummary.length > 0" class="space-y-3">
-        <h3 class="text-sm font-bold text-forest-800 flex items-center gap-2">
-          <Users :size="16" />
-          分帳結算匯總
-        </h3>
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-bold text-forest-800 flex items-center gap-2">
+            <Users :size="16" />
+            分帳結算匯總
+          </h3>
+          <button
+            @click="isMemberSheetOpen = true"
+            class="p-1 text-forest-300 hover:text-forest-500 transition-colors cursor-pointer"
+          >
+            <Pencil :size="14" />
+          </button>
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <div
             v-for="person in settlementSummary"
@@ -352,6 +386,21 @@ const handleDeleteExpense = async () => {
         @save="handleSaveExpense"
         @delete="handleDeleteExpense"
         @update:dirty="isFormDirty = $event"
+      />
+    </BaseBottomSheet>
+
+    <!-- Member Management Sheet -->
+    <BaseBottomSheet
+      :is-open="isMemberSheetOpen"
+      title="管理旅伴名單"
+      :has-unsaved-changes="isMemberFormDirty"
+      @close="isMemberSheetOpen = false"
+    >
+      <MemberForm
+        :initial-members="tripMembers"
+        :current-user-email="currentUserEmail"
+        @save="handleSaveMembers"
+        @update:dirty="isMemberFormDirty = $event"
       />
     </BaseBottomSheet>
 

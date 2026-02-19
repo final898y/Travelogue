@@ -25,6 +25,8 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const authStore = useAuthStore();
 const currentUserEmail = authStore.user?.email || "me";
+const defaultMemberName =
+  authStore.user?.displayName || currentUserEmail.split("@")[0] || "成員";
 
 const isEditMode = computed(() => !!props.initialData.id);
 
@@ -96,7 +98,8 @@ const toggleSplitMember = (memberId: string) => {
 
 // 預設成員列表（若 tripMembers 未提供）
 const members = computed(
-  () => props.tripMembers || [{ id: currentUserEmail, name: "我" }],
+  () =>
+    props.tripMembers || [{ id: currentUserEmail, name: defaultMemberName }],
 );
 
 // 計算每人平均

@@ -73,6 +73,29 @@ export const useTripStore = defineStore("trip", () => {
   };
 
   /**
+   * 即時監聽單一旅程
+   */
+  const subscribeToTrip = (id: string, callback: (trip: Trip) => void) => {
+    const docRef = doc(db, "trips", id);
+    return onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const rawData = { id: snapshot.id, ...snapshot.data() };
+        const result = TripSchema.safeParse(rawData);
+        if (result.success) {
+          // 更新本地快取
+          const idx = trips.value.findIndex((t) => t.id === id);
+          if (idx !== -1) {
+            trips.value[idx] = result.data;
+          } else {
+            trips.value.push(result.data);
+          }
+          callback(result.data);
+        }
+      }
+    });
+  };
+
+  /**
    * 獲取單一旅程資訊 (用於非即時監聽視圖)
    */
   const fetchTripById = async (id: string) => {
@@ -251,6 +274,7 @@ export const useTripStore = defineStore("trip", () => {
     loading,
     error,
     subscribeToTrips,
+    subscribeToTrip,
     fetchTripById,
     addTrip,
     updateTrip,

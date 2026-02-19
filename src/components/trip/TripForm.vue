@@ -20,6 +20,8 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore();
 const currentUserEmail = authStore.user?.email || "me";
+const defaultMemberName =
+  authStore.user?.displayName || currentUserEmail.split("@")[0] || "成員";
 
 // 預設值與初始狀態
 const today = new Date().toISOString().split("T")[0]!;
@@ -42,7 +44,9 @@ const formData = reactive<TripFormData>({
   endDate: props.initialData?.endDate || tomorrow,
   coverImage: props.initialData?.coverImage || defaultCoverImage,
   status: props.initialData?.status || "upcoming",
-  members: props.initialData?.members || [{ id: currentUserEmail, name: "我" }],
+  members: props.initialData?.members || [
+    { id: currentUserEmail, name: defaultMemberName },
+  ],
 });
 
 const newMemberName = ref("");
@@ -81,7 +85,9 @@ watch(
         newVal.status !== (props.initialData.status || "upcoming") ||
         JSON.stringify(newVal.members) !==
           JSON.stringify(
-            props.initialData.members || [{ id: currentUserEmail, name: "我" }],
+            props.initialData.members || [
+              { id: currentUserEmail, name: defaultMemberName },
+            ],
           );
     } else {
       isDirty =
@@ -90,7 +96,8 @@ watch(
         newVal.endDate !== tomorrow ||
         newVal.coverImage !== defaultCoverImage ||
         newVal.members.length > 1 ||
-        newVal.members?.[0]?.id !== currentUserEmail;
+        newVal.members?.[0]?.id !== currentUserEmail ||
+        newVal.members?.[0]?.name !== defaultMemberName;
     }
     emit("update:dirty", isDirty);
   },
