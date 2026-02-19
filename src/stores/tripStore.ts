@@ -19,12 +19,10 @@ import {
   TripSchema,
   DailyPlanSchema,
   ExpenseSchema,
-  CollectionSchema,
   type Trip,
   type DailyPlan,
   type Activity,
   type Expense,
-  type Collection,
   type Booking,
 } from "../types/trip";
 
@@ -32,7 +30,6 @@ export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
   const currentTripPlans = ref<DailyPlan[]>([]);
   const currentTripExpenses = ref<Expense[]>([]);
-  const currentTripCollections = ref<Collection[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -220,36 +217,6 @@ export const useTripStore = defineStore("trip", () => {
     });
   };
 
-  /**
-   * 監聽資料收集
-   */
-  const subscribeToCollections = (tripId: string) => {
-    const collectionsRef = collection(db, "trips", tripId, "collections");
-    const q = query(collectionsRef, orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snapshot) => {
-      const rawData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      currentTripCollections.value = validateAndFilter<Collection>(
-        CollectionSchema,
-        rawData,
-      );
-    });
-  };
-
-  const addCollection = async (
-    tripId: string,
-    item: Omit<Collection, "id" | "createdAt">,
-  ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
-    const collectionsRef = collection(db, "trips", tripId, "collections");
-    return await addDoc(collectionsRef, {
-      ...item,
-      createdAt: Timestamp.now(),
-    });
-  };
-
   // Add a new trip
   const addTrip = async (
     tripData: Omit<Trip, "id" | "userId" | "createdAt">,
@@ -312,7 +279,6 @@ export const useTripStore = defineStore("trip", () => {
     trips,
     currentTripPlans,
     currentTripExpenses,
-    currentTripCollections,
     loading,
     error,
     subscribeToTrips,
@@ -322,8 +288,6 @@ export const useTripStore = defineStore("trip", () => {
     deleteTripActivity,
     subscribeToExpenses,
     addExpense,
-    subscribeToCollections,
-    addCollection,
     addTrip,
     updateTripBooking,
     deleteTripBooking,

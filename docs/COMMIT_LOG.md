@@ -8,7 +8,21 @@
 
 ### [2026-02-19]
 
-#### `TBD` - feat(booking): 實作預訂行程的新增、編輯與刪除功能
+#### `TBD` - refactor(collection): 獨立資料收集 Store 並補全新增編輯功能
+
+- **Store 獨立與遷移**:
+  - 建立 `collectionStore.ts` 並將資料收集狀態與 CRUD 邏輯從 `tripStore.ts` 抽離，提升維護性。
+  - 實作完整的 `updateCollection` 與 `deleteCollection` 方法。
+- **功能與 UI 優化**:
+  - 建立 `CollectionForm.vue` 組件，統一使用 Lucide SVG 圖示提供網頁、IG、YouTube 等來源選擇。
+  - 重構 `CollectionView.vue`，整合 `BaseBottomSheet` 實作與 `PlanView` 一致的 FAB 新增流程。
+  - 加入來源過濾器 (Filters) 與點擊編輯功能。
+- **工程規範與型別安全**:
+  - 嚴格遵守 Zod Schema 校驗與 TypeScript 型別定義。
+  - 修正 `collectionStore` 中的 lint 錯誤，移除 `any` 並優化解構賦值。
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+
+#### `8cf9492` - feat(booking): 實作預訂行程的新增、編輯與刪除功能
 
 - **預訂管理功能實作**:
   - 在 `tripStore.ts` 實作 `updateTripBooking` 與 `deleteTripBooking` 方法，管理主文件中的 `bookings` 陣列。

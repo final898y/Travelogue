@@ -1,30 +1,28 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, toRefs } from "vue";
-import { useRoute } from "vue-router";
-import { useTripStore } from "../stores/tripStore";
-import type { CollectionSource } from "../types/trip";
+import { onMounted, onUnmounted, ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useCollectionStore } from "../stores/collectionStore";
+import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
+import CollectionForm from "../components/trip/CollectionForm.vue";
+import type { Collection, CollectionSource } from "../types/trip";
 
 const route = useRoute();
-const tripStore = useTripStore();
-const { currentTripCollections: collections } = toRefs(tripStore);
+const router = useRouter();
+const collectionStore = useCollectionStore();
+const { collections } = storeToRefs(collectionStore);
 const tripId = route.params.id as string;
 
 const activeFilter = ref<CollectionSource | "all">("all");
-const isModalOpen = ref(false);
-
-const newCollection = ref({
-  title: "",
-  url: "",
-  source: "web" as CollectionSource,
-  note: "",
-  category: "未分類",
-});
+const isSheetOpen = ref(false);
+const currentCollection = ref<Partial<Collection> | null>(null);
+const isSaving = ref(false);
 
 let unsubscribe: (() => void) | null = null;
 
 onMounted(() => {
   if (tripId) {
-    unsubscribe = tripStore.subscribeToCollections(tripId);
+    unsubscribe = collectionStore.subscribeToCollections(tripId);
   }
 });
 
@@ -37,48 +35,89 @@ const filteredCollections = computed(() => {
   return collections.value.filter((item) => item.source === activeFilter.value);
 });
 
-const getSourceIcon = (source: CollectionSource) => {
-  switch (source) {
-    case "threads":
-      return "🧵";
-    case "instagram":
-      return "📸";
-    case "youtube":
-      return "📺";
-    case "web":
-      return "🌐";
-    default:
-      return "📄";
+const goBack = () => {
+  router.push("/");
+};
+
+const openEditSheet = (item?: Collection) => {
+  currentCollection.value = item
+    ? { ...item }
+    : { source: "web", category: "未分類" };
+  isSheetOpen.value = true;
+};
+
+const handleSaveCollection = async (updatedItem: Collection) => {
+  if (!tripId || isSaving.value) return;
+
+  try {
+    isSaving.value = true;
+    if (updatedItem.id) {
+      await collectionStore.updateCollection(
+        tripId,
+        updatedItem.id,
+        updatedItem,
+      );
+    } else {
+      await collectionStore.addCollection(tripId, updatedItem);
+    }
+    isSheetOpen.value = false;
+  } catch (error) {
+    console.error("儲存收集失敗:", error);
+    alert("儲存失敗，請稍後再試");
+  } finally {
+    isSaving.value = false;
   }
 };
 
-const handleAddCollection = async () => {
-  if (!newCollection.value.title || !newCollection.value.url) return;
+const handleDeleteCollection = async () => {
+  if (!tripId || !currentCollection.value?.id || isSaving.value) return;
+
+  if (!confirm("確定要刪除此收集項目嗎？")) return;
 
   try {
-    await tripStore.addCollection(tripId, newCollection.value);
-    isModalOpen.value = false;
-    newCollection.value = {
-      title: "",
-      url: "",
-      source: "web",
-      note: "",
-      category: "未分類",
-    };
-  } catch {
-    alert("新增失敗");
+    isSaving.value = true;
+    await collectionStore.deleteCollection(tripId, currentCollection.value.id);
+    isSheetOpen.value = false;
+  } catch (error) {
+    console.error("刪除收集失敗:", error);
+    alert("刪除失敗，請稍後再試");
+  } finally {
+    isSaving.value = false;
   }
 };
 </script>
 
 <template>
-  <div class="min-h-screen pb-32 animate-fade-in">
+  <div class="min-h-screen pb-32 animate-fade-in bg-cream-light/30">
+    <!-- Header -->
     <header class="px-6 pt-8 pb-4">
-      <h1 class="text-2xl font-rounded font-bold text-forest-800">行前收集</h1>
-      <p class="text-gray-500 text-sm">整理 Threads、IG 與網頁靈感</p>
+      <div class="flex items-center gap-2 mb-1">
+        <button
+          @click="goBack"
+          class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 class="text-2xl font-rounded font-bold text-forest-800">
+          資料收集
+        </h1>
+      </div>
+      <p class="text-gray-500 text-sm ml-8">整理 Threads、IG 與網頁靈感</p>
 
       <!-- Filters -->
-      <div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-2">
+      <div class="flex gap-2 mt-6 overflow-x-auto no-scrollbar pb-2">
         <button
           v-for="f in ['all', 'threads', 'instagram', 'web', 'youtube']"
           :key="f"
@@ -110,14 +149,102 @@ const handleAddCollection = async () => {
         <div
           v-for="item in filteredCollections"
           :key="item.id"
-          class="card-base group"
+          @click="openEditSheet(item)"
+          class="card-base group cursor-pointer hover:shadow-soft-lg active:scale-[0.98] transition-all"
         >
           <div class="flex justify-between items-start mb-2">
-            <span class="text-xl">{{ getSourceIcon(item.source) }}</span>
+            <div class="text-forest-400">
+              <svg
+                v-if="item.source === 'threads'"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-at-sign"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
+              </svg>
+              <svg
+                v-if="item.source === 'instagram'"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-instagram"
+              >
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              <svg
+                v-if="item.source === 'web'"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-globe"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a14.5 14.5 0 0 0 0 20" />
+                <path d="M2 12h20" />
+              </svg>
+              <svg
+                v-if="item.source === 'youtube'"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-youtube"
+              >
+                <path
+                  d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"
+                />
+                <path d="m10 15 5-3-5-3z" />
+              </svg>
+              <svg
+                v-if="item.source === 'other'"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-more-horizontal"
+              >
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="19" cy="12" r="1" />
+                <circle cx="5" cy="12" r="1" />
+              </svg>
+            </div>
             <a
               :href="item.url"
               target="_blank"
-              class="text-forest-400 hover:text-forest-600 transition-colors"
+              @click.stop
+              class="text-forest-200 hover:text-forest-500 transition-colors p-1"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -139,12 +266,15 @@ const handleAddCollection = async () => {
             </a>
           </div>
           <h3
-            class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-500 transition-colors"
+            class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-600 transition-colors"
           >
             {{ item.title }}
           </h3>
-          <p v-if="item.note" class="text-xs text-gray-500 line-clamp-2 mb-2">
-            {{ item.note }}
+          <p
+            v-if="item.note"
+            class="text-xs text-gray-500 line-clamp-2 mb-2 italic"
+          >
+            "{{ item.note }}"
           </p>
           <div class="flex items-center gap-2">
             <span
@@ -159,7 +289,7 @@ const handleAddCollection = async () => {
 
     <!-- FAB -->
     <button
-      @click="isModalOpen = true"
+      @click="openEditSheet()"
       class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
       <svg
@@ -172,94 +302,35 @@ const handleAddCollection = async () => {
         stroke-width="2.5"
         stroke-linecap="round"
         stroke-linejoin="round"
+        class="lucide lucide-plus"
       >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
       </svg>
     </button>
 
-    <!-- Simple Add Modal (Portal concept) -->
+    <!-- Edit Collection Sheet -->
+    <BaseBottomSheet
+      :is-open="isSheetOpen"
+      :title="currentCollection?.id ? '編輯收集' : '新增收集'"
+      @close="isSheetOpen = false"
+    >
+      <CollectionForm
+        v-if="currentCollection"
+        :initial-data="currentCollection"
+        @save="handleSaveCollection"
+        @delete="handleDeleteCollection"
+      />
+    </BaseBottomSheet>
+
+    <!-- Global Loading Overlay -->
     <div
-      v-if="isModalOpen"
-      class="fixed inset-0 z-[60] flex items-center justify-center p-6"
+      v-if="isSaving"
+      class="fixed inset-0 bg-white/50 backdrop-blur-sm z-[200] flex items-center justify-center"
     >
       <div
-        class="absolute inset-0 bg-forest-900/40 backdrop-blur-sm"
-        @click="isModalOpen = false"
+        class="w-12 h-12 border-4 border-forest-100 border-t-forest-400 rounded-full animate-spin"
       ></div>
-      <div
-        class="relative w-full max-w-md bg-white rounded-3xl shadow-soft-xl p-6 animate-scale-in"
-      >
-        <h2 class="text-xl font-bold text-forest-800 mb-4">新增收集</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1"
-              >標題</label
-            >
-            <input
-              v-model="newCollection.title"
-              type="text"
-              class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400"
-              placeholder="例如：築地必吃美食清單"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1"
-              >網址 (URL)</label
-            >
-            <input
-              v-model="newCollection.url"
-              type="text"
-              class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400"
-              placeholder="https://..."
-            />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-gray-400 mb-1"
-                >來源</label
-              >
-              <select
-                v-model="newCollection.source"
-                class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400"
-              >
-                <option value="web">網頁文章</option>
-                <option value="threads">Threads</option>
-                <option value="instagram">Instagram</option>
-                <option value="youtube">YouTube</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-400 mb-1"
-                >分類</label
-              >
-              <input
-                v-model="newCollection.category"
-                type="text"
-                class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400"
-                placeholder="美食、景點..."
-              />
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1"
-              >筆記</label
-            >
-            <textarea
-              v-model="newCollection.note"
-              rows="3"
-              class="w-full px-4 py-2 bg-cream-light border border-forest-100 rounded-xl focus:outline-none focus:border-forest-400"
-              placeholder="寫下你的心得或重點..."
-            ></textarea>
-          </div>
-          <button
-            @click="handleAddCollection"
-            class="w-full py-3 bg-forest-400 text-white font-bold rounded-xl shadow-soft hover:bg-forest-500 transition-colors"
-          >
-            確認儲存
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -271,18 +342,5 @@ const handleAddCollection = async () => {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out forwards;
 }
 </style>
