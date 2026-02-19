@@ -89,19 +89,19 @@ export const useCollectionStore = defineStore("collection", () => {
   /**
    * 更新收集項目
    */
-    const updateCollection = async (
-      tripId: string,
-      collectionId: string,
-      item: Partial<Collection>,
-    ) => {
-      if (!auth.currentUser) throw new Error("User not logged in");
-      const docRef = doc(db, "trips", tripId, "collections", collectionId);
-  
-      // 過濾掉不應手動更新的內部欄位
-      const { id: _id, createdAt: _createdAt, ...dataToUpdate } = item;
-      return await updateDoc(docRef, dataToUpdate);
-    };
-    /**
+  const updateCollection = async (
+    tripId: string,
+    collectionId: string,
+    item: Partial<Collection>,
+  ) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const docRef = doc(db, "trips", tripId, "collections", collectionId);
+
+    // 過濾掉不應手動更新的內部欄位
+    const { id: _id, createdAt: _createdAt, ...dataToUpdate } = item;
+    return await updateDoc(docRef, dataToUpdate);
+  };
+  /**
    * 刪除收集項目
    */
   const deleteCollection = async (tripId: string, collectionId: string) => {

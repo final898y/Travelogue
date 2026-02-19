@@ -8,7 +8,21 @@
 
 ### [2026-02-19]
 
-#### `TBD` - refactor(collection): 獨立資料收集 Store 並補全新增編輯功能
+#### `TBD` - feat(preparation): 實作準備清單的新增、編輯、刪除與狀態切換
+
+- **準備清單功能實作**:
+  - 在 `tripStore.ts` 實作 `updateTripPreparationItem`、`deleteTripPreparationItem` 與 `togglePreparationItem` 方法。
+  - 建立 `PreparationForm.vue` 組件，提供類別選單（行李、證件、金融、醫藥、電子、其他）並統一使用 Lucide SVG 圖示。
+  - 重構 `PreparationView.vue`，整合 `BaseBottomSheet` 實作與 `PlanView` 一致的 FAB 新增流程與編輯體驗。
+- **UI/UX 優化**:
+  - 區分「待辦」與「行李」分頁顯示，並支援點擊項目快速切換完成狀態。
+  - 導入 Optimistic UI 概念，切換完成狀態時立即反應並同步至資料庫。
+  - 補全返回按鈕與全域 Loading 遮罩。
+- **工程規範**:
+  - 修正 `tripStore.ts` 中缺失的型別導入，確保編譯無誤。
+  - 完成 `npm run test`, `lint`, `format`, `build` 完整驗證流程。
+
+#### `d5169c1` - refactor(collection): 獨立資料收集 Store 並補全新增編輯功能
 
 - **Store 獨立與遷移**:
   - 建立 `collectionStore.ts` 並將資料收集狀態與 CRUD 邏輯從 `tripStore.ts` 抽離，提升維護性。

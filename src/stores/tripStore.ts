@@ -24,6 +24,7 @@ import {
   type Activity,
   type Expense,
   type Booking,
+  type ChecklistItem,
 } from "../types/trip";
 
 export const useTripStore = defineStore("trip", () => {
@@ -275,6 +276,79 @@ export const useTripStore = defineStore("trip", () => {
     await updateDoc(tripRef, { bookings });
   };
 
+  /**
+   * 更新準備清單項目 (Trip 主文件中的 preparation 陣列)
+   */
+  const updateTripPreparationItem = async (
+    tripId: string,
+    item: Partial<ChecklistItem>,
+  ) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const tripRef = doc(db, "trips", tripId);
+    const tripSnap = await getDoc(tripRef);
+    if (!tripSnap.exists()) throw new Error("Trip not found");
+
+    const tripData = tripSnap.data() as Trip;
+    const preparation = [...(tripData.preparation || [])];
+
+    // 建立項目副本並處理 ID
+    const itemToSave = item.id
+      ? { ...item }
+      : ({
+          ...item,
+          id: crypto.randomUUID(),
+          isCompleted: false,
+        } as ChecklistItem);
+
+    const idx = preparation.findIndex(
+      (p: ChecklistItem) => p.id === itemToSave.id,
+    );
+    if (idx !== -1) {
+      preparation[idx] = itemToSave as ChecklistItem;
+    } else {
+      preparation.push(itemToSave as ChecklistItem);
+    }
+
+    await updateDoc(tripRef, { preparation });
+  };
+
+  /**
+   * 刪除準備清單項目
+   */
+  const deleteTripPreparationItem = async (tripId: string, itemId: string) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const tripRef = doc(db, "trips", tripId);
+    const tripSnap = await getDoc(tripRef);
+    if (!tripSnap.exists()) throw new Error("Trip not found");
+
+    const tripData = tripSnap.data() as Trip;
+    const preparation = (tripData.preparation || []).filter(
+      (p: ChecklistItem) => p.id !== itemId,
+    );
+
+    await updateDoc(tripRef, { preparation });
+  };
+
+  /**
+   * 切換準備清單項目的完成狀態 (原子化操作優化)
+   */
+  const togglePreparationItem = async (tripId: string, itemId: string) => {
+    if (!auth.currentUser) throw new Error("User not logged in");
+    const tripRef = doc(db, "trips", tripId);
+    const tripSnap = await getDoc(tripRef);
+    if (!tripSnap.exists()) throw new Error("Trip not found");
+
+    const tripData = tripSnap.data() as Trip;
+    const preparation = (tripData.preparation || []).map((p: ChecklistItem) => {
+      if (p.id === itemId) {
+        return { ...p, isCompleted: !p.isCompleted };
+      }
+      return p;
+    });
+
+    await updateDoc(tripRef, { preparation });
+  };
+
   return {
     trips,
     currentTripPlans,
@@ -291,5 +365,8 @@ export const useTripStore = defineStore("trip", () => {
     addTrip,
     updateTripBooking,
     deleteTripBooking,
+    updateTripPreparationItem,
+    deleteTripPreparationItem,
+    togglePreparationItem,
   };
 });
