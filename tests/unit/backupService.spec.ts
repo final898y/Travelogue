@@ -67,6 +67,63 @@ describe("Backup Service", () => {
     });
   });
 
+  describe("fetchSingleTripData", () => {
+    it("應正確抓取特定旅程及其子集合資料", async () => {
+      const tripId = "target-trip";
+      vi.mocked(firestore.getDocs)
+        .mockResolvedValueOnce({
+          empty: false,
+          docs: [{ id: tripId, data: () => ({ title: "特定旅程" }) }],
+        } as any)
+        .mockResolvedValue({ docs: [] } as any); // sub-collections
+
+      const result = await backupService.fetchSingleTripData(tripId);
+
+      expect(result.trip.data.id).toBe(tripId);
+      expect(firestore.where).toHaveBeenCalledWith("__name__", "==", tripId);
+    });
+  });
+
+  describe("importSingleTrip", () => {
+    it("導入單一旅程時應產生新旅程並修改標題", async () => {
+      const validSingleData = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        trip: {
+          data: {
+            id: "old-id",
+            userId: "old-user",
+            title: "原標題",
+            startDate: "2024-01-01",
+            endDate: "2024-01-02",
+            days: 2,
+            status: "upcoming"
+          },
+          plans: [{ tripId: "old-id", date: "2024-01-01", activities: [] }],
+          expenses: [],
+          collections: []
+        }
+      };
+      
+      const file = new File([JSON.stringify(validSingleData)], "trip.json", { type: "application/json" });
+      
+      // Mock addDoc to return a new ID
+      vi.mocked(firestore.addDoc).mockResolvedValue({ id: "new-trip-id" } as any);
+
+      const newId = await backupService.importSingleTrip(mockUserId, file);
+
+      expect(newId).toBe("new-trip-id");
+      expect(firestore.addDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          title: "原標題 (匯入)",
+          userId: mockUserId
+        })
+      );
+      expect(firestore.writeBatch).toHaveBeenCalled();
+    });
+  });
+
   describe("clearAllUserData", () => {
     it("應遞迴刪除子集合後再刪除主文件", async () => {
       const mockTripDoc = {

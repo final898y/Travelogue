@@ -8,6 +8,21 @@
 
 ## [2026-02-20]
 
+### `TBD` - feat(trip): 實作特定旅程之匯出與匯入功能
+
+- **功能擴展**:
+  - 於 `backupService.ts` 新增 `exportSingleTrip` 與 `importSingleTrip` 方法，支援單一旅程資料的提取與恢復。
+  - 導入單一旅程時會自動產生新 Trip ID，標題附加「(匯入)」後綴，防止與現有資料衝突。
+- **UI/UX 優化**:
+  - 在 `TripCard.vue` 的更多選單中新增「匯出」按鈕。
+  - 在 `HomeView.vue` 的 Header 新增「匯入行程」按鈕，並實作匯入後的自動導航邏輯。
+- **測試與驗證**:
+  - 於 `backupService.spec.ts` 補全單一旅程操作的單元測試。
+  - 修正 TypeScript `Record<string, unknown>` 型別轉型，確保 `Timestamp` 寫入時符合 Lint 規範。
+  - 通過 85 個測試案例、無 Lint 錯誤、生產環境編譯成功。
+
+## [2026-02-20]
+
 ### `TBD` - feat(settings): 實作資料管理系統 (備份/導出/導入) 與單元測試
 
 - **核心服務實作**:

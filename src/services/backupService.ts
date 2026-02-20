@@ -39,9 +39,123 @@ const ExportDataPackageSchema = z.object({
 export type ExportDataPackage = z.infer<typeof ExportDataPackageSchema>;
 
 /**
+ * 單一旅程包裹格式定義
+ */
+const SingleTripPackageSchema = z.object({
+  version: z.string(),
+  exportedAt: z.string(),
+  trip: z.object({
+    data: TripSchema,
+    plans: z.array(DailyPlanSchema),
+    expenses: z.array(ExpenseSchema),
+    collections: z.array(CollectionSchema),
+  }),
+});
+
+export type SingleTripPackage = z.infer<typeof SingleTripPackageSchema>;
+
+/**
  * 資料管理服務
  */
 export const backupService = {
+  /**
+   * 提取單一旅程的完整資料
+   */
+  async fetchSingleTripData(tripId: string): Promise<SingleTripPackage> {
+    const tripSnap = await getDocs(
+      query(collection(db, "trips"), where("__name__", "==", tripId)),
+    );
+
+    const firstDoc = tripSnap.docs[0];
+    if (!firstDoc) throw new Error("找不到該旅程資料");
+    const tripData = { id: tripId, ...firstDoc.data() } as Trip;
+
+    const [plansSnap, expSnap, collSnap] = await Promise.all([
+      getDocs(collection(db, "trips", tripId, "plans")),
+      getDocs(collection(db, "trips", tripId, "expenses")),
+      getDocs(collection(db, "trips", tripId, "collections")),
+    ]);
+
+    return {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      trip: {
+        data: tripData,
+        plans: plansSnap.docs.map(
+          (d) => ({ ...d.data() }) as unknown as DailyPlan,
+        ),
+        expenses: expSnap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as unknown as Expense,
+        ),
+        collections: collSnap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as unknown as Collection,
+        ),
+      },
+    };
+  },
+
+  /**
+   * 觸發單一旅程 JSON 下載
+   */
+  async exportSingleTrip(tripId: string, title: string) {
+    const data = await this.fetchSingleTripData(tripId);
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Trip_${title.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  /**
+   * 導入單一旅程 (作為新旅程新增)
+   */
+  async importSingleTrip(userId: string, jsonFile: File) {
+    const text = await jsonFile.text();
+    const rawData = JSON.parse(text);
+    const validatedData = SingleTripPackageSchema.parse(rawData);
+
+    const { data, plans, expenses, collections } = validatedData.trip;
+
+    // 建立新的 Trip Document
+    const tripsRef = collection(db, "trips");
+    const newTripData: Record<string, unknown> = {
+      ...data,
+      userId,
+      title: `${data.title} (匯入)`,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+    delete newTripData.id;
+
+    const newTripRef = await addDoc(tripsRef, newTripData);
+    const newTripId = newTripRef.id;
+
+    // 批次寫入子集合
+    const batch = writeBatch(db);
+
+    for (const plan of plans) {
+      const planRef = doc(collection(db, "trips", newTripId, "plans"));
+      batch.set(planRef, { ...plan, tripId: newTripId });
+    }
+
+    for (const exp of expenses) {
+      const expRef = doc(collection(db, "trips", newTripId, "expenses"));
+      batch.set(expRef, exp);
+    }
+
+    for (const coll of collections) {
+      const collRef = doc(collection(db, "trips", newTripId, "collections"));
+      batch.set(collRef, coll);
+    }
+
+    await batch.commit();
+    return newTripId;
+  },
+
   /**
    * 提取當前使用者的所有旅遊資料
    */
@@ -109,6 +223,7 @@ export const backupService = {
     const backupsRef = collection(db, "backups");
     await addDoc(backupsRef, {
       ...data,
+      userId, // 明確頂層 userId
       createdAt: Timestamp.now(),
     });
   },

@@ -5,11 +5,12 @@ import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
 import { useUIStore } from "../stores/uiStore";
 import { importSeedData } from "../services/seed";
+import { backupService } from "../services/backupService";
 import TripCard from "../components/trip/TripCard.vue";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import TripForm from "../components/trip/TripForm.vue";
 import Logo from "../assets/Logo.svg";
-import { Plus, ChevronRight, MapPin } from "../assets/icons";
+import { Plus, ChevronRight, MapPin, Upload } from "../assets/icons";
 import type { Trip } from "../types/trip";
 
 const router = useRouter();
@@ -21,6 +22,7 @@ const isSheetOpen = ref(false);
 const isSaving = ref(false);
 const isFormDirty = ref(false);
 const editingTrip = ref<Trip | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -39,6 +41,45 @@ const navigateToTrip = (tripId: number | string) => {
     return;
   }
   router.push({ name: "plan", params: { id: tripId } });
+};
+
+const handleExportTrip = async (tripId: string | number, title: string) => {
+  try {
+    isSaving.value = true;
+    await backupService.exportSingleTrip(tripId.toString(), title);
+    uiStore.showToast("旅程資料匯出成功", "success");
+  } catch (error) {
+    console.error("Export Error:", error);
+    uiStore.showToast("匯出失敗", "error");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const triggerImport = () => {
+  fileInput.value?.click();
+};
+
+const handleImportTrip = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !authStore.user) return;
+
+  try {
+    isSaving.value = true;
+    const newTripId = await backupService.importSingleTrip(
+      authStore.user.uid,
+      file,
+    );
+    uiStore.showToast("旅程匯入成功！", "success");
+    navigateToTrip(newTripId);
+  } catch (error) {
+    console.error("Import Error:", error);
+    uiStore.showToast("匯入失敗，格式不符", "error");
+  } finally {
+    isSaving.value = false;
+    target.value = "";
+  }
 };
 
 const openAddSheet = () => {
@@ -133,6 +174,15 @@ const handleSeed = async () => {
 
 <template>
   <div class="pb-32">
+    <!-- Hidden File Input for Single Trip Import -->
+    <input
+      type="file"
+      ref="fileInput"
+      class="hidden"
+      accept=".json"
+      @change="handleImportTrip"
+    />
+
     <!-- Header -->
     <header
       class="sticky top-0 z-40 bg-cream-light/80 backdrop-blur-md px-6 py-5 flex justify-between items-center"
@@ -149,8 +199,16 @@ const handleSeed = async () => {
           {{ isSeeding ? "導入中..." : "初始化資料" }}
         </button>
         <button
+          @click="triggerImport"
+          class="w-10 h-10 flex items-center justify-center bg-forest-50 text-forest-400 rounded-full shadow-soft hover:bg-forest-100 active:scale-90 transition-all cursor-pointer"
+          title="匯入行程"
+        >
+          <Upload :size="20" :stroke-width="2.5" />
+        </button>
+        <button
           @click="openAddSheet"
           class="w-10 h-10 flex items-center justify-center bg-forest-400 text-white rounded-full shadow-soft hover:bg-forest-500 active:scale-90 transition-all cursor-pointer"
+          title="新增旅程"
         >
           <Plus :size="24" :stroke-width="2.5" />
         </button>
@@ -200,6 +258,7 @@ const handleSeed = async () => {
             @click="navigateToTrip(trip.id)"
             @edit="handleEditTrip"
             @delete="handleDeleteTrip"
+            @export="handleExportTrip"
           />
         </div>
 

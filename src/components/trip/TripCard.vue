@@ -12,12 +12,14 @@ import {
   Clock,
   Pencil,
   Trash2,
+  Download,
 } from "../../assets/icons";
 
 const props = defineProps<TripUI>();
 const emit = defineEmits<{
   (e: "edit", id: string | number): void;
   (e: "delete", id: string | number): void;
+  (e: "export", id: string | number, title: string): void;
 }>();
 
 const isMenuOpen = ref(false);
@@ -38,6 +40,12 @@ const handleDelete = (event: Event) => {
   event.stopPropagation();
   isMenuOpen.value = false;
   emit("delete", props.id);
+};
+
+const handleExport = (event: Event) => {
+  event.stopPropagation();
+  isMenuOpen.value = false;
+  emit("export", props.id, props.title);
 };
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -116,6 +124,13 @@ onUnmounted(() => {
             >
               <Pencil :size="14" />
               編輯
+            </button>
+            <button
+              @click="handleExport"
+              class="w-full px-4 py-2 text-left text-sm font-medium text-forest-600 hover:bg-forest-50 flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <Download :size="14" />
+              匯出
             </button>
             <button
               @click="handleDelete"
