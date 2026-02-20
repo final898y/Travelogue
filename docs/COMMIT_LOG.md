@@ -8,6 +8,17 @@
 
 ## [2026-02-20]
 
+## [2026-02-20] fix(store): 解決 Firestore 文件 ID 映射衝突與 Store 權限注入
+
+- **Version**: `2.1.4`
+- **改動方向**: 修正資料映射順序以防止 ID 被覆蓋，並完成 CollectionStore 的權限重構。
+- **具體內容**:
+  - 修正 `tripStore.ts` 與 `collectionStore.ts` 的映射邏輯，確保 `id: doc.id` 具有最高優先權（放置於解構之後）。
+  - 重構 `collectionStore.ts` 以完全使用 `authStore` 進行權限判斷，移除對 Firebase `auth` 的直接依賴。
+  - 在 `addTrip` 與 `addCollection` 實作資料清理邏輯，確保新增時不會將帶有 `id` 欄位的物件存入資料庫內容中。
+  - 補全 TypeScript 型別定義，徹底消除 Store 中因清理資料而產生的 `any` 型別警告。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.4`。
+
 ## [2026-02-20] feat(collection): 擴展資料收集結構並優化連結功能
 
 - **Version**: `2.1.3`

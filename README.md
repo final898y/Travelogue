@@ -82,5 +82,5 @@ npm run test
 
 ---
 
-**Version**: 2.1.3 (Soft UI Evolution Edition)  
+**Version**: 2.1.4 (Soft UI Evolution Edition)  
 **License**: MIT

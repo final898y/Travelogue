@@ -11,7 +11,8 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { db, auth } from "../services/firebase";
+import { db } from "../services/firebase";
+import { useAuthStore } from "./authStore";
 import type { Collection } from "../types/trip";
 import { CollectionSchema } from "../types/trip";
 import { z } from "zod";
@@ -20,6 +21,7 @@ export const useCollectionStore = defineStore("collection", () => {
   const collections = ref<Collection[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const authStore = useAuthStore();
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -55,8 +57,8 @@ export const useCollectionStore = defineStore("collection", () => {
       q,
       (snapshot) => {
         const rawData = snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...doc.data(),
+          id: doc.id, // 確保正確的 ID 蓋掉內容中可能存在的 id 欄位
         }));
         collections.value = validateAndFilter<Collection>(
           CollectionSchema,
@@ -78,10 +80,14 @@ export const useCollectionStore = defineStore("collection", () => {
     tripId: string,
     item: Omit<Collection, "id" | "createdAt">,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const collectionsRef = collection(db, "trips", tripId, "collections");
+
+    // 明確排除 id，防止空字串或錯誤 ID 被當作欄位存入
+    const { id: _id, ...cleanItem } = item as Partial<Collection>;
+
     return await addDoc(collectionsRef, {
-      ...item,
+      ...cleanItem,
       createdAt: Timestamp.now(),
     });
   };
@@ -94,18 +100,19 @@ export const useCollectionStore = defineStore("collection", () => {
     collectionId: string,
     item: Partial<Collection>,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "collections", collectionId);
 
     // 過濾掉不應手動更新的內部欄位
     const { id: _id, createdAt: _createdAt, ...dataToUpdate } = item;
     return await updateDoc(docRef, dataToUpdate);
   };
+
   /**
    * 刪除收集項目
    */
   const deleteCollection = async (tripId: string, collectionId: string) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "collections", collectionId);
     return await deleteDoc(docRef);
   };

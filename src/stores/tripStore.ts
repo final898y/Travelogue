@@ -61,8 +61,8 @@ export const useTripStore = defineStore("trip", () => {
       q,
       (snapshot) => {
         const rawData = snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...doc.data(),
+          id: doc.id,
         }));
         trips.value = validateAndFilter<Trip>(TripSchema, rawData);
         loading.value = false;
@@ -81,7 +81,7 @@ export const useTripStore = defineStore("trip", () => {
     const docRef = doc(db, "trips", id);
     return onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
-        const rawData = { id: snapshot.id, ...snapshot.data() };
+        const rawData = { ...snapshot.data(), id: snapshot.id };
         const result = TripSchema.safeParse(rawData);
         if (result.success) {
           // 更新本地快取
@@ -105,7 +105,7 @@ export const useTripStore = defineStore("trip", () => {
     const docRef = doc(db, "trips", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const rawData = { id: docSnap.id, ...docSnap.data() };
+      const rawData = { ...docSnap.data(), id: docSnap.id };
       const result = TripSchema.safeParse(rawData);
       if (result.success) {
         return result.data;
@@ -126,8 +126,12 @@ export const useTripStore = defineStore("trip", () => {
   ) => {
     if (!authStore.user)
       throw new Error("User must be logged in to create a trip");
+
+    // 安全移除 id 避免汙染
+    const { id: _id, ...cleanData } = tripData as Partial<Trip>;
+
     const docRef = await addDoc(tripsRef, {
-      ...tripData,
+      ...cleanData,
       userId: authStore.user.email || authStore.user.uid,
       createdAt: Timestamp.now(),
     });
