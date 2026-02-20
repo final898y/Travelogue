@@ -184,8 +184,10 @@ export type CollectionSource = z.infer<typeof CollectionSourceSchema>;
 
 export const CollectionSchema = z.object({
   id: z.string(),
-  title: z.string(),
-  url: z.string().url(),
+  title: z.string().min(1, "標題不可為空"),
+  url: z.string().url("請輸入有效的來源連結"),
+  mapUrl: z.string().url("請輸入有效的地點連結").or(z.string().optional()),
+  websiteUrl: z.string().url("請輸入有效的官網連結").or(z.string().optional()),
   source: CollectionSourceSchema,
   note: z.string().optional(),
   imageUrl: z.string().url().or(z.string().optional()),

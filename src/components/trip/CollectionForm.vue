@@ -27,6 +27,8 @@ const isEditMode = computed(() => !!props.initialData.id);
 const formData = reactive<Partial<Collection>>({
   title: "",
   url: "",
+  mapUrl: "",
+  websiteUrl: "",
   source: "web",
   category: "未分類",
   note: "",
@@ -43,6 +45,8 @@ watch(
       JSON.stringify({
         title: "",
         url: "",
+        mapUrl: "",
+        websiteUrl: "",
         source: "web",
         category: "未分類",
         note: "",
@@ -78,12 +82,23 @@ const handleSave = () => {
   if (!formData.title) return uiStore.showToast("請輸入標題", "warning");
   if (!formData.url) return uiStore.showToast("請輸入網址", "warning");
 
-  // 簡易網址校驗
-  try {
-    new URL(formData.url);
-  } catch {
-    return uiStore.showToast("請輸入有效的網址", "warning");
-  }
+  // 網址校驗函式
+  const isValidUrl = (url?: string) => {
+    if (!url) return true;
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if (!isValidUrl(formData.url))
+    return uiStore.showToast("請輸入有效的來源網址", "warning");
+  if (formData.mapUrl && !isValidUrl(formData.mapUrl))
+    return uiStore.showToast("請輸入有效的地點網址", "warning");
+  if (formData.websiteUrl && !isValidUrl(formData.websiteUrl))
+    return uiStore.showToast("請輸入有效的官網網址", "warning");
 
   emit("save", { ...formData });
 };
@@ -137,12 +152,36 @@ const handleSave = () => {
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase"
-          >網址 (URL)</label
+          >網址 (來源 URL)</label
         >
         <input
           v-model="formData.url"
           type="url"
-          placeholder="https://..."
+          placeholder="https://... (來源貼文或網頁)"
+          class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-mono shadow-sm"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-forest-300 uppercase"
+          >地點連結 (Google Maps)</label
+        >
+        <input
+          v-model="formData.mapUrl"
+          type="url"
+          placeholder="https://maps.app.goo.gl/..."
+          class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-mono shadow-sm"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-forest-300 uppercase"
+          >官網 / 訂餐連結 (可選)</label
+        >
+        <input
+          v-model="formData.websiteUrl"
+          type="url"
+          placeholder="https://tabelog.com/..."
           class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-mono shadow-sm"
         />
       </div>

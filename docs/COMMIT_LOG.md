@@ -8,6 +8,18 @@
 
 ## [2026-02-20]
 
+## [2026-02-20] feat(collection): 擴展資料收集結構並優化連結功能
+
+- **Version**: `2.1.3`
+- **改動方向**: 針對資料收集 (Collection) 實作多重 URL 支援，優化地圖與官網跳轉體驗。
+- **具體內容**:
+  - 於 `CollectionSchema` 新增 `mapUrl` (地點) 與 `websiteUrl` (官網/訂餐) 可選欄位。
+  - 更新 `CollectionForm.vue` 支援新欄位輸入，並改用 Zod 標準之 `.url()` 進行嚴格校驗。
+  - 重構 `CollectionView.vue` 卡片，將地圖圖示連結至 `mapUrl`，並新增官網連結圖示 (`ExternalLink`)。
+  - 同步更新 `seed.ts` 範例資料與 `CollectionForm.spec.ts` 單元測試。
+  - 修正 `icons.ts` 補上缺失的 `ExternalLink` 與 `Github` 圖示匯出。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.3`。
+
 ## [2026-02-20] feat(booking): 優化機票預訂流程與系統連結
 
 - **Version**: `2.1.2`

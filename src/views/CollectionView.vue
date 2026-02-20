@@ -16,6 +16,7 @@ import {
   Plus,
   MapPin,
   Bookmark,
+  ExternalLink,
 } from "../assets/icons";
 import type { Collection, CollectionSource } from "../types/trip";
 
@@ -183,14 +184,28 @@ const handleDeleteCollection = async () => {
               <Youtube v-if="item.source === 'youtube'" :size="20" />
               <MoreHorizontal v-if="item.source === 'other'" :size="20" />
             </div>
-            <a
-              :href="item.url"
-              target="_blank"
-              @click.stop
-              class="text-forest-200 hover:text-forest-500 transition-colors p-1"
-            >
-              <MapPin :size="18" />
-            </a>
+            <div class="flex gap-1">
+              <a
+                v-if="item.websiteUrl"
+                :href="item.websiteUrl"
+                target="_blank"
+                @click.stop
+                class="text-forest-200 hover:text-forest-500 transition-colors p-1"
+                title="官方網站/訂餐"
+              >
+                <ExternalLink :size="18" />
+              </a>
+              <a
+                v-if="item.mapUrl"
+                :href="item.mapUrl"
+                target="_blank"
+                @click.stop
+                class="text-forest-200 hover:text-forest-500 transition-colors p-1"
+                title="開啟地圖"
+              >
+                <MapPin :size="18" />
+              </a>
+            </div>
           </div>
           <h3
             class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-600 transition-colors"

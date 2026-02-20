@@ -50,6 +50,8 @@ describe("CollectionForm.vue", () => {
       id: "coll-1",
       title: "好吃拉麵",
       url: "https://example.com",
+      mapUrl: "https://maps.google.com",
+      websiteUrl: "https://tabelog.com",
       category: "美食",
       source: "instagram" as const,
     };
@@ -60,9 +62,20 @@ describe("CollectionForm.vue", () => {
       },
     });
 
-    expect(
-      (wrapper.find("input[type='text']").element as HTMLInputElement).value,
-    ).toBe("好吃拉麵");
+    const textInput = wrapper.find("input[type='text']");
+    const urlInputs = wrapper.findAll("input[type='url']");
+
+    expect((textInput.element as HTMLInputElement).value).toBe("好吃拉麵");
+    expect((urlInputs[0].element as HTMLInputElement).value).toBe(
+      "https://example.com",
+    );
+    expect((urlInputs[1].element as HTMLInputElement).value).toBe(
+      "https://maps.google.com",
+    );
+    expect((urlInputs[2].element as HTMLInputElement).value).toBe(
+      "https://tabelog.com",
+    );
+
     expect((wrapper.find("select").element as HTMLSelectElement).value).toBe(
       "美食",
     );
@@ -84,7 +97,7 @@ describe("CollectionForm.vue", () => {
     expect(wrapper.emitted("update:dirty")![0][0]).toBe(true);
   });
 
-  it("標題或網址未輸入時應擋下儲存並提示", async () => {
+  it("標題或網址未輸入或網址無效時應擋下儲存並提示", async () => {
     const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
@@ -98,6 +111,15 @@ describe("CollectionForm.vue", () => {
     await wrapper.find("input[type='text']").setValue("測試");
     await wrapper.find("button.bg-forest-400").trigger("click");
     expect(uiStore.showToast).toHaveBeenCalledWith("請輸入網址", "warning");
+
+    // Case 3: 無效的網址
+    const urlInputs = wrapper.findAll("input[type='url']");
+    await urlInputs[0].setValue("invalid-url");
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "請輸入有效的來源網址",
+      "warning",
+    );
   });
 
   it("資料正確且網址有效時應觸發 save", async () => {

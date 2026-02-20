@@ -53,6 +53,7 @@ export {
   Info,
   LogOut,
   Github,
+  ExternalLink,
   ChevronDown,
   CheckCircle,
   XCircle,

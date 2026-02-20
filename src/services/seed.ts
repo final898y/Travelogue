@@ -589,16 +589,26 @@ const collectionSeeds: Record<string, Omit<Collection, "id" | "createdAt">[]> =
     "2024 東京賞櫻之旅": [
       {
         title: "2024東京櫻花預測",
-        url: "https://example.com/sakura",
+        url: "https://tenki.jp/sakura/expectation/",
         source: "web",
-        category: "景點",
+        category: "攻略/工具",
         note: "注意滿開時間",
       },
       {
-        title: "Threads 上熱門的新宿美食",
-        url: "https://threads.net/tokyo-food",
-        source: "threads",
+        title: "新宿御苑官網",
+        url: "https://www.env.go.jp/garden/shinjukugyoen/index.html",
+        source: "web",
+        category: "景點",
+        mapUrl: "https://maps.app.goo.gl/DMZ6mqWhZpYpY6pY8",
+        websiteUrl: "https://www.env.go.jp/garden/shinjukugyoen/index.html",
+      },
+      {
+        title: "六歌仙燒肉預約",
+        url: "https://www.rokkasen.co.jp/",
+        source: "web",
         category: "美食",
+        mapUrl: "https://maps.app.goo.gl/rokkasen-shinjuku",
+        websiteUrl: "https://www.rokkasen.co.jp/en/contents/resv.html",
       },
     ],
   };
