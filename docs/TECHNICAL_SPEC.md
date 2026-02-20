@@ -31,40 +31,40 @@ D:\Repos\Travelogue
 
 專案採用職責分離的 Store 設計：
 
--   **`authStore.ts`**: 管理 Firebase Auth 狀態與使用者白名單驗證。
--   **`tripStore.ts`**: 旅程清單 (CRUD) 與主文件欄位（成員、預訂、準備清單）。
--   **`planStore.ts`**: 管理「行程活動」子集合，支援即時監聽 (onSnapshot)。
--   **`expenseStore.ts`**: 管理「記帳紀錄」子集合與結算邏輯。
--   **`collectionStore.ts`**: 管理「資料收集」子集合。
--   **`uiStore.ts`**: **全域交互系統**，管理 Toast 與 ConfirmDialog 的顯示與非同步 Promise。
+- **`authStore.ts`**: 管理 Firebase Auth 狀態與使用者白名單驗證。
+- **`tripStore.ts`**: 旅程清單 (CRUD) 與主文件欄位（成員、預訂、準備清單）。
+- **`planStore.ts`**: 管理「行程活動」子集合，支援即時監聽 (onSnapshot)。
+- **`expenseStore.ts`**: 管理「記帳紀錄」子集合與結算邏輯。
+- **`collectionStore.ts`**: 管理「資料收集」子集合。
+- **`uiStore.ts`**: **全域交互系統**，管理 Toast 與 ConfirmDialog 的顯示與非同步 Promise。
 
 ---
 
 ## 3. 資料模型與驗證 (Types & Zod)
 
--   **Zod 執行期校驗**: 所有從 Firestore 獲取的資料必須通過 `src/types/trip.ts` 定義的 Zod Schema 驗證。
--   **UI 型別分離**: 為了解決 Vue SFC 編譯器限制，純 TypeScript 介面定義於 `src/types/trip-ui.ts`。
--   **ID 綁定模式**: 成員與記帳全面採用 `id` (Email 或產生的 UID) 進行綁定，避免因更名導致資料斷連。
+- **Zod 執行期校驗**: 所有從 Firestore 獲取的資料必須通過 `src/types/trip.ts` 定義的 Zod Schema 驗證。
+- **UI 型別分離**: 為了解決 Vue SFC 編譯器限制，純 TypeScript 介面定義於 `src/types/trip-ui.ts`。
+- **ID 綁定模式**: 成員與記帳全面採用 `id` (Email 或產生的 UID) 進行綁定，避免因更名導致資料斷連。
 
 ---
 
 ## 4. 關鍵技術實現
 
--   **即時同步**: 使用 Firestore `onSnapshot` 實現多人/多端即時資料同步。
--   **分包優化**: 於 `vite.config.ts` 實作 `manualChunks`，將大型套件 (Firebase, Zod) 獨立打包，`index.js` 體積 < 50kB。
--   **單元測試**: 使用 Vitest + `@pinia/testing`，核心業務表單測試覆蓋率高。
+- **即時同步**: 使用 Firestore `onSnapshot` 實現多人/多端即時資料同步。
+- **分包優化**: 於 `vite.config.ts` 實作 `manualChunks`，將大型套件 (Firebase, Zod) 獨立打包，`index.js` 體積 < 50kB。
+- **單元測試**: 使用 Vitest + `@pinia/testing`，核心業務表單測試覆蓋率高。
 
 ---
 
 ## 5. 未來擴展功能 (Roadmap)
 
--   **資料管理系統 (近期目標)**:
-    - [ ] 實作 `backupService.ts`：雲端備份至 `backups` 集合。
-    - [ ] 實作 JSON 導出功能：打包完整旅程資料供下載。
-    - [ ] 實作 JSON 導入功能：完整覆蓋或增量還原資料。
--   **地圖與智慧功能**:
-    - [ ] 整合 Google Maps JavaScript API 實作地圖視圖模式。
-    - [ ] 實作 OpenWeatherMap 氣象 API 連動。
--   **社交與共享**:
-    - [ ] 實作單一旅程的共享連結 (Shared URL)。
-    - [ ] PWA 離線支援與離線快取優化。
+- **資料管理系統 (近期目標)**:
+  - [ ] 實作 `backupService.ts`：雲端備份至 `backups` 集合。
+  - [ ] 實作 JSON 導出功能：打包完整旅程資料供下載。
+  - [ ] 實作 JSON 導入功能：完整覆蓋或增量還原資料。
+- **地圖與智慧功能**:
+  - [ ] 整合 Google Maps JavaScript API 實作地圖視圖模式。
+  - [ ] 實作 OpenWeatherMap 氣象 API 連動。
+- **社交與共享**:
+  - [ ] 實作單一旅程的共享連結 (Shared URL)。
+  - [ ] PWA 離線支援與離線快取優化。

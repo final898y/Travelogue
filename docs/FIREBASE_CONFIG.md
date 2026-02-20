@@ -7,14 +7,18 @@
 ## 1. Firestore 資料結構 (Data Schema)
 
 ### 📂 `whitelist` (全域集合)
+
 用於存放授權使用者的 Email，實作高效的存取控制。
+
 - **文件 ID**: **必須直接使用使用者的 Email (全小寫)**。例如 `test@gmail.com`。
 - **欄位**:
   - `email` (string): 使用者 Email。
   - `addedAt` (timestamp): 加入時間。
 
 ### 📂 `trips` (主集合)
+
 存放旅程的核心資訊與嵌入式清單。
+
 - **欄位**:
   - `title` (string): 旅程名稱。
   - `startDate` (string): 開始日期 (YYYY-MM-DD)。
@@ -30,16 +34,19 @@
   - `updatedAt` (timestamp): 最後更新時間。
 
 #### └── 📂 `plans` (子集合)
+
 - **路徑**: `/trips/{tripId}/plans/{planId}`
 - **功能**: 存放每日具體行程。
 - **欄位**: `tripId`, `date`, `activities` (Array of Activity objects)。
 
 #### └── 📂 `expenses` (子集合)
+
 - **路徑**: `/trips/{tripId}/expenses/{expenseId}`
 - **功能**: 存放記帳與分帳紀錄。
 - **欄位**: `date`, `category`, `amount`, `currency`, `description`, `payer` (Member ID), `splitWith` (Array of Member IDs), `createdAt`。
 
 #### └── 📂 `collections` (子集合)
+
 - **路徑**: `/trips/{tripId}/collections/{itemId}`
 - **功能**: 存放行前收集的靈感 (網頁、IG、Threads 等)。
 - **欄位**: `title`, `url`, `source`, `category`, `note`, `createdAt`。
@@ -93,11 +100,11 @@ service cloud.firestore {
 
 當應用程式執行複雜查詢（如跨欄位過濾與排序）時，需建立以下複合索引：
 
-| 集合 ID | 欄位 (排序順序) | 用途 |
-| :--- | :--- | :--- |
-| `trips` | `userId` (Asc), `startDate` (Desc) | 獲取特定使用者的旅程列表 |
-| `plans` | `tripId` (Asc), `date` (Asc) | 按日期排序顯示行程活動 |
-| `expenses` | `tripId` (Asc), `date` (Desc) | 按時間倒序顯示記帳明細 |
+| 集合 ID    | 欄位 (排序順序)                    | 用途                     |
+| :--------- | :--------------------------------- | :----------------------- |
+| `trips`    | `userId` (Asc), `startDate` (Desc) | 獲取特定使用者的旅程列表 |
+| `plans`    | `tripId` (Asc), `date` (Asc)       | 按日期排序顯示行程活動   |
+| `expenses` | `tripId` (Asc), `date` (Desc)      | 按時間倒序顯示記帳明細   |
 
 ---
 

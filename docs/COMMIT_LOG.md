@@ -8,6 +8,25 @@
 
 ## [2026-02-20]
 
+### `TBD` - feat(settings): 實作資料管理系統 (備份/導出/導入) 與單元測試
+
+- **核心服務實作**:
+  - 建立 `backupService.ts` 處理遞迴資料提取，完整涵蓋旅程及其所有子集合（行程、支出、收藏）。
+  - 實作 JSON 格式打包與下載邏輯，支援本地備份。
+  - 實作雲端備份功能，將資料快照存儲於 Firestore `backups` 集合。
+  - 實作安全導入邏輯：包含 Zod Schema 校驗、遞迴刪除現有資料與 `writeBatch` 批次恢復。
+- **測試覆蓋**:
+  - 新增 `tests/unit/backupService.spec.ts`，驗證資料提取查詢、遞迴刪除邏輯以及導入時的 Zod 校驗。
+- **UI/UX 整合**:
+  - 於 `SettingView.vue` 新增「資料安全」區塊與對應功能按鈕。
+  - 導入前整合 `BaseConfirmDialog` 進行二次確認，防止誤操作。
+  - 實作全域處理遮罩與即時 Toast 進度提示。
+- **工程與驗證**:
+  - 修正 TypeScript 型別轉型錯誤與 Lint 規範問題。
+  - 通過 85 個測試案例 (含 4 個新測試)、無 Lint 錯誤、生產環境編譯成功。
+
+## [2026-02-20]
+
 ### `TBD` - feat(ui): 實作全域 Toast 與 ConfirmDialog 並優化交互體驗
 
 - **全域交互系統**:

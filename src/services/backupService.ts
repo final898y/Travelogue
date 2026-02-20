@@ -1,0 +1,189 @@
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  doc,
+  addDoc,
+  Timestamp,
+  deleteDoc,
+} from "firebase/firestore";
+import { db } from "./firebase";
+import {
+  TripSchema,
+  DailyPlanSchema,
+  ExpenseSchema,
+  CollectionSchema,
+} from "../types/trip";
+import type { Trip, DailyPlan, Expense, Collection } from "../types/trip";
+import { z } from "zod";
+
+/**
+ * 導出資料包裹格式定義
+ */
+const ExportDataPackageSchema = z.object({
+  version: z.string(),
+  exportedAt: z.string(),
+  userId: z.string(),
+  trips: z.array(
+    z.object({
+      data: TripSchema,
+      plans: z.array(DailyPlanSchema),
+      expenses: z.array(ExpenseSchema),
+      collections: z.array(CollectionSchema),
+    }),
+  ),
+});
+
+export type ExportDataPackage = z.infer<typeof ExportDataPackageSchema>;
+
+/**
+ * 資料管理服務
+ */
+export const backupService = {
+  /**
+   * 提取當前使用者的所有旅遊資料
+   */
+  async fetchAllUserData(userId: string): Promise<ExportDataPackage> {
+    const tripsRef = collection(db, "trips");
+    const q = query(tripsRef, where("userId", "==", userId));
+    const tripSnapshots = await getDocs(q);
+
+    const fullTripsData = [];
+
+    for (const tripDoc of tripSnapshots.docs) {
+      const tripId = tripDoc.id;
+      const tripData = { id: tripId, ...tripDoc.data() } as Trip;
+
+      // 平行抓取子集合
+      const [plansSnap, expSnap, collSnap] = await Promise.all([
+        getDocs(collection(db, "trips", tripId, "plans")),
+        getDocs(collection(db, "trips", tripId, "expenses")),
+        getDocs(collection(db, "trips", tripId, "collections")),
+      ]);
+
+      fullTripsData.push({
+        data: tripData,
+        plans: plansSnap.docs.map(
+          (d) => ({ ...d.data() }) as unknown as DailyPlan,
+        ),
+        expenses: expSnap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as unknown as Expense,
+        ),
+        collections: collSnap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as unknown as Collection,
+        ),
+      });
+    }
+
+    return {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      userId,
+      trips: fullTripsData,
+    };
+  },
+
+  /**
+   * 觸發 JSON 檔案下載
+   */
+  async exportToJSON(userId: string) {
+    const data = await this.fetchAllUserData(userId);
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Travelogue_Export_${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  /**
+   * 將資料備份至雲端 (Firestore backups 集合)
+   */
+  async createCloudBackup(userId: string) {
+    const data = await this.fetchAllUserData(userId);
+    const backupsRef = collection(db, "backups");
+    await addDoc(backupsRef, {
+      ...data,
+      createdAt: Timestamp.now(),
+    });
+  },
+
+  /**
+   * 從 JSON 導入資料 (覆蓋模式)
+   */
+  async importFromJSON(userId: string, jsonFile: File) {
+    const text = await jsonFile.text();
+    const rawData = JSON.parse(text);
+
+    // 1. 驗證資料格式
+    const validatedData = ExportDataPackageSchema.parse(rawData);
+
+    // 2. 清理該使用者的現有資料 (遞迴刪除)
+    await this.clearAllUserData(userId);
+
+    // 3. 批次寫入新資料
+    // 注意：Firestore 批次寫入上限為 500 次操作，若資料極大需分段處理
+    const batch = writeBatch(db);
+
+    for (const tripWrapper of validatedData.trips) {
+      const { data, plans, expenses, collections } = tripWrapper;
+      const tripId = data.id;
+      const tripRef = doc(db, "trips", tripId);
+
+      // 還原主文件 (確保 userId 正確)
+      const restoredTrip: Partial<Trip> = { ...data, userId };
+      delete restoredTrip.id; // Firestore ID 由文件路徑決定
+      batch.set(tripRef, restoredTrip);
+
+      // 還原 plans
+      for (const plan of plans) {
+        const planRef = doc(collection(db, "trips", tripId, "plans"));
+        batch.set(planRef, plan);
+      }
+
+      // 還原 expenses
+      for (const exp of expenses) {
+        const expRef = doc(collection(db, "trips", tripId, "expenses"));
+        batch.set(expRef, exp);
+      }
+
+      // 還原 collections
+      for (const coll of collections) {
+        const collRef = doc(collection(db, "trips", tripId, "collections"));
+        batch.set(collRef, coll);
+      }
+    }
+
+    await batch.commit();
+  },
+
+  /**
+   * 清理使用者的所有資料 (內部使用)
+   */
+  async clearAllUserData(userId: string) {
+    const tripsRef = collection(db, "trips");
+    const q = query(tripsRef, where("userId", "==", userId));
+    const tripSnapshots = await getDocs(q);
+
+    for (const tripDoc of tripSnapshots.docs) {
+      const tripId = tripDoc.id;
+
+      // 刪除子集合內容
+      const subCollections = ["plans", "expenses", "collections"];
+      for (const sub of subCollections) {
+        const subSnap = await getDocs(collection(db, "trips", tripId, sub));
+        for (const subDoc of subSnap.docs) {
+          await deleteDoc(subDoc.ref);
+        }
+      }
+
+      // 刪除主文件
+      await deleteDoc(tripDoc.ref);
+    }
+  },
+};
