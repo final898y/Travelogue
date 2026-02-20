@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
+import { useUIStore } from "../stores/uiStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import BookingForm from "../components/trip/BookingForm.vue";
 import { ChevronLeft, Plane, Bed, Ticket, Plus } from "../assets/icons";
@@ -10,6 +11,7 @@ import type { Trip, Booking } from "../types/trip";
 const route = useRoute();
 const router = useRouter();
 const tripStore = useTripStore();
+const uiStore = useUIStore();
 const tripId = route.params.id as string;
 
 const trip = ref<Trip | null>(null);
@@ -52,10 +54,11 @@ const handleSaveBooking = async (updatedBooking: Booking) => {
     isSaving.value = true;
     await tripStore.updateTripBooking(tripId, updatedBooking);
     await fetchTripData(); // 重新獲取資料以更新 UI
+    uiStore.showToast("預訂資訊儲存成功", "success");
     handleCloseSheet();
   } catch (error) {
     console.error("儲存預訂失敗:", error);
-    alert("儲存失敗，請稍後再試");
+    uiStore.showToast("儲存失敗，請稍後再試", "error");
   } finally {
     isSaving.value = false;
   }
@@ -64,18 +67,26 @@ const handleSaveBooking = async (updatedBooking: Booking) => {
 const handleDeleteBooking = async () => {
   if (!tripId || !currentBooking.value?.id || isSaving.value) return;
 
-  if (!confirm("確定要刪除此預訂資訊嗎？")) return;
+  const confirmed = await uiStore.showConfirm({
+    title: "確定刪除預訂？",
+    message: "這將永久移除此筆預訂紀錄，且無法復原。",
+    okText: "刪除",
+    cancelText: "取消",
+  });
 
-  try {
-    isSaving.value = true;
-    await tripStore.deleteTripBooking(tripId, currentBooking.value.id);
-    await fetchTripData();
-    handleCloseSheet();
-  } catch (error) {
-    console.error("刪除預訂失敗:", error);
-    alert("刪除失敗，請稍後再試");
-  } finally {
-    isSaving.value = false;
+  if (confirmed) {
+    try {
+      isSaving.value = true;
+      await tripStore.deleteTripBooking(tripId, currentBooking.value.id);
+      await fetchTripData();
+      uiStore.showToast("預訂已移除", "success");
+      handleCloseSheet();
+    } catch (error) {
+      console.error("刪除預訂失敗:", error);
+      uiStore.showToast("刪除失敗，請稍後再試", "error");
+    } finally {
+      isSaving.value = false;
+    }
   }
 };
 </script>

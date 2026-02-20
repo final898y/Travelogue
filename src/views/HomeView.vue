@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
+import { useUIStore } from "../stores/uiStore";
 import { importSeedData } from "../services/seed";
 import TripCard from "../components/trip/TripCard.vue";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
@@ -14,6 +15,7 @@ import type { Trip } from "../types/trip";
 const router = useRouter();
 const tripStore = useTripStore();
 const authStore = useAuthStore();
+const uiStore = useUIStore();
 const isSeeding = ref(false);
 const isSheetOpen = ref(false);
 const isSaving = ref(false);
@@ -55,13 +57,21 @@ const handleEditTrip = (tripId: string | number) => {
 };
 
 const handleDeleteTrip = async (tripId: string | number) => {
-  if (confirm("確定要刪除這趟旅程嗎？此動作無法復原。")) {
+  const confirmed = await uiStore.showConfirm({
+    title: "確定要刪除嗎？",
+    message: "這趟旅程及其所有相關行程資料將會永久移除，此動作無法復原。",
+    okText: "刪除",
+    cancelText: "保留",
+  });
+
+  if (confirmed) {
     try {
       isSaving.value = true;
       await tripStore.deleteTrip(tripId.toString());
+      uiStore.showToast("旅程已成功刪除", "success");
     } catch (error) {
       console.error("刪除旅程失敗:", error);
-      alert("刪除失敗，請稍後再試。");
+      uiStore.showToast("刪除失敗，請稍後再試。", "error");
     } finally {
       isSaving.value = false;
     }
@@ -82,28 +92,38 @@ const handleSaveTrip = async (
     isSaving.value = true;
     if (editingTrip.value) {
       await tripStore.updateTrip(editingTrip.value.id, tripData);
+      uiStore.showToast("旅程更新成功", "success");
     } else {
       const newTripId = await tripStore.addTrip(tripData);
+      uiStore.showToast("新的旅程已建立！", "success");
       // 成功後自動導航至新旅程的行程頁面 (僅限新增)
       navigateToTrip(newTripId);
     }
     handleCloseSheet();
   } catch (error) {
     console.error("儲存旅程失敗:", error);
-    alert("儲存失敗，請檢查 Firebase 設定或網絡連接。");
+    uiStore.showToast("儲存失敗，請檢查網絡連接。", "error");
   } finally {
     isSaving.value = false;
   }
 };
 const handleSeed = async () => {
   if (!authStore.user) return;
-  if (confirm("確定要導入預設資料嗎？這將會填入多筆範例旅程。")) {
+
+  const confirmed = await uiStore.showConfirm({
+    title: "導入預設資料？",
+    message: "這將會為您填入多筆精選的範例旅程，幫助您快速上手。",
+    okText: "開始導入",
+    cancelText: "先不要",
+  });
+
+  if (confirmed) {
     isSeeding.value = true;
     try {
       await importSeedData(authStore.user.uid);
-      alert("資料導入成功！");
+      uiStore.showToast("資料導入成功！", "success");
     } catch (err) {
-      alert("導入失敗: " + (err as Error).message);
+      uiStore.showToast("導入失敗: " + (err as Error).message, "error");
     } finally {
       isSeeding.value = false;
     }

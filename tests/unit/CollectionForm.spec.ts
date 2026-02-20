@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { createTestingPinia } from "@pinia/testing";
 import CollectionForm from "../../src/components/trip/CollectionForm.vue";
+import { useUIStore } from "../../src/stores/uiStore";
 
 // Mock icons
 vi.mock("../../src/assets/icons", () => ({
@@ -12,8 +14,21 @@ vi.mock("../../src/assets/icons", () => ({
 }));
 
 describe("CollectionForm.vue", () => {
+  const mountWithPinia = (options = {}) => {
+    return mount(CollectionForm, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+          }),
+        ],
+      },
+      ...options,
+    });
+  };
+
   it("應渲染預設表單狀態 (建立模式)", () => {
-    const wrapper = mount(CollectionForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData: {},
       },
@@ -39,7 +54,7 @@ describe("CollectionForm.vue", () => {
       source: "instagram" as const,
     };
 
-    const wrapper = mount(CollectionForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData,
       },
@@ -58,7 +73,7 @@ describe("CollectionForm.vue", () => {
   });
 
   it("切換分類應更新 formData", async () => {
-    const wrapper = mount(CollectionForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
 
@@ -70,25 +85,23 @@ describe("CollectionForm.vue", () => {
   });
 
   it("標題或網址未輸入時應擋下儲存並提示", async () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const wrapper = mount(CollectionForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
+    const uiStore = useUIStore();
 
     // Case 1: 沒標題
     await wrapper.find("button.bg-forest-400").trigger("click");
-    expect(alertSpy).toHaveBeenCalledWith("請輸入標題");
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入標題", "warning");
 
     // Case 2: 有標題沒網址
     await wrapper.find("input[type='text']").setValue("測試");
     await wrapper.find("button.bg-forest-400").trigger("click");
-    expect(alertSpy).toHaveBeenCalledWith("請輸入網址");
-
-    alertSpy.mockRestore();
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入網址", "warning");
   });
 
   it("資料正確且網址有效時應觸發 save", async () => {
-    const wrapper = mount(CollectionForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
 

@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
+import { useUIStore } from "../stores/uiStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import PreparationForm from "../components/trip/PreparationForm.vue";
 import { ChevronLeft, Plus, Pencil, Check, FileText } from "../assets/icons";
@@ -10,6 +11,7 @@ import type { Trip, ChecklistItem } from "../types/trip";
 const route = useRoute();
 const router = useRouter();
 const tripStore = useTripStore();
+const uiStore = useUIStore();
 const tripId = route.params.id as string;
 
 const activeTab = ref("todo");
@@ -67,6 +69,7 @@ const handleToggle = async (id: string) => {
     await fetchTripData();
   } catch (error) {
     console.error("更新狀態失敗:", error);
+    uiStore.showToast("更新狀態失敗", "error");
   }
 };
 
@@ -77,10 +80,11 @@ const handleSaveItem = async (updatedItem: ChecklistItem) => {
     isSaving.value = true;
     await tripStore.updateTripPreparationItem(tripId, updatedItem);
     await fetchTripData();
+    uiStore.showToast("項目已儲存", "success");
     handleCloseSheet();
   } catch (error) {
     console.error("儲存項目失敗:", error);
-    alert("儲存失敗");
+    uiStore.showToast("儲存失敗", "error");
   } finally {
     isSaving.value = false;
   }
@@ -89,18 +93,26 @@ const handleSaveItem = async (updatedItem: ChecklistItem) => {
 const handleDeleteItem = async () => {
   if (!tripId || !currentItem.value?.id || isSaving.value) return;
 
-  if (!confirm("確定要刪除此項目嗎？")) return;
+  const confirmed = await uiStore.showConfirm({
+    title: "移除此項目？",
+    message: "確定要刪除這個準備項目嗎？",
+    okText: "刪除",
+    cancelText: "取消",
+  });
 
-  try {
-    isSaving.value = true;
-    await tripStore.deleteTripPreparationItem(tripId, currentItem.value.id);
-    await fetchTripData();
-    handleCloseSheet();
-  } catch (error) {
-    console.error("刪除項目失敗:", error);
-    alert("刪除失敗");
-  } finally {
-    isSaving.value = false;
+  if (confirmed) {
+    try {
+      isSaving.value = true;
+      await tripStore.deleteTripPreparationItem(tripId, currentItem.value.id);
+      await fetchTripData();
+      uiStore.showToast("項目已移除", "success");
+      handleCloseSheet();
+    } catch (error) {
+      console.error("刪除項目失敗:", error);
+      uiStore.showToast("刪除失敗", "error");
+    } finally {
+      isSaving.value = false;
+    }
   }
 };
 </script>

@@ -6,6 +6,7 @@
 import { reactive, computed, watch, ref } from "vue";
 import { Check, UserPlus, X } from "../../assets/icons";
 import { useAuthStore } from "../../stores/authStore";
+import { useUIStore } from "../../stores/uiStore";
 import type { Trip, TripMember } from "../../types/trip";
 
 const props = defineProps<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const authStore = useAuthStore();
+const uiStore = useUIStore();
 const currentUserEmail = authStore.user?.email || "me";
 const defaultMemberName =
   authStore.user?.displayName || currentUserEmail.split("@")[0] || "成員";
@@ -55,7 +57,7 @@ const addMember = () => {
   const name = newMemberName.value.trim();
   if (!name) return;
   if (formData.members.some((m) => m.name === name)) {
-    return alert("旅伴名稱重複");
+    return uiStore.showToast("旅伴名稱重複", "warning");
   }
   // 生成簡單唯一 ID
   const newId = `member_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -115,11 +117,11 @@ const daysCount = computed(() => {
 });
 
 const handleSave = () => {
-  if (!formData.title) return alert("請輸入旅程標題");
+  if (!formData.title) return uiStore.showToast("請輸入旅程標題", "warning");
   const start = new Date(formData.startDate);
   const end = new Date(formData.endDate);
   if (start > end) {
-    return alert("開始日期不能晚於結束日期");
+    return uiStore.showToast("開始日期不能晚於結束日期", "warning");
   }
 
   emit("save", {

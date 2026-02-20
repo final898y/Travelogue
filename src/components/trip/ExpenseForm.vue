@@ -14,6 +14,7 @@ import {
   Check,
 } from "../../assets/icons";
 import { useAuthStore } from "../../stores/authStore";
+import { useUIStore } from "../../stores/uiStore";
 import type { Expense, TripMember } from "../../types/trip";
 
 const props = defineProps<{
@@ -24,6 +25,7 @@ const props = defineProps<{
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const authStore = useAuthStore();
+const uiStore = useUIStore();
 const currentUserEmail = authStore.user?.email || "me";
 const defaultMemberName =
   authStore.user?.displayName || currentUserEmail.split("@")[0] || "成員";
@@ -75,11 +77,13 @@ const categories = [
 const currencies = ["TWD", "JPY", "USD", "EUR", "KRW"];
 
 const handleSave = () => {
-  if (!formData.description) return alert("請輸入支出描述");
-  if (!formData.amount || formData.amount <= 0) return alert("請輸入有效金額");
-  if (!formData.payer) return alert("請指定付款人");
+  if (!formData.description)
+    return uiStore.showToast("請輸入支出描述", "warning");
+  if (!formData.amount || formData.amount <= 0)
+    return uiStore.showToast("請輸入有效金額", "warning");
+  if (!formData.payer) return uiStore.showToast("請指定付款人", "warning");
   if (!formData.splitWith || formData.splitWith.length === 0)
-    return alert("至少需有一人均分");
+    return uiStore.showToast("至少需有一人均分", "warning");
 
   emit("save", { ...formData });
 };

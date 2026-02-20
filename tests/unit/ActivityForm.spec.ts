@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { createTestingPinia } from "@pinia/testing";
 import ActivityForm from "../../src/components/trip/ActivityForm.vue";
+import { useUIStore } from "../../src/stores/uiStore";
 
 // Mock icons
 vi.mock("../../src/assets/icons", () => ({
@@ -14,8 +16,21 @@ vi.mock("../../src/assets/icons", () => ({
 }));
 
 describe("ActivityForm.vue", () => {
+  const mountWithPinia = (options = {}) => {
+    return mount(ActivityForm, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+          }),
+        ],
+      },
+      ...options,
+    });
+  };
+
   it("應渲染預設表單狀態 (建立模式)", () => {
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData: {},
       },
@@ -44,7 +59,7 @@ describe("ActivityForm.vue", () => {
       time: "12:30",
     };
 
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData,
       },
@@ -67,7 +82,7 @@ describe("ActivityForm.vue", () => {
   });
 
   it("切換類別應更新 formData", async () => {
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
 
@@ -81,21 +96,19 @@ describe("ActivityForm.vue", () => {
   });
 
   it("未輸入標題時不應觸發 save", async () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
+    const uiStore = useUIStore();
 
     await wrapper.find("button.bg-forest-400").trigger("click");
 
-    expect(alertSpy).toHaveBeenCalledWith("請輸入活動標題");
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入活動標題", "warning");
     expect(wrapper.emitted("save")).toBeFalsy();
-
-    alertSpy.mockRestore();
   });
 
   it("應正確處理備選方案 (Options) 的新增與刪除", async () => {
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: { initialData: {} },
     });
 
@@ -116,7 +129,7 @@ describe("ActivityForm.vue", () => {
   });
 
   it("點擊刪除按鈕應觸發 delete 事件", async () => {
-    const wrapper = mount(ActivityForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData: { id: "123", title: "Test" },
       },

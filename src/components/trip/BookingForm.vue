@@ -5,6 +5,7 @@
  */
 import { reactive, computed, watch } from "vue";
 import { Plane, Bed, Car, Ticket, Package } from "../../assets/icons";
+import { useUIStore } from "../../stores/uiStore";
 import type { Booking, BookingType } from "../../types/trip";
 
 const props = defineProps<{
@@ -13,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
+const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
 // 建立局部狀態副本
@@ -57,7 +59,7 @@ const bookingTypes: { value: BookingType; label: string; icon: string }[] = [
 ];
 
 const handleSave = () => {
-  if (!formData.title) return alert("請輸入預訂標題");
+  if (!formData.title) return uiStore.showToast("請輸入預訂標題", "warning");
   emit("save", { ...formData });
 };
 </script>

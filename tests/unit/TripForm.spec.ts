@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
+import { createTestingPinia } from "@pinia/testing";
 import TripForm from "../../src/components/trip/TripForm.vue";
+import { useUIStore } from "../../src/stores/uiStore";
 
 // Mock authStore
 vi.mock("../../src/stores/authStore", () => ({
@@ -18,8 +20,21 @@ vi.mock("../../src/assets/icons", () => ({
 }));
 
 describe("TripForm.vue", () => {
+  const mountWithPinia = (options = {}) => {
+    return mount(TripForm, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+          }),
+        ],
+      },
+      ...options,
+    });
+  };
+
   it("應渲染預設表單狀態 (建立模式)", () => {
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
 
     const inputs = wrapper.findAll("input");
     const titleInput = inputs[0]; // Title is first input
@@ -43,7 +58,7 @@ describe("TripForm.vue", () => {
       members: [{ id: "me", name: "我" }],
     };
 
-    const wrapper = mount(TripForm, {
+    const wrapper = mountWithPinia({
       props: {
         initialData,
       },
@@ -63,7 +78,7 @@ describe("TripForm.vue", () => {
   });
 
   it("應正確計算天數", async () => {
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
 
     // 設定日期 (4/1 - 4/5 = 5天)
     const inputs = wrapper.findAll("input");
@@ -75,20 +90,18 @@ describe("TripForm.vue", () => {
   });
 
   it("未輸入標題時不應觸發 save 事件", async () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
+    const uiStore = useUIStore();
 
     await wrapper.find("button.bg-forest-400").trigger("click");
 
-    expect(alertSpy).toHaveBeenCalledWith("請輸入旅程標題");
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入旅程標題", "warning");
     expect(wrapper.emitted("save")).toBeFalsy();
-
-    alertSpy.mockRestore();
   });
 
   it("開始日期晚於結束日期時不應觸發 save 事件", async () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
+    const uiStore = useUIStore();
 
     const inputs = wrapper.findAll("input");
     await inputs[0].setValue("測試旅程");
@@ -97,14 +110,15 @@ describe("TripForm.vue", () => {
 
     await wrapper.find("button.bg-forest-400").trigger("click");
 
-    expect(alertSpy).toHaveBeenCalledWith("開始日期不能晚於結束日期");
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "開始日期不能晚於結束日期",
+      "warning",
+    );
     expect(wrapper.emitted("save")).toBeFalsy();
-
-    alertSpy.mockRestore();
   });
 
   it("資料正確時應觸發 save 事件並傳遞正確資料", async () => {
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
 
     const inputs = wrapper.findAll("input");
     await inputs[0].setValue("大阪行");
@@ -122,7 +136,7 @@ describe("TripForm.vue", () => {
   });
 
   it("修改資料時應觸發 update:dirty 事件", async () => {
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
 
     const input = wrapper.find("input[type='text']");
     await input.setValue("新標題");
@@ -132,7 +146,7 @@ describe("TripForm.vue", () => {
   });
 
   it("應能新增與刪除旅伴", async () => {
-    const wrapper = mount(TripForm);
+    const wrapper = mountWithPinia();
     const expectedDefaultName = "test"; // derived from test@example.com
 
     // 初始應只有預設旅伴名稱

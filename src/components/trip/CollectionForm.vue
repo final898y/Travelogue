@@ -11,6 +11,7 @@ import {
   Youtube,
   MoreHorizontal,
 } from "../../assets/icons";
+import { useUIStore } from "../../stores/uiStore";
 import type { Collection, CollectionSource } from "../../types/trip";
 
 const props = defineProps<{
@@ -19,6 +20,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
+const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
 // 建立局部狀態副本
@@ -73,14 +75,14 @@ const categories = [
 ];
 
 const handleSave = () => {
-  if (!formData.title) return alert("請輸入標題");
-  if (!formData.url) return alert("請輸入網址");
+  if (!formData.title) return uiStore.showToast("請輸入標題", "warning");
+  if (!formData.url) return uiStore.showToast("請輸入網址", "warning");
 
   // 簡易網址校驗
   try {
     new URL(formData.url);
   } catch {
-    return alert("請輸入有效的網址");
+    return uiStore.showToast("請輸入有效的網址", "warning");
   }
 
   emit("save", { ...formData });

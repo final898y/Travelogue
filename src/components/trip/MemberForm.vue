@@ -5,6 +5,7 @@
  */
 import { reactive, ref, watch } from "vue";
 import { UserPlus, X } from "../../assets/icons";
+import { useUIStore } from "../../stores/uiStore";
 import type { TripMember } from "../../types/trip";
 
 const props = defineProps<{
@@ -16,6 +17,8 @@ const emit = defineEmits<{
   (e: "save", members: TripMember[]): void;
   (e: "update:dirty", isDirty: boolean): void;
 }>();
+
+const uiStore = useUIStore();
 
 // 建立局部狀態副本 (使用深拷貝避免改到 props)
 const members = reactive<TripMember[]>(
@@ -44,21 +47,25 @@ const addMember = () => {
   const name = newMemberName.value.trim();
   if (!name) return;
   if (members.some((m) => m.name === name)) {
-    return alert("旅伴名稱重複");
+    return uiStore.showToast("旅伴名稱重複", "warning");
   }
   const newId = `member_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   members.push({ id: newId, name });
   newMemberName.value = "";
 };
 
-const removeMember = (id: string) => {
+const removeMember = async (id: string) => {
   if (id === props.currentUserEmail) return;
 
-  if (
-    confirm(
+  const confirmed = await uiStore.showConfirm({
+    title: "移除旅伴？",
+    message:
       "刪除旅伴後，相關的記帳紀錄將會顯示為『已移除旅伴』，確定要刪除嗎？",
-    )
-  ) {
+    okText: "移除",
+    cancelText: "保留",
+  });
+
+  if (confirmed) {
     const idx = members.findIndex((m) => m.id === id);
     if (idx > -1) {
       members.splice(idx, 1);
@@ -82,7 +89,7 @@ watch(
 
 const handleSave = () => {
   if (members.length === 0) {
-    return alert("旅伴名單不能為空");
+    return uiStore.showToast("旅伴名單不能為空", "warning");
   }
   emit("save", [...members]);
 };

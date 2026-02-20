@@ -13,6 +13,7 @@ import {
   Plus,
   X,
 } from "../../assets/icons";
+import { useUIStore } from "../../stores/uiStore";
 import type { Activity } from "../../types/trip";
 
 const props = defineProps<{
@@ -20,6 +21,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
+
+const uiStore = useUIStore();
 
 // 建立局部狀態副本以供編輯
 const formData = reactive<Partial<Activity>>({
@@ -66,7 +69,7 @@ const categories = [
 ];
 
 const handleSave = () => {
-  if (!formData.title) return alert("請輸入活動標題");
+  if (!formData.title) return uiStore.showToast("請輸入活動標題", "warning");
   emit("save", { ...formData });
 };
 

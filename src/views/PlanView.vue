@@ -7,6 +7,7 @@ import { ref, computed, onMounted, onUnmounted, toRefs } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { usePlanStore } from "../stores/planStore";
+import { useUIStore } from "../stores/uiStore";
 import { useTripDetails } from "../composables/useTripDetails";
 import PlanHeader from "../components/ui/PlanHeader.vue";
 import HorizontalDatePicker from "../components/ui/HorizontalDatePicker.vue";
@@ -20,6 +21,7 @@ const router = useRouter();
 const route = useRoute();
 const tripStore = useTripStore();
 const planStore = usePlanStore();
+const uiStore = useUIStore();
 const { currentTripPlans } = toRefs(planStore);
 
 const tripId = route.params.id as string;
@@ -123,10 +125,11 @@ const handleSaveActivity = async (updatedActivity: Activity) => {
       selectedDate.value,
       updatedActivity,
     );
+    uiStore.showToast("行程儲存成功", "success");
     handleCloseSheet();
   } catch (error) {
     console.error("儲存活動失敗:", error);
-    alert("儲存失敗，請稍後再試");
+    uiStore.showToast("儲存失敗，請稍後再試", "error");
   } finally {
     isSaving.value = false;
   }
@@ -141,21 +144,29 @@ const handleDeleteActivity = async () => {
   )
     return;
 
-  if (!confirm("確定要刪除此行程嗎？")) return;
+  const confirmed = await uiStore.showConfirm({
+    title: "確定刪除此行程？",
+    message: "此動作將永久移除該行程活動，無法復原。",
+    okText: "刪除",
+    cancelText: "取消",
+  });
 
-  try {
-    isSaving.value = true;
-    await planStore.deleteTripActivity(
-      tripId,
-      selectedDate.value,
-      currentActivity.value.id,
-    );
-    handleCloseSheet();
-  } catch (error) {
-    console.error("刪除活動失敗:", error);
-    alert("刪除失敗，請稍後再試");
-  } finally {
-    isSaving.value = false;
+  if (confirmed) {
+    try {
+      isSaving.value = true;
+      await planStore.deleteTripActivity(
+        tripId,
+        selectedDate.value,
+        currentActivity.value.id,
+      );
+      uiStore.showToast("行程已刪除", "success");
+      handleCloseSheet();
+    } catch (error) {
+      console.error("刪除活動失敗:", error);
+      uiStore.showToast("刪除失敗，請稍後再試", "error");
+    } finally {
+      isSaving.value = false;
+    }
   }
 };
 </script>

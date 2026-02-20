@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useExpenseStore } from "../stores/expenseStore";
 import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
+import { useUIStore } from "../stores/uiStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import ExpenseForm from "../components/trip/ExpenseForm.vue";
 import MemberForm from "../components/trip/MemberForm.vue";
@@ -28,6 +29,7 @@ const router = useRouter();
 const expenseStore = useExpenseStore();
 const tripStore = useTripStore();
 const authStore = useAuthStore();
+const uiStore = useUIStore();
 const { expenses } = storeToRefs(expenseStore);
 const tripId = route.params.id as string;
 
@@ -73,11 +75,12 @@ const handleSaveMembers = async (newMembers: TripMember[]) => {
   try {
     isSaving.value = true;
     await tripStore.updateTrip(tripId, { members: newMembers });
+    uiStore.showToast("旅伴名單已更新", "success");
     isMemberSheetOpen.value = false;
     isMemberFormDirty.value = false;
   } catch (error) {
     console.error("更新旅伴失敗:", error);
-    alert("儲存失敗");
+    uiStore.showToast("更新成員失敗", "error");
   } finally {
     isSaving.value = false;
   }
@@ -183,13 +186,15 @@ const handleSaveExpense = async (updatedItem: Expense) => {
     isSaving.value = true;
     if (updatedItem.id) {
       await expenseStore.updateExpense(tripId, updatedItem.id, updatedItem);
+      uiStore.showToast("支出更新成功", "success");
     } else {
       await expenseStore.addExpense(tripId, updatedItem);
+      uiStore.showToast("新增支出成功", "success");
     }
     handleCloseSheet();
   } catch (error) {
     console.error("儲存支出失敗:", error);
-    alert("儲存失敗");
+    uiStore.showToast("儲存失敗，請稍後再試", "error");
   } finally {
     isSaving.value = false;
   }
@@ -198,17 +203,25 @@ const handleSaveExpense = async (updatedItem: Expense) => {
 const handleDeleteExpense = async () => {
   if (!tripId || !currentExpense.value?.id || isSaving.value) return;
 
-  if (!confirm("確定要刪除此筆支出紀錄嗎？")) return;
+  const confirmed = await uiStore.showConfirm({
+    title: "確定刪除支出？",
+    message: "這筆消費紀錄將會被永久移除，且無法復原。",
+    okText: "刪除",
+    cancelText: "取消",
+  });
 
-  try {
-    isSaving.value = true;
-    await expenseStore.deleteExpense(tripId, currentExpense.value.id);
-    handleCloseSheet();
-  } catch (error) {
-    console.error("刪除支出失敗:", error);
-    alert("刪除失敗");
-  } finally {
-    isSaving.value = false;
+  if (confirmed) {
+    try {
+      isSaving.value = true;
+      await expenseStore.deleteExpense(tripId, currentExpense.value.id);
+      uiStore.showToast("支出已移除", "success");
+      handleCloseSheet();
+    } catch (error) {
+      console.error("刪除支出失敗:", error);
+      uiStore.showToast("刪除失敗", "error");
+    } finally {
+      isSaving.value = false;
+    }
   }
 };
 </script>

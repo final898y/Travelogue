@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useCollectionStore } from "../stores/collectionStore";
+import { useUIStore } from "../stores/uiStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import CollectionForm from "../components/trip/CollectionForm.vue";
 import {
@@ -21,6 +22,7 @@ import type { Collection, CollectionSource } from "../types/trip";
 const route = useRoute();
 const router = useRouter();
 const collectionStore = useCollectionStore();
+const uiStore = useUIStore();
 const { collections } = storeToRefs(collectionStore);
 const tripId = route.params.id as string;
 
@@ -75,13 +77,15 @@ const handleSaveCollection = async (updatedItem: Collection) => {
         updatedItem.id,
         updatedItem,
       );
+      uiStore.showToast("更新成功", "success");
     } else {
       await collectionStore.addCollection(tripId, updatedItem);
+      uiStore.showToast("已加入收藏", "success");
     }
     handleCloseSheet();
   } catch (error) {
     console.error("儲存收集失敗:", error);
-    alert("儲存失敗，請稍後再試");
+    uiStore.showToast("儲存失敗，請稍後再試", "error");
   } finally {
     isSaving.value = false;
   }
@@ -90,17 +94,28 @@ const handleSaveCollection = async (updatedItem: Collection) => {
 const handleDeleteCollection = async () => {
   if (!tripId || !currentCollection.value?.id || isSaving.value) return;
 
-  if (!confirm("確定要刪除此收集項目嗎？")) return;
+  const confirmed = await uiStore.showConfirm({
+    title: "移除此收藏？",
+    message: "確定要移除這個靈感收集項目嗎？",
+    okText: "移除",
+    cancelText: "保留",
+  });
 
-  try {
-    isSaving.value = true;
-    await collectionStore.deleteCollection(tripId, currentCollection.value.id);
-    handleCloseSheet();
-  } catch (error) {
-    console.error("刪除收集失敗:", error);
-    alert("刪除失敗，請稍後再試");
-  } finally {
-    isSaving.value = false;
+  if (confirmed) {
+    try {
+      isSaving.value = true;
+      await collectionStore.deleteCollection(
+        tripId,
+        currentCollection.value.id,
+      );
+      uiStore.showToast("已移除收藏", "success");
+      handleCloseSheet();
+    } catch (error) {
+      console.error("刪除收集失敗:", error);
+      uiStore.showToast("刪除失敗，請稍後再試", "error");
+    } finally {
+      isSaving.value = false;
+    }
   }
 };
 </script>

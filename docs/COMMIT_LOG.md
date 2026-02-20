@@ -8,6 +8,23 @@
 
 ## [2026-02-20]
 
+### `TBD` - feat(ui): 實作全域 Toast 與 ConfirmDialog 並優化交互體驗
+
+- **全域交互系統**:
+  - 建立 `uiStore.ts` (Pinia) 統一管理提示與確認狀態，支援非同步 `Promise` 型式的確認對話框。
+  - 建立 `BaseToast.vue`: 採用 Soft UI 手帳風格設計，具備實心陰影與品牌專屬色系（Forest, Coral-red, Honey-orange）。
+  - 建立 `BaseConfirmDialog.vue`: 現代化模態對話框，具備高質感背景模糊與符合專案規範的按鈕設計。
+- **全站交互替換**:
+  - 將全專案超過 30 處 `window.alert()` 與 `window.confirm()` 替換為自定義組件，達成 100% UI 一致性。
+  - 受影響範圍包含所有視圖 (Views) 與業務表單 (Forms)。
+- **工程與測試優化**:
+  - 安裝 `@pinia/testing` 套件並更新 4 個核心表單測試檔案 (`TripForm.spec.ts` 等)，補全 Pinia 測試環境。
+  - 更新測試邏輯以驗證 `uiStore.showToast` 觸發狀態，確保交互邏輯可被測試覆蓋。
+- **驗證成果**:
+  - 通過 81 個測試案例、無 Lint 錯誤、生產環境編譯成功。
+
+## [2026-02-20]
+
 ### `TBD` - style(home): 更新首頁 Header Logo 並優化視覺比例
 
 - **品牌更新**:

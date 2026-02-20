@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Plus,
 } from "../../assets/icons";
+import { useUIStore } from "../../stores/uiStore";
 import type { ChecklistItem } from "../../types/trip";
 
 const props = defineProps<{
@@ -21,6 +22,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
+const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
 // 建立局部狀態副本
@@ -58,7 +60,7 @@ const categories = [
 ];
 
 const handleSave = () => {
-  if (!formData.title) return alert("請輸入項目名稱");
+  if (!formData.title) return uiStore.showToast("請輸入項目名稱", "warning");
   emit("save", { ...formData });
 };
 </script>

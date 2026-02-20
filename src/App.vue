@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import BottomNav from "./components/ui/BottomNav.vue";
+import BaseToast from "./components/ui/BaseToast.vue";
+import BaseConfirmDialog from "./components/ui/BaseConfirmDialog.vue";
 import { useAuthStore } from "./stores/authStore";
 import { useRoute } from "vue-router";
 
@@ -9,6 +11,10 @@ const route = useRoute();
 
 <template>
   <div class="min-h-screen bg-cream-light font-sans selection:bg-forest-100">
+    <!-- Global Notifications -->
+    <BaseToast />
+    <BaseConfirmDialog />
+
     <!-- Initial Loading Overlay -->
     <div
       v-if="authStore.loading"
