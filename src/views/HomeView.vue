@@ -7,7 +7,8 @@ import { importSeedData } from "../services/seed";
 import TripCard from "../components/trip/TripCard.vue";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import TripForm from "../components/trip/TripForm.vue";
-import { Sprout, Plus, ChevronRight, MapPin } from "../assets/icons";
+import Logo from "../assets/Logo.svg";
+import { Plus, ChevronRight, MapPin } from "../assets/icons";
 import type { Trip } from "../types/trip";
 
 const router = useRouter();
@@ -116,13 +117,8 @@ const handleSeed = async () => {
     <header
       class="sticky top-0 z-40 bg-cream-light/80 backdrop-blur-md px-6 py-5 flex justify-between items-center"
     >
-      <div class="flex items-center gap-2 text-forest-500">
-        <Sprout :size="24" />
-        <h1
-          class="text-2xl font-rounded font-bold text-forest-800 tracking-tight"
-        >
-          Travelogue
-        </h1>
+      <div class="flex items-center">
+        <img :src="Logo" alt="Travelogue" class="h-10 w-auto" />
       </div>
       <div class="flex gap-2">
         <button
