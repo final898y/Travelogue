@@ -13,6 +13,7 @@
 - **文件 ID**: **必須直接使用使用者的 Email (全小寫)**。例如 `test@gmail.com`。
 - **欄位**:
   - `email` (string): 使用者 Email。
+  - `isAdmin` (boolean): 是否具備管理員權限 (如：執行資料初始化)。
   - `addedAt` (timestamp): 加入時間。
 
 ### 📂 `trips` (主集合)
@@ -29,7 +30,7 @@
   - `members` (array): `Array<{ id: string, name: string }>`。
   - `bookings` (array): 嵌入式預訂資訊。
   - `preparation` (array): 嵌入式準備清單項目。
-  - `userId` (string): 建立者的 Firebase UID。
+  - `userId` (string): 建立者的 Email (優先) 或 Firebase UID。
   - `createdAt` (timestamp): 建立時間。
   - `updatedAt` (timestamp): 最後更新時間。
 

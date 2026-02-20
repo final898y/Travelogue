@@ -8,6 +8,18 @@
 
 ## [2026-02-20]
 
+## [2026-02-20] refactor(auth): 優化權限驗證與資料存儲邏輯
+
+- **Version**: `2.1.1`
+- **改動方向**: 統一使用 `authStore` 進行權限驗證，移除硬編碼 Email，並優先以 Email 作為資料關聯鍵。
+- **具體內容**:
+  - 在 `authStore.ts` 中擴展白名單驗證邏輯，支援讀取並存儲 `isAdmin` 權限旗標。
+  - 在 `HomeView.vue` 中，將「初始化資料」按鈕改為根據 `authStore.isAdmin` 決定是否顯示（解耦硬編碼）。
+  - 在 `tripStore.ts` 中，將所有直接調用 Firebase `auth` 的邏輯改為引用 `authStore`，確保狀態單一來源。
+  - 在 `addTrip` 方法中，優先使用 `user.email` 作為 `userId` 存入資料庫，提升資料可讀性。
+  - 在 `HomeView.vue` 的 `handleDeleteTrip` 增加 `userId` 與當前使用者 Email 的權限比對。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.1`。
+
 ### `TBD` - feat(trip): 實作特定旅程之匯出與匯入功能
 
 - **功能擴展**:

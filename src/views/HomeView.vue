@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { useAuthStore } from "../stores/authStore";
@@ -23,6 +23,8 @@ const isSaving = ref(false);
 const isFormDirty = ref(false);
 const editingTrip = ref<Trip | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+
+const isAllowedToSeed = computed(() => authStore.isAdmin);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -98,6 +100,14 @@ const handleEditTrip = (tripId: string | number) => {
 };
 
 const handleDeleteTrip = async (tripId: string | number) => {
+  const trip = tripStore.trips.find((t) => t.id === tripId);
+  const userEmail = authStore.user?.email;
+
+  if (!trip || !userEmail || trip.userId !== userEmail) {
+    uiStore.showToast("您沒有權限刪除此旅程", "error");
+    return;
+  }
+
   const confirmed = await uiStore.showConfirm({
     title: "確定要刪除嗎？",
     message: "這趟旅程及其所有相關行程資料將會永久移除，此動作無法復原。",
@@ -192,6 +202,7 @@ const handleSeed = async () => {
       </div>
       <div class="flex gap-2">
         <button
+          v-if="isAllowedToSeed"
           @click="handleSeed"
           :disabled="isSeeding"
           class="px-3 py-1 text-xs font-bold bg-forest-100 text-forest-600 rounded-full hover:bg-forest-200 transition-colors disabled:opacity-50"

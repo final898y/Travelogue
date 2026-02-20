@@ -12,17 +12,25 @@ import { auth, db } from "../services/firebase";
 
 export const useAuthStore = defineStore("auth", () => {
   const user = ref<User | null>(null);
+  const isAdmin = ref(false);
   const loading = ref(true);
   const error = ref<string | null>(null);
 
-  // Check if email is in whitelist (Industry Best Practice: ID as Key)
-  const isEmailWhitelisted = async (email: string) => {
+  // Check if email is in whitelist and get permissions
+  const checkWhitelist = async (email: string) => {
     try {
       const docRef = doc(db, "whitelist", email.toLowerCase());
       const docSnap = await getDoc(docRef);
-      return docSnap.exists();
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        isAdmin.value = !!data.isAdmin;
+        return true;
+      }
+      isAdmin.value = false;
+      return false;
     } catch (err) {
       console.error("Whitelist check failed:", err);
+      isAdmin.value = false;
       return false;
     }
   };
@@ -31,16 +39,18 @@ export const useAuthStore = defineStore("auth", () => {
   const init = () => {
     onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser && firebaseUser.email) {
-        const isAllowed = await isEmailWhitelisted(firebaseUser.email);
+        const isAllowed = await checkWhitelist(firebaseUser.email);
         if (isAllowed) {
           user.value = firebaseUser;
         } else {
           await signOut(auth);
           user.value = null;
+          isAdmin.value = false;
           error.value = "您的帳號不在授權白名單內，請聯繫管理員。";
         }
       } else {
         user.value = null;
+        isAdmin.value = false;
       }
       loading.value = false;
     });
@@ -52,10 +62,11 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const result = await signInWithPopup(auth, provider);
       if (result.user.email) {
-        const isAllowed = await isEmailWhitelisted(result.user.email);
+        const isAllowed = await checkWhitelist(result.user.email);
         if (!isAllowed) {
           await signOut(auth);
           user.value = null;
+          isAdmin.value = false;
           error.value = "您的帳號不在授權白名單內，請聯繫管理員。";
           throw new Error("NOT_IN_WHITELIST");
         }
@@ -74,6 +85,7 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       await signOut(auth);
       user.value = null;
+      isAdmin.value = false;
       error.value = null;
     } catch (err) {
       console.error("Logout failed:", err);
@@ -82,6 +94,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   return {
     user,
+    isAdmin,
     loading,
     error,
     init,

@@ -168,9 +168,20 @@ const handleImport = async (event: Event) => {
   }
 };
 
-const formatDate = (ts: Timestamp | any) => {
+const formatDate = (
+  ts: Timestamp | Date | number | string | null | undefined,
+) => {
   if (!ts) return "未知時間";
-  const date = ts.toDate ? ts.toDate() : new Date(ts);
+
+  let date: Date;
+  if (ts instanceof Date) {
+    date = ts;
+  } else if (ts && typeof ts === "object" && "toDate" in ts) {
+    date = (ts as Timestamp).toDate();
+  } else {
+    date = new Date(ts as string | number);
+  }
+
   return date.toLocaleString("zh-TW", {
     month: "short",
     day: "numeric",
@@ -253,7 +264,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "version",
-        label: "版本資訊 (v2.1.0)",
+        label: "版本資訊 (v2.1.1)",
         icon: Info as FunctionalComponent,
       },
     ],

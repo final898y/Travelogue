@@ -44,7 +44,10 @@ describe("Auth Store", () => {
     // Mock 登入結果
     (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
     // Mock 白名單檢查結果 (Exists)
-    (getDoc as vi.Mock).mockResolvedValueOnce({ exists: () => true });
+    (getDoc as vi.Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({}),
+    });
 
     await store.loginWithGoogle();
 
@@ -67,7 +70,41 @@ describe("Auth Store", () => {
     expect(store.error).toContain("不在授權白名單內");
   });
 
-  it("logout - 應呼叫 signOut 並清空狀態", async () => {
+  it("loginWithGoogle - 登入成功且具備 Admin 權限", async () => {
+    const store = useAuthStore();
+    const mockUser = { email: "admin@test.com", uid: "admin-123" };
+
+    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
+    // Mock 白名單且 isAdmin 為 true
+    (getDoc as vi.Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ isAdmin: true }),
+    });
+
+    await store.loginWithGoogle();
+
+    expect(store.user).toEqual(mockUser as any);
+    expect(store.isAdmin).toBe(true);
+  });
+
+  it("loginWithGoogle - 登入成功但僅為普通用戶 (無 isAdmin 欄位)", async () => {
+    const store = useAuthStore();
+    const mockUser = { email: "user@test.com", uid: "user-123" };
+
+    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
+    // Mock 白名單且 isAdmin 為 false (或不存在)
+    (getDoc as vi.Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ isAdmin: false }),
+    });
+
+    await store.loginWithGoogle();
+
+    expect(store.user).toEqual(mockUser as any);
+    expect(store.isAdmin).toBe(false);
+  });
+
+  it("logout - 應呼叫 signOut 並清空狀態 (包含 isAdmin)", async () => {
     const store = useAuthStore();
     store.user = { uid: "123" } as any;
 
@@ -87,7 +124,10 @@ describe("Auth Store", () => {
         callback(mockFirebaseUser);
       },
     );
-    (getDoc as vi.Mock).mockResolvedValueOnce({ exists: () => false });
+    (getDoc as vi.Mock).mockResolvedValueOnce({
+      exists: () => false,
+      data: () => ({}),
+    });
 
     store.init();
 

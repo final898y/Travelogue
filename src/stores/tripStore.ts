@@ -11,7 +11,8 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { db, auth } from "../services/firebase";
+import { db } from "../services/firebase";
+import { useAuthStore } from "./authStore";
 import { z } from "zod";
 import {
   TripSchema,
@@ -24,6 +25,7 @@ export const useTripStore = defineStore("trip", () => {
   const trips = ref<Trip[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const authStore = useAuthStore();
 
   // Collection reference
   const tripsRef = collection(db, "trips");
@@ -52,7 +54,7 @@ export const useTripStore = defineStore("trip", () => {
 
   // Real-time listener for all trips
   const subscribeToTrips = () => {
-    if (!auth.currentUser) return () => {};
+    if (!authStore.user) return () => {};
     loading.value = true;
     const q = query(tripsRef, orderBy("startDate", "desc"));
     return onSnapshot(
@@ -99,7 +101,7 @@ export const useTripStore = defineStore("trip", () => {
    * 獲取單一旅程資訊 (用於非即時監聽視圖)
    */
   const fetchTripById = async (id: string) => {
-    if (!auth.currentUser) return null;
+    if (!authStore.user) return null;
     const docRef = doc(db, "trips", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -122,11 +124,11 @@ export const useTripStore = defineStore("trip", () => {
   const addTrip = async (
     tripData: Omit<Trip, "id" | "userId" | "createdAt">,
   ) => {
-    if (!auth.currentUser)
+    if (!authStore.user)
       throw new Error("User must be logged in to create a trip");
     const docRef = await addDoc(tripsRef, {
       ...tripData,
-      userId: auth.currentUser.uid,
+      userId: authStore.user.email || authStore.user.uid,
       createdAt: Timestamp.now(),
     });
     return docRef.id;
@@ -137,14 +139,14 @@ export const useTripStore = defineStore("trip", () => {
     tripId: string,
     tripData: Partial<Omit<Trip, "id" | "userId" | "createdAt">>,
   ) => {
-    if (!auth.currentUser) throw new Error("User must be logged in");
+    if (!authStore.user) throw new Error("User must be logged in");
     const docRef = doc(db, "trips", tripId);
     await updateDoc(docRef, tripData);
   };
 
   // Delete a trip
   const deleteTrip = async (tripId: string) => {
-    if (!auth.currentUser) throw new Error("User must be logged in");
+    if (!authStore.user) throw new Error("User must be logged in");
     // TODO: Ideally also delete sub-collections like 'activities' and 'expenses'
     // For now, we just delete the main document
     const docRef = doc(db, "trips", tripId);
@@ -156,7 +158,7 @@ export const useTripStore = defineStore("trip", () => {
    * 更新預訂資訊 (Trip 主文件中的 bookings 陣列)
    */
   const updateTripBooking = async (tripId: string, booking: Booking) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const tripRef = doc(db, "trips", tripId);
     const tripSnap = await getDoc(tripRef);
     if (!tripSnap.exists()) throw new Error("Trip not found");
@@ -183,7 +185,7 @@ export const useTripStore = defineStore("trip", () => {
    * 刪除預訂資訊
    */
   const deleteTripBooking = async (tripId: string, bookingId: string) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const tripRef = doc(db, "trips", tripId);
     const tripSnap = await getDoc(tripRef);
     if (!tripSnap.exists()) throw new Error("Trip not found");
@@ -203,7 +205,7 @@ export const useTripStore = defineStore("trip", () => {
     tripId: string,
     item: Partial<ChecklistItem>,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const tripRef = doc(db, "trips", tripId);
     const tripSnap = await getDoc(tripRef);
     if (!tripSnap.exists()) throw new Error("Trip not found");
@@ -236,7 +238,7 @@ export const useTripStore = defineStore("trip", () => {
    * 刪除準備清單項目
    */
   const deleteTripPreparationItem = async (tripId: string, itemId: string) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const tripRef = doc(db, "trips", tripId);
     const tripSnap = await getDoc(tripRef);
     if (!tripSnap.exists()) throw new Error("Trip not found");
@@ -253,7 +255,7 @@ export const useTripStore = defineStore("trip", () => {
    * 切換準備清單項目的完成狀態 (原子化操作優化)
    */
   const togglePreparationItem = async (tripId: string, itemId: string) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const tripRef = doc(db, "trips", tripId);
     const tripSnap = await getDoc(tripRef);
     if (!tripSnap.exists()) throw new Error("Trip not found");

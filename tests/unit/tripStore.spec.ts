@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useTripStore } from "../../src/stores/tripStore";
+import { useAuthStore } from "../../src/stores/authStore";
 import * as firestore from "firebase/firestore";
 
 // Mock Firebase
@@ -17,16 +18,26 @@ vi.mock("firebase/firestore", () => ({
   Timestamp: { now: vi.fn(() => ({ seconds: 123, nanoseconds: 456 })) },
 }));
 
-// Mock Firebase Auth
+// Mock Firebase Auth (Service Direct)
 vi.mock("../../src/services/firebase", () => ({
   db: {},
-  auth: { currentUser: { uid: "user-123" } },
+  auth: { currentUser: { uid: "user-123", email: "user@test.com" } },
+}));
+
+// Mock authStore
+vi.mock("../../src/stores/authStore", () => ({
+  useAuthStore: vi.fn(),
 }));
 
 describe("Trip Store", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+
+    // Default mock user for authStore
+    (useAuthStore as any).mockReturnValue({
+      user: { uid: "user-123", email: "user@test.com" },
+    });
   });
 
   it("初始化時應具備正確的初始狀態", () => {
@@ -35,7 +46,7 @@ describe("Trip Store", () => {
     expect(store.loading).toBe(false);
   });
 
-  it("addTrip 應能正確新增旅程並綁定 userId", async () => {
+  it("addTrip 應能正確新增旅程並優先綁定 Email 作為 userId", async () => {
     const store = useTripStore();
     const tripData = {
       title: "新旅程",
@@ -52,8 +63,25 @@ describe("Trip Store", () => {
     expect(id).toBe("new-trip-id");
     expect(firestore.addDoc).toHaveBeenCalled();
     const addedData = (firestore.addDoc as any).mock.calls[0][1];
-    expect(addedData.userId).toBe("user-123");
+    expect(addedData.userId).toBe("user@test.com"); // 應使用 Email
     expect(addedData.createdAt).toBeDefined();
+  });
+
+  it("addTrip 在無 Email 時應使用 UID 作為 userId", async () => {
+    // 模擬無 Email 的用戶
+    (useAuthStore as any).mockReturnValue({
+      user: { uid: "user-123", email: null },
+    });
+
+    const store = useTripStore();
+    const tripData = { title: "無 Email 旅程" };
+
+    (firestore.addDoc as any).mockResolvedValueOnce({ id: "new-trip-id" });
+
+    await store.addTrip(tripData as any);
+
+    const addedData = (firestore.addDoc as any).mock.calls[0][1];
+    expect(addedData.userId).toBe("user-123"); // 退回 UID
   });
 
   it("updateTripBooking 應能更新 trip 中的預訂陣列", async () => {
