@@ -3,7 +3,11 @@ import { useAuthStore } from "../stores/authStore";
 import { useUIStore } from "../stores/uiStore";
 import { useRouter } from "vue-router";
 import { ref, onMounted, type FunctionalComponent } from "vue";
-import { backupService } from "../services/backupService";
+import {
+  backupService,
+  type ExportDataPackage,
+} from "../services/backupService";
+import type { Timestamp } from "firebase/firestore";
 import {
   Users,
   Download,
@@ -35,12 +39,17 @@ interface SettingGroup {
   items: SettingItem[];
 }
 
+interface CloudBackupRecord extends ExportDataPackage {
+  id: string;
+  createdAt: Timestamp;
+}
+
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 const router = useRouter();
 const isProcessing = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
-const cloudBackups = ref<any[]>([]);
+const cloudBackups = ref<CloudBackupRecord[]>([]);
 const isFetchingBackups = ref(false);
 
 const handleLogout = async () => {
@@ -56,7 +65,8 @@ const fetchBackups = async () => {
   if (!authStore.user) return;
   try {
     isFetchingBackups.value = true;
-    cloudBackups.value = await backupService.listCloudBackups(authStore.user.uid);
+    const records = await backupService.listCloudBackups(authStore.user.uid);
+    cloudBackups.value = records as CloudBackupRecord[];
   } catch (error) {
     console.error("Fetch Backups Error:", error);
   } finally {
@@ -133,7 +143,8 @@ const handleImport = async (event: Event) => {
 
   const confirmed = await uiStore.showConfirm({
     title: "確定要覆蓋資料嗎？",
-    message: "導入操作將會『完全刪除』您目前的旅程資料，並以備份檔內容取代。此動作無法復原。",
+    message:
+      "導入操作將會『完全刪除』您目前的旅程資料，並以備份檔內容取代。此動作無法復原。",
     okText: "確定導入",
     cancelText: "取消",
   });
@@ -157,7 +168,7 @@ const handleImport = async (event: Event) => {
   }
 };
 
-const formatDate = (ts: any) => {
+const formatDate = (ts: Timestamp | any) => {
   if (!ts) return "未知時間";
   const date = ts.toDate ? ts.toDate() : new Date(ts);
   return date.toLocaleString("zh-TW", {
@@ -172,8 +183,16 @@ const settingsGroups: SettingGroup[] = [
   {
     title: "旅程管理",
     items: [
-      { id: "members", label: "旅伴成員管理", icon: Users as FunctionalComponent },
-      { id: "archive", label: "已封存的旅程", icon: Archive as FunctionalComponent },
+      {
+        id: "members",
+        label: "旅伴成員管理",
+        icon: Users as FunctionalComponent,
+      },
+      {
+        id: "archive",
+        label: "已封存的旅程",
+        icon: Archive as FunctionalComponent,
+      },
     ],
   },
   {
@@ -202,17 +221,41 @@ const settingsGroups: SettingGroup[] = [
   {
     title: "系統設定",
     items: [
-      { id: "notifications", label: "通知提醒", icon: Bell as FunctionalComponent },
-      { id: "currency", label: "預設幣別 (TWD)", icon: Coins as FunctionalComponent },
-      { id: "theme", label: "主題風格 (森林綠)", icon: Palette as FunctionalComponent },
+      {
+        id: "notifications",
+        label: "通知提醒",
+        icon: Bell as FunctionalComponent,
+      },
+      {
+        id: "currency",
+        label: "預設幣別 (TWD)",
+        icon: Coins as FunctionalComponent,
+      },
+      {
+        id: "theme",
+        label: "主題風格 (森林綠)",
+        icon: Palette as FunctionalComponent,
+      },
     ],
   },
   {
     title: "關於",
     items: [
-      { id: "help", label: "使用幫助", icon: HelpCircle as FunctionalComponent },
-      { id: "feedback", label: "意見回饋", icon: MessageSquare as FunctionalComponent },
-      { id: "version", label: "版本資訊 (v2.0.0)", icon: Info as FunctionalComponent },
+      {
+        id: "help",
+        label: "使用幫助",
+        icon: HelpCircle as FunctionalComponent,
+      },
+      {
+        id: "feedback",
+        label: "意見回饋",
+        icon: MessageSquare as FunctionalComponent,
+      },
+      {
+        id: "version",
+        label: "版本資訊 (v2.1.0)",
+        icon: Info as FunctionalComponent,
+      },
     ],
   },
 ];
@@ -286,35 +329,56 @@ const settingsGroups: SettingGroup[] = [
           </button>
 
           <!-- Special Section: Cloud Backups List (Only in Data Security Group) -->
-          <div v-if="group.id === 'backup' || group.title === '資料安全'" class="pt-2">
+          <div v-if="group.title === '資料安全'" class="pt-2">
             <div class="flex justify-between items-center mb-2 px-1">
-              <h4 class="text-[10px] font-bold text-forest-300 uppercase">最近的雲端備份</h4>
-              <button @click="fetchBackups" class="p-1 text-forest-200 hover:text-forest-400 transition-colors">
-                <RefreshCcw :size="12" :class="{ 'animate-spin': isFetchingBackups }" />
+              <h4 class="text-[10px] font-bold text-forest-300 uppercase">
+                最近的雲端備份
+              </h4>
+              <button
+                @click="fetchBackups"
+                class="p-1 text-forest-200 hover:text-forest-400 transition-colors cursor-pointer"
+              >
+                <RefreshCcw
+                  :size="12"
+                  :class="{ 'animate-spin': isFetchingBackups }"
+                />
               </button>
             </div>
-            
+
             <div v-if="cloudBackups.length > 0" class="space-y-2">
-              <div v-for="b in cloudBackups.slice(0, 3)" :key="b.id" 
-                class="flex items-center justify-between p-3 bg-white/50 border border-forest-50 rounded-xl">
+              <div
+                v-for="b in cloudBackups.slice(0, 3)"
+                :key="b.id"
+                class="flex items-center justify-between p-3 bg-white/50 border border-forest-50 rounded-xl"
+              >
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-forest-50 flex items-center justify-center text-forest-300">
+                  <div
+                    class="w-8 h-8 rounded-lg bg-forest-50 flex items-center justify-center text-forest-300"
+                  >
                     <Clock :size="16" />
                   </div>
                   <div>
-                    <p class="text-xs font-bold text-forest-800">{{ formatDate(b.createdAt) }}</p>
-                    <p class="text-[9px] text-gray-400">包含 {{ b.trips?.length || 0 }} 趟旅程</p>
+                    <p class="text-xs font-bold text-forest-800">
+                      {{ formatDate(b.createdAt) }}
+                    </p>
+                    <p class="text-[9px] text-gray-400">
+                      包含 {{ b.trips?.length || 0 }} 趟旅程
+                    </p>
                   </div>
                 </div>
-                <button 
+                <button
                   @click="handleCloudRestore(b.id, formatDate(b.createdAt))"
-                  class="px-3 py-1.5 bg-forest-100 text-forest-600 rounded-lg text-[10px] font-bold hover:bg-forest-200 transition-all flex items-center gap-1 cursor-pointer">
+                  class="px-3 py-1.5 bg-forest-100 text-forest-600 rounded-lg text-[10px] font-bold hover:bg-forest-200 transition-all flex items-center gap-1 cursor-pointer"
+                >
                   <RotateCcw :size="12" />
                   還原
                 </button>
               </div>
             </div>
-            <p v-else-if="!isFetchingBackups" class="text-center py-4 text-[10px] text-gray-400 italic">
+            <p
+              v-else-if="!isFetchingBackups"
+              class="text-center py-4 text-[10px] text-gray-400 italic"
+            >
               尚無雲端備份紀錄
             </p>
           </div>

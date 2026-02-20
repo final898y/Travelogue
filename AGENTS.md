@@ -168,6 +168,22 @@ feat(auth): 新增 JWT Token 刷新機制
 - 更新 docs/COMMIT_LOG.md
 ```
 
+### 4.4 語義化版本控制 (Semantic Versioning)
+
+Agent 在執行 Commit 前，必須根據改動內容更新專案版本號（格式：`X.Y.Z`），並同步至以下檔案：
+
+- `package.json` 中的 `"version"`
+- `README.md` 末尾的 **Version** 標記
+- `src/views/SettingView.vue` 中的版本資訊顯示
+
+**升級規則：**
+
+- **Major (X)**: 涉及重大架構變更、不向下相容的邏輯（如更換資料庫、重寫核心 Store）。
+- **Minor (Y)**: 新增功能 (feat)，且能向下相容。
+- **Patch (Z)**: 修復 Bug (fix)、格式調整 (style)、文件更新 (docs)、瑣事 (chore) 或效能優化 (perf)。
+
+**操作要求**：每次 Commit 前必須先判斷本次變更類型，執行版本遞增，並在 `COMMIT_LOG.md` 紀錄對應的版本號。
+
 ---
 
 ## 5. 指令快捷腳本 (Scripts)

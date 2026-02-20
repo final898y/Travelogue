@@ -14,8 +14,14 @@ vi.mock("firebase/firestore", async () => {
       set: vi.fn(),
       commit: vi.fn(() => Promise.resolve()),
     })),
-    collection: vi.fn((_db, ...path) => ({ id: path[path.length - 1], path: path.join("/") })),
-    doc: vi.fn((_db, ...path) => ({ id: path[path.length - 1], ref: { id: path[path.length - 1] } })),
+    collection: vi.fn((_db, ...path) => ({
+      id: path[path.length - 1],
+      path: path.join("/"),
+    })),
+    doc: vi.fn((_db, ...path) => ({
+      id: path[path.length - 1],
+      ref: { id: path[path.length - 1] },
+    })),
     query: vi.fn(),
     where: vi.fn(),
     orderBy: vi.fn(),
@@ -85,23 +91,27 @@ describe("Backup Service", () => {
             startDate: "2024-01-01",
             endDate: "2024-01-02",
             days: 2,
-            status: "upcoming"
+            status: "upcoming",
           },
           plans: [{ tripId: "old-id", date: "2024-01-01", activities: [] }],
           expenses: [],
-          collections: []
-        }
+          collections: [],
+        },
       };
-      
-      const file = new File([JSON.stringify(validSingleData)], "trip.json", { type: "application/json" });
-      vi.mocked(firestore.addDoc).mockResolvedValue({ id: "new-trip-id" } as any);
+
+      const file = new File([JSON.stringify(validSingleData)], "trip.json", {
+        type: "application/json",
+      });
+      vi.mocked(firestore.addDoc).mockResolvedValue({
+        id: "new-trip-id",
+      } as any);
 
       const newId = await backupService.importSingleTrip(mockUserId, file);
 
       expect(newId).toBe("new-trip-id");
       expect(firestore.addDoc).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ title: "原標題 (匯入)" })
+        expect.objectContaining({ title: "原標題 (匯入)" }),
       );
     });
   });
@@ -109,7 +119,12 @@ describe("Backup Service", () => {
   describe("listCloudBackups", () => {
     it("應正確查詢雲端備份清單並依時間排序", async () => {
       vi.mocked(firestore.getDocs).mockResolvedValueOnce({
-        docs: [{ id: "b1", data: () => ({ createdAt: { toDate: () => new Date() } }) }],
+        docs: [
+          {
+            id: "b1",
+            data: () => ({ createdAt: { toDate: () => new Date() } }),
+          },
+        ],
       } as any);
 
       const result = await backupService.listCloudBackups(mockUserId);
@@ -139,8 +154,12 @@ describe("Backup Service", () => {
 
   describe("importFromJSON", () => {
     it("當輸入無效 JSON 格式時應拋出錯誤", async () => {
-      const invalidFile = new File(['{"invalid": "data"}'], "test.json", { type: "application/json" });
-      await expect(backupService.importFromJSON(mockUserId, invalidFile)).rejects.toThrow();
+      const invalidFile = new File(['{"invalid": "data"}'], "test.json", {
+        type: "application/json",
+      });
+      await expect(
+        backupService.importFromJSON(mockUserId, invalidFile),
+      ).rejects.toThrow();
     });
   });
 });

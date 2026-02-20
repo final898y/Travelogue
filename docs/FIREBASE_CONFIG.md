@@ -46,12 +46,15 @@
 - **欄位**: `date`, `category`, `amount`, `currency`, `description`, `payer` (Member ID), `splitWith` (Array of Member IDs), `createdAt`。
 
 #### └── 📂 `collections` (子集合)
+
 - **路徑**: `/trips/{tripId}/collections/{itemId}`
 - **功能**: 存放行前收集的靈感 (網頁、IG、Threads 等)。
 - **欄位**: `title`, `url`, `source`, `category`, `note`, `createdAt`。
 
 ### 📂 `backups` (備份集合)
+
 存放使用者的雲端備份快照。
+
 - **欄位**: `userId`, `exportedAt`, `version`, `trips` (Nested Array), `createdAt` (timestamp)。
 
 ---
@@ -113,6 +116,7 @@ service cloud.firestore {
 | `trips`    | `userId` (Asc), `startDate` (Desc) | 獲取特定使用者的旅程列表 |
 | `plans`    | `tripId` (Asc), `date` (Asc)       | 按日期排序顯示行程活動   |
 | `expenses` | `tripId` (Asc), `date` (Desc)      | 按時間倒序顯示記帳明細   |
+| `backups`  | `userId` (Asc), `createdAt` (Desc) | 獲取使用者的雲端備份清單 |
 
 ---
 

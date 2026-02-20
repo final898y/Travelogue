@@ -273,9 +273,10 @@ export const backupService = {
     const snap = await getDocs(
       query(collection(db, "backups"), where("__name__", "==", backupId)),
     );
-    if (snap.empty) throw new Error("找不到備份紀錄");
+    const firstDoc = snap.docs[0];
+    if (snap.empty || !firstDoc) throw new Error("找不到備份紀錄");
 
-    const backupData = snap.docs[0].data() as ExportDataPackage;
+    const backupData = firstDoc.data() as ExportDataPackage;
     await this.applyDataPackage(userId, backupData);
   },
 
