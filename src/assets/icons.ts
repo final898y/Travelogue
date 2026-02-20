@@ -60,4 +60,5 @@ export {
   DownloadCloud,
   Upload,
   RefreshCcw,
+  RotateCcw,
 } from "lucide-vue-next";

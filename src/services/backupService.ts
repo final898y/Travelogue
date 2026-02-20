@@ -8,6 +8,7 @@ import {
   addDoc,
   Timestamp,
   deleteDoc,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import {
@@ -200,6 +201,85 @@ export const backupService = {
   },
 
   /**
+   * 將資料包寫入 Firestore (核心導入邏輯)
+   */
+  async applyDataPackage(userId: string, validatedData: ExportDataPackage) {
+    // 1. 清理該使用者的現有資料 (遞迴刪除)
+    await this.clearAllUserData(userId);
+
+    // 2. 批次寫入新資料
+    const batch = writeBatch(db);
+
+    for (const tripWrapper of validatedData.trips) {
+      const { data, plans, expenses, collections } = tripWrapper;
+      const tripId = data.id;
+      const tripRef = doc(db, "trips", tripId);
+
+      // 還原主文件
+      const restoredTrip: Record<string, unknown> = { ...data, userId };
+      delete restoredTrip.id;
+      batch.set(tripRef, restoredTrip);
+
+      // 還原子集合
+      for (const plan of plans) {
+        const planRef = doc(collection(db, "trips", tripId, "plans"));
+        batch.set(planRef, plan);
+      }
+      for (const exp of expenses) {
+        const expRef = doc(collection(db, "trips", tripId, "expenses"));
+        batch.set(expRef, exp);
+      }
+      for (const coll of collections) {
+        const collRef = doc(collection(db, "trips", tripId, "collections"));
+        batch.set(collRef, coll);
+      }
+    }
+
+    await batch.commit();
+  },
+
+  /**
+   * 從 JSON 導入資料 (覆蓋模式)
+   */
+  async importFromJSON(userId: string, jsonFile: File) {
+    const text = await jsonFile.text();
+    const rawData = JSON.parse(text);
+    const validatedData = ExportDataPackageSchema.parse(rawData);
+    await this.applyDataPackage(userId, validatedData);
+  },
+
+  /**
+   * 獲取使用者的雲端備份清單
+   */
+  async listCloudBackups(userId: string) {
+    const backupsRef = collection(db, "backups");
+    const q = query(
+      backupsRef,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as ExportDataPackage),
+      createdAt: d.data().createdAt as Timestamp,
+    }));
+  },
+
+  /**
+   * 從雲端備份還原
+   */
+  async restoreFromCloud(userId: string, backupId: string) {
+    const snap = await getDocs(
+      query(collection(db, "backups"), where("__name__", "==", backupId)),
+    );
+    if (snap.empty) throw new Error("找不到備份紀錄");
+
+    const backupData = snap.docs[0].data() as ExportDataPackage;
+    await this.applyDataPackage(userId, backupData);
+  },
+
+  /**
    * 觸發 JSON 檔案下載
    */
   async exportToJSON(userId: string) {
@@ -223,58 +303,9 @@ export const backupService = {
     const backupsRef = collection(db, "backups");
     await addDoc(backupsRef, {
       ...data,
-      userId, // 明確頂層 userId
+      userId,
       createdAt: Timestamp.now(),
     });
-  },
-
-  /**
-   * 從 JSON 導入資料 (覆蓋模式)
-   */
-  async importFromJSON(userId: string, jsonFile: File) {
-    const text = await jsonFile.text();
-    const rawData = JSON.parse(text);
-
-    // 1. 驗證資料格式
-    const validatedData = ExportDataPackageSchema.parse(rawData);
-
-    // 2. 清理該使用者的現有資料 (遞迴刪除)
-    await this.clearAllUserData(userId);
-
-    // 3. 批次寫入新資料
-    // 注意：Firestore 批次寫入上限為 500 次操作，若資料極大需分段處理
-    const batch = writeBatch(db);
-
-    for (const tripWrapper of validatedData.trips) {
-      const { data, plans, expenses, collections } = tripWrapper;
-      const tripId = data.id;
-      const tripRef = doc(db, "trips", tripId);
-
-      // 還原主文件 (確保 userId 正確)
-      const restoredTrip: Partial<Trip> = { ...data, userId };
-      delete restoredTrip.id; // Firestore ID 由文件路徑決定
-      batch.set(tripRef, restoredTrip);
-
-      // 還原 plans
-      for (const plan of plans) {
-        const planRef = doc(collection(db, "trips", tripId, "plans"));
-        batch.set(planRef, plan);
-      }
-
-      // 還原 expenses
-      for (const exp of expenses) {
-        const expRef = doc(collection(db, "trips", tripId, "expenses"));
-        batch.set(expRef, exp);
-      }
-
-      // 還原 collections
-      for (const coll of collections) {
-        const collRef = doc(collection(db, "trips", tripId, "collections"));
-        batch.set(collRef, coll);
-      }
-    }
-
-    await batch.commit();
   },
 
   /**

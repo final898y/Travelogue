@@ -2,7 +2,7 @@
 import { useAuthStore } from "../stores/authStore";
 import { useUIStore } from "../stores/uiStore";
 import { useRouter } from "vue-router";
-import { ref, type FunctionalComponent } from "vue";
+import { ref, onMounted, type FunctionalComponent } from "vue";
 import { backupService } from "../services/backupService";
 import {
   Users,
@@ -19,6 +19,8 @@ import {
   DownloadCloud,
   Upload,
   RefreshCcw,
+  Clock,
+  RotateCcw,
 } from "../assets/icons";
 
 interface SettingItem {
@@ -38,6 +40,8 @@ const uiStore = useUIStore();
 const router = useRouter();
 const isProcessing = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const cloudBackups = ref<any[]>([]);
+const isFetchingBackups = ref(false);
 
 const handleLogout = async () => {
   try {
@@ -47,6 +51,22 @@ const handleLogout = async () => {
     console.error("Logout Error:", error);
   }
 };
+
+const fetchBackups = async () => {
+  if (!authStore.user) return;
+  try {
+    isFetchingBackups.value = true;
+    cloudBackups.value = await backupService.listCloudBackups(authStore.user.uid);
+  } catch (error) {
+    console.error("Fetch Backups Error:", error);
+  } finally {
+    isFetchingBackups.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchBackups();
+});
 
 const handleExport = async () => {
   if (!authStore.user) return;
@@ -68,9 +88,35 @@ const handleCloudBackup = async () => {
     isProcessing.value = true;
     await backupService.createCloudBackup(authStore.user.uid);
     uiStore.showToast("已完成雲端備份", "success");
+    await fetchBackups(); // 重新整理列表
   } catch (error) {
     console.error("Backup Error:", error);
     uiStore.showToast("備份失敗", "error");
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+const handleCloudRestore = async (backupId: string, dateLabel: string) => {
+  if (!authStore.user) return;
+
+  const confirmed = await uiStore.showConfirm({
+    title: "從雲端還原？",
+    message: `確定要還原 ${dateLabel} 的備份嗎？這會『完全覆蓋』目前的旅程資料且無法復原。`,
+    okText: "開始還原",
+    cancelText: "取消",
+  });
+
+  if (!confirmed) return;
+
+  try {
+    isProcessing.value = true;
+    await backupService.restoreFromCloud(authStore.user.uid, backupId);
+    uiStore.showToast("雲端還原完成", "success");
+    window.location.reload();
+  } catch (error) {
+    console.error("Restore Error:", error);
+    uiStore.showToast("還原失敗，請稍後再試", "error");
   } finally {
     isProcessing.value = false;
   }
@@ -93,7 +139,7 @@ const handleImport = async (event: Event) => {
   });
 
   if (!confirmed) {
-    target.value = ""; // 清空檔案選擇
+    target.value = "";
     return;
   }
 
@@ -101,15 +147,25 @@ const handleImport = async (event: Event) => {
     isProcessing.value = true;
     await backupService.importFromJSON(authStore.user.uid, file);
     uiStore.showToast("資料導入完成", "success");
-    // 重新整理頁面或導航以更新 Store 狀態 (Optional)
     window.location.reload();
   } catch (error) {
     console.error("Import Error:", error);
-    uiStore.showToast("導入失敗，格式不符或權限不足", "error");
+    uiStore.showToast("導入失敗，格式不符", "error");
   } finally {
     isProcessing.value = false;
     target.value = "";
   }
+};
+
+const formatDate = (ts: any) => {
+  if (!ts) return "未知時間";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  return date.toLocaleString("zh-TW", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const settingsGroups: SettingGroup[] = [
@@ -125,19 +181,19 @@ const settingsGroups: SettingGroup[] = [
     items: [
       {
         id: "backup",
-        label: "建立雲端備份",
+        label: "立即建立雲端備份",
         icon: DownloadCloud as FunctionalComponent,
         action: handleCloudBackup,
       },
       {
         id: "export",
-        label: "匯出 JSON 檔案",
+        label: "匯出本地 JSON 檔案",
         icon: Download as FunctionalComponent,
         action: handleExport,
       },
       {
         id: "import",
-        label: "從備份檔導入",
+        label: "從本地備份檔導入",
         icon: Upload as FunctionalComponent,
         action: triggerImport,
       },
@@ -176,7 +232,29 @@ const settingsGroups: SettingGroup[] = [
     <header
       class="px-6 pt-12 pb-8 bg-forest-800 text-white rounded-b-[40px] shadow-soft-lg mb-8"
     >
-      <!-- ... (Header Content) -->
+      <div class="flex items-center gap-6">
+        <div
+          class="w-20 h-20 rounded-3xl border-4 border-white/20 overflow-hidden shadow-soft bg-forest-700 flex items-center justify-center"
+        >
+          <img
+            v-if="authStore.user?.photoURL"
+            :src="authStore.user.photoURL"
+            alt="Avatar"
+            class="w-full h-full object-cover"
+          />
+          <span v-else class="text-2xl font-bold">{{
+            authStore.user?.displayName?.charAt(0) || "U"
+          }}</span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-rounded font-bold">
+            {{ authStore.user?.displayName || "未登入" }}
+          </h1>
+          <p class="text-white/60 text-sm flex items-center gap-1">
+            {{ authStore.user?.email || "travelogue@example.com" }}
+          </p>
+        </div>
+      </div>
     </header>
 
     <main class="px-6 space-y-8">
@@ -206,6 +284,40 @@ const settingsGroups: SettingGroup[] = [
               <ChevronRight :size="20" class="text-forest-200" />
             </div>
           </button>
+
+          <!-- Special Section: Cloud Backups List (Only in Data Security Group) -->
+          <div v-if="group.id === 'backup' || group.title === '資料安全'" class="pt-2">
+            <div class="flex justify-between items-center mb-2 px-1">
+              <h4 class="text-[10px] font-bold text-forest-300 uppercase">最近的雲端備份</h4>
+              <button @click="fetchBackups" class="p-1 text-forest-200 hover:text-forest-400 transition-colors">
+                <RefreshCcw :size="12" :class="{ 'animate-spin': isFetchingBackups }" />
+              </button>
+            </div>
+            
+            <div v-if="cloudBackups.length > 0" class="space-y-2">
+              <div v-for="b in cloudBackups.slice(0, 3)" :key="b.id" 
+                class="flex items-center justify-between p-3 bg-white/50 border border-forest-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-forest-50 flex items-center justify-center text-forest-300">
+                    <Clock :size="16" />
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-forest-800">{{ formatDate(b.createdAt) }}</p>
+                    <p class="text-[9px] text-gray-400">包含 {{ b.trips?.length || 0 }} 趟旅程</p>
+                  </div>
+                </div>
+                <button 
+                  @click="handleCloudRestore(b.id, formatDate(b.createdAt))"
+                  class="px-3 py-1.5 bg-forest-100 text-forest-600 rounded-lg text-[10px] font-bold hover:bg-forest-200 transition-all flex items-center gap-1 cursor-pointer">
+                  <RotateCcw :size="12" />
+                  還原
+                </button>
+              </div>
+            </div>
+            <p v-else-if="!isFetchingBackups" class="text-center py-4 text-[10px] text-gray-400 italic">
+              尚無雲端備份紀錄
+            </p>
+          </div>
         </div>
       </div>
 
