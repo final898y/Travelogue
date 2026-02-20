@@ -11,7 +11,8 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import { db, auth } from "../services/firebase";
+import { db } from "../services/firebase";
+import { useAuthStore } from "./authStore";
 import { z } from "zod";
 import { DailyPlanSchema, type DailyPlan, type Activity } from "../types/trip";
 
@@ -19,6 +20,7 @@ export const usePlanStore = defineStore("plan", () => {
   const currentTripPlans = ref<DailyPlan[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const authStore = useAuthStore();
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -70,8 +72,8 @@ export const usePlanStore = defineStore("plan", () => {
       q,
       (snapshot) => {
         const rawData = snapshot.docs.map((doc) => ({
-          tripId,
           ...doc.data(),
+          tripId, // 確保 tripId 正確
         }));
         currentTripPlans.value = validateAndFilter<DailyPlan>(
           DailyPlanSchema,
@@ -94,7 +96,7 @@ export const usePlanStore = defineStore("plan", () => {
     date: string,
     activity: Activity,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
 
     const { id: docId, plan } = await getOrCreatePlanDoc(tripId, date);
     const activities = [...plan.activities];
@@ -127,7 +129,7 @@ export const usePlanStore = defineStore("plan", () => {
     date: string,
     activityId: string,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
 
     const { id: docId, plan } = await getOrCreatePlanDoc(tripId, date);
     if (!docId) return;

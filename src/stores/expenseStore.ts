@@ -11,7 +11,8 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { db, auth } from "../services/firebase";
+import { db } from "../services/firebase";
+import { useAuthStore } from "./authStore";
 import type { Expense } from "../types/trip";
 import { ExpenseSchema } from "../types/trip";
 import { z } from "zod";
@@ -20,6 +21,7 @@ export const useExpenseStore = defineStore("expense", () => {
   const expenses = ref<Expense[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const authStore = useAuthStore();
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -55,8 +57,8 @@ export const useExpenseStore = defineStore("expense", () => {
       q,
       (snapshot) => {
         const rawData = snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...doc.data(),
+          id: doc.id,
         }));
         expenses.value = validateAndFilter<Expense>(ExpenseSchema, rawData);
         loading.value = false;
@@ -75,10 +77,14 @@ export const useExpenseStore = defineStore("expense", () => {
     tripId: string,
     item: Omit<Expense, "id" | "createdAt">,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const expensesRef = collection(db, "trips", tripId, "expenses");
+
+    // 安全移除 id 避免汙染
+    const { id: _id, ...cleanItem } = item as Partial<Expense>;
+
     return await addDoc(expensesRef, {
-      ...item,
+      ...cleanItem,
       createdAt: Timestamp.now(),
     });
   };
@@ -91,7 +97,7 @@ export const useExpenseStore = defineStore("expense", () => {
     expenseId: string,
     item: Partial<Expense>,
   ) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "expenses", expenseId);
 
     // 過濾掉不應手動更新的內部欄位
@@ -103,7 +109,7 @@ export const useExpenseStore = defineStore("expense", () => {
    * 刪除支出項目
    */
   const deleteExpense = async (tripId: string, expenseId: string) => {
-    if (!auth.currentUser) throw new Error("User not logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "expenses", expenseId);
     return await deleteDoc(docRef);
   };

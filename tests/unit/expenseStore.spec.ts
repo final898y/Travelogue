@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useExpenseStore } from "../../src/stores/expenseStore";
+import { useAuthStore } from "../../src/stores/authStore";
 import * as firestore from "firebase/firestore";
 
 // Mock Firebase
@@ -22,10 +23,20 @@ vi.mock("../../src/services/firebase", () => ({
   auth: { currentUser: { uid: "user-123" } },
 }));
 
+// Mock authStore
+vi.mock("../../src/stores/authStore", () => ({
+  useAuthStore: vi.fn(),
+}));
+
 describe("Expense Store", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+
+    // Default mock user for authStore
+    (useAuthStore as any).mockReturnValue({
+      user: { uid: "user-123" },
+    });
   });
 
   it("初始化時應具備正確的初始狀態", () => {

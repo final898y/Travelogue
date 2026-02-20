@@ -8,6 +8,16 @@
 
 ## [2026-02-20]
 
+## [2026-02-20] refactor(store): 全站 Store 架構同步與 ID 衝突防禦
+
+- **Version**: `2.1.5`
+- **改動方向**: 統一全站 Store 的 Auth 注入方式與資料映射安全性。
+- **具體內容**:
+  - 完成 `expenseStore.ts` 與 `planStore.ts` 的 `authStore` 遷移，移除所有剩餘的 Firebase SDK `auth` 直接調用。
+  - 同步修正所有子集合的 `onSnapshot` 映射邏輯，確保文件 `id` 覆蓋順序正確，防止資料庫欄位衝突導致的更新失敗。
+  - 於 `addExpense` 等方法實作資料清理，確保物件 ID 不會汙染 Firestore 文檔欄位。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.5`。
+
 ## [2026-02-20] fix(store): 解決 Firestore 文件 ID 映射衝突與 Store 權限注入
 
 - **Version**: `2.1.4`
