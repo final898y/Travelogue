@@ -8,6 +8,18 @@
 
 ## [2026-02-20]
 
+## [2026-02-20] feat(booking): 優化機票預訂流程與系統連結
+
+- **Version**: `2.1.2`
+- **改動方向**: 針對機票預訂實作分欄輸入與原生時間選擇，並補強系統連結。
+- **具體內容**:
+  - 在 `BookingForm.vue` 中針對「機票」類型實作分欄輸入（出發地/目的地、出發時間/抵達時間）。
+  - 將所有預訂時間輸入優化為原生 `datetime-local` 選擇器。
+  - 重構 `BookingView.vue` 機票卡片，將地點與對應時間成對顯示，提升閱讀直覺。
+  - 在 `SettingView.vue` 的「關於」區塊新增 GitHub 專案源碼連結，並同步更新 `icons.ts`。
+  - 修正 `README.md` 中失效的文件連結。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.2`。
+
 ## [2026-02-20] refactor(auth): 優化權限驗證與資料存儲邏輯
 
 - **Version**: `2.1.1`

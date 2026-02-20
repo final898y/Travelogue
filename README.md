@@ -56,7 +56,7 @@ npm run test
 - [**技術規格說明書 (TECHNICAL_SPEC.md)**](./docs/TECHNICAL_SPEC.md): 包含資料夾結構、Store 設計、資料模型定義與 Roadmap。
 - [**UI/UX 設計規範 (UI_UX_DESIGN.md)**](./docs/UI_UX_DESIGN.md): 包含設計理念、顏色系統、陰影規範與交互組件定義。
 - [**Firebase 設定指南 (FIREBASE_CONFIG.md)**](./docs/FIREBASE_CONFIG.md): 包含 Firestore Schema、安全性規則與索引設定。
-- [**開發日誌 (COMMIT_LOG.md)**](./docs/docs/COMMIT_LOG.md): 紀錄詳細的開發進程與功能變動。
+- [**開發日誌 (COMMIT_LOG.md)**](./docs/COMMIT_LOG.md): 紀錄詳細的開發進程與功能變動。
 - [**協作規範 (GIT_RULES.md)**](./docs/GIT_RULES.md): Git 分支策略與 Commit 規範。
 
 ---
@@ -82,5 +82,5 @@ npm run test
 
 ---
 
-**Version**: 2.1.1 (Soft UI Evolution Edition)  
+**Version**: 2.1.2 (Soft UI Evolution Edition)  
 **License**: MIT

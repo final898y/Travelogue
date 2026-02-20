@@ -3,7 +3,7 @@
  * BookingForm (Component)
  * Handles viewing and editing booking details.
  */
-import { reactive, computed, watch } from "vue";
+import { reactive, computed, watch, type FunctionalComponent } from "vue";
 import { Plane, Bed, Car, Ticket, Package } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
 import type { Booking, BookingType } from "../../types/trip";
@@ -18,8 +18,8 @@ const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
 // 建立局部狀態副本
-const formData = reactive<Partial<Booking>>({
-  type: "flight",
+const formData = reactive({
+  type: "flight" as BookingType,
   title: "",
   dateTime: "",
   confirmationNo: "",
@@ -27,14 +27,46 @@ const formData = reactive<Partial<Booking>>({
   note: "",
   isConfirmed: true,
   ...props.initialData,
+  // 內部轉換用欄位
+  depLoc: "",
+  arrLoc: "",
+  depTime: "",
+  arrTime: "",
 });
+
+// 初始化拆分欄位
+const initSplitFields = () => {
+  if (formData.type === "flight") {
+    const locs = formData.location?.split("->") || [];
+    formData.depLoc = locs[0]?.trim() || "";
+    formData.arrLoc = locs[1]?.trim() || "";
+
+    const times = formData.dateTime?.split("|") || [];
+    formData.depTime = times[0]?.trim() || "";
+    formData.arrTime = times[1]?.trim() || "";
+  }
+};
+
+initSplitFields();
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
   formData,
   (newVal) => {
+    // 建立一個不包含內部轉換欄位的物件用於比較
+    const cleanData = {
+      type: newVal.type,
+      title: newVal.title,
+      dateTime: newVal.dateTime,
+      confirmationNo: newVal.confirmationNo,
+      location: newVal.location,
+      note: newVal.note,
+      isConfirmed: newVal.isConfirmed,
+      id: newVal.id,
+    };
+
     const isDirty =
-      JSON.stringify(newVal) !==
+      JSON.stringify(cleanData) !==
       JSON.stringify({
         type: "flight",
         title: "",
@@ -50,17 +82,43 @@ watch(
   { deep: true },
 );
 
-const bookingTypes: { value: BookingType; label: string; icon: string }[] = [
-  { value: "flight", label: "機票", icon: "flight" },
-  { value: "hotel", label: "住宿", icon: "hotel" },
-  { value: "transport", label: "交通", icon: "transport" },
-  { value: "activity", label: "活動", icon: "activity" },
-  { value: "other", label: "其他", icon: "other" },
+const bookingTypes: {
+  value: BookingType;
+  label: string;
+  icon: FunctionalComponent;
+}[] = [
+  { value: "flight", label: "機票", icon: Plane as FunctionalComponent },
+  { value: "hotel", label: "住宿", icon: Bed as FunctionalComponent },
+  { value: "transport", label: "交通", icon: Car as FunctionalComponent },
+  { value: "activity", label: "活動", icon: Ticket as FunctionalComponent },
+  { value: "other", label: "其他", icon: Package as FunctionalComponent },
 ];
 
 const handleSave = () => {
   if (!formData.title) return uiStore.showToast("請輸入預訂標題", "warning");
-  emit("save", { ...formData });
+
+  // 如果是機票，將拆分欄位合併回主欄位
+  if (formData.type === "flight") {
+    formData.location = `${formData.depLoc} -> ${formData.arrLoc}`;
+    formData.dateTime = `${formData.depTime} | ${formData.arrTime}`;
+  }
+
+  // 移除內部欄位後發送 (僅傳送 Booking 介面定義的欄位)
+  const payload: Partial<Booking> = {
+    type: formData.type,
+    title: formData.title,
+    dateTime: formData.dateTime,
+    confirmationNo: formData.confirmationNo,
+    location: formData.location,
+    note: formData.note,
+    isConfirmed: formData.isConfirmed,
+  };
+
+  if (formData.id) {
+    payload.id = formData.id;
+  }
+
+  emit("save", payload);
 };
 </script>
 
@@ -85,11 +143,7 @@ const handleSave = () => {
           "
         >
           <div class="text-forest-400">
-            <Plane v-if="bt.value === 'flight'" :size="20" />
-            <Bed v-if="bt.value === 'hotel'" :size="20" />
-            <Car v-if="bt.value === 'transport'" :size="20" />
-            <Ticket v-if="bt.value === 'activity'" :size="20" />
-            <Package v-if="bt.value === 'other'" :size="20" />
+            <component :is="bt.icon" :size="20" />
           </div>
           <span class="text-[10px] font-bold text-forest-600">{{
             bt.label
@@ -112,31 +166,82 @@ const handleSave = () => {
         />
       </div>
 
-      <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >時間 / 日期</label
-        >
-        <input
-          v-model="formData.dateTime"
-          type="text"
-          placeholder="例如：2024-05-01 08:30"
-          class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
-        />
-      </div>
+      <!-- Flight Specific Fields -->
+      <template v-if="formData.type === 'flight'">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-forest-300 uppercase"
+              >出發地</label
+            >
+            <input
+              v-model="formData.depLoc"
+              type="text"
+              placeholder="TPE"
+              class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-forest-300 uppercase"
+              >目的地</label
+            >
+            <input
+              v-model="formData.arrLoc"
+              type="text"
+              placeholder="NRT"
+              class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
+            />
+          </div>
+        </div>
 
-      <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >地點 / 路線</label
-        >
-        <input
-          v-model="formData.location"
-          type="text"
-          :placeholder="
-            formData.type === 'flight' ? '例如：TPE -> NRT' : '例如：飯店地址'
-          "
-          class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
-        />
-      </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-forest-300 uppercase"
+              >出發時間</label
+            >
+            <input
+              v-model="formData.depTime"
+              type="datetime-local"
+              class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-xs font-bold shadow-sm"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-forest-300 uppercase"
+              >抵達時間</label
+            >
+            <input
+              v-model="formData.arrTime"
+              type="datetime-local"
+              class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-xs font-bold shadow-sm"
+            />
+          </div>
+        </div>
+      </template>
+
+      <!-- Generic Fields for Non-Flight -->
+      <template v-else>
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-forest-300 uppercase"
+            >日期時間</label
+          >
+          <input
+            v-model="formData.dateTime"
+            type="datetime-local"
+            class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-forest-300 uppercase"
+            >地點 / 路線</label
+          >
+          <input
+            v-model="formData.location"
+            type="text"
+            placeholder="例如：飯店地址"
+            class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+          />
+        </div>
+      </template>
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase"

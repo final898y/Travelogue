@@ -52,6 +52,7 @@ export {
   MessageSquare,
   Info,
   LogOut,
+  Github,
   ChevronDown,
   CheckCircle,
   XCircle,

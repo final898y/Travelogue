@@ -53,7 +53,7 @@ const handleSaveBooking = async (updatedBooking: Booking) => {
   try {
     isSaving.value = true;
     await tripStore.updateTripBooking(tripId, updatedBooking);
-    await fetchTripData(); // 重新獲取資料以更新 UI
+    await fetchTripData(); // 重新獲獲取資料以更新 UI
     uiStore.showToast("預訂資訊儲存成功", "success");
     handleCloseSheet();
   } catch (error) {
@@ -88,6 +88,47 @@ const handleDeleteBooking = async () => {
       isSaving.value = false;
     }
   }
+};
+
+const getFlightDetails = (booking: Booking) => {
+  const locs = booking.location?.split("->") || [];
+  const times = booking.dateTime?.split("|") || [];
+
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return "--:--";
+    try {
+      const date = new Date(timeStr.trim());
+      return date.toLocaleTimeString("zh-TW", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return timeStr;
+    }
+  };
+
+  const formatDate = (timeStr?: string) => {
+    if (!timeStr) return "";
+    try {
+      const date = new Date(timeStr.trim());
+      return date.toLocaleDateString("zh-TW", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  return {
+    depLoc: locs[0]?.trim() || "---",
+    arrLoc: locs[1]?.trim() || "---",
+    depTime: formatTime(times[0]),
+    arrTime: formatTime(times[1]),
+    depDate: formatDate(times[0]),
+    arrDate: formatDate(times[1]),
+  };
 };
 </script>
 
@@ -133,16 +174,36 @@ const handleDeleteBooking = async () => {
             class="bg-forest-400 p-4 text-white flex justify-between items-center"
           >
             <span class="font-bold">{{ booking.title }}</span>
-            <span class="text-xs opacity-80">{{ booking.dateTime }}</span>
+            <div
+              class="flex items-center gap-1 opacity-80 text-[10px] font-bold"
+            >
+              <span>{{ getFlightDetails(booking as Booking).depDate }}</span>
+              <span
+                v-if="
+                  getFlightDetails(booking as Booking).arrDate !==
+                  getFlightDetails(booking as Booking).depDate
+                "
+              >
+                → {{ getFlightDetails(booking as Booking).arrDate }}
+              </span>
+            </div>
           </div>
           <div class="p-6">
             <div class="flex justify-between items-center mb-6">
+              <!-- Departure -->
               <div class="text-center flex-1">
-                <div class="text-3xl font-bold text-forest-800">
-                  {{ booking.location?.split("->")?.[0]?.trim() || "---" }}
+                <div class="text-xs font-bold text-gray-400 uppercase mb-1">
+                  Departure
+                </div>
+                <div class="text-3xl font-bold text-forest-800 mb-1">
+                  {{ getFlightDetails(booking as Booking).depLoc }}
+                </div>
+                <div class="text-sm font-bold text-forest-500">
+                  {{ getFlightDetails(booking as Booking).depTime }}
                 </div>
               </div>
-              <div class="flex-1 flex flex-col items-center px-4">
+
+              <div class="flex-1 flex flex-col items-center px-4 pt-4">
                 <div
                   class="w-full border-t-2 border-dashed border-forest-200 relative"
                 >
@@ -153,19 +214,28 @@ const handleDeleteBooking = async () => {
                   />
                 </div>
               </div>
+
+              <!-- Arrival -->
               <div class="text-center flex-1">
-                <div class="text-3xl font-bold text-forest-800">
-                  {{ booking.location?.split("->")?.[1]?.trim() || "---" }}
+                <div class="text-xs font-bold text-gray-400 uppercase mb-1">
+                  Arrival
+                </div>
+                <div class="text-3xl font-bold text-forest-800 mb-1">
+                  {{ getFlightDetails(booking as Booking).arrLoc }}
+                </div>
+                <div class="text-sm font-bold text-forest-500">
+                  {{ getFlightDetails(booking as Booking).arrTime }}
                 </div>
               </div>
             </div>
+
             <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
               <div>
                 <div class="text-[10px] text-gray-400 uppercase font-bold">
                   Confirmation
                 </div>
                 <div class="text-lg font-bold text-forest-700">
-                  {{ booking.confirmationNo }}
+                  {{ booking.confirmationNo || "---" }}
                 </div>
               </div>
               <div class="text-right">
@@ -199,10 +269,13 @@ const handleDeleteBooking = async () => {
               <div class="mt-4 flex justify-between items-end">
                 <div class="space-y-1">
                   <div class="text-[10px] text-gray-400 uppercase font-bold">
-                    Time
+                    Date & Time
                   </div>
-                  <div class="text-sm font-medium text-forest-700">
-                    {{ booking.dateTime }}
+                  <div class="text-sm font-bold text-forest-700">
+                    {{ getFlightDetails(booking as Booking).depDate }}
+                    <span class="text-forest-400 ml-1">
+                      {{ getFlightDetails(booking as Booking).depTime }}
+                    </span>
                   </div>
                 </div>
                 <div

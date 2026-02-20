@@ -20,6 +20,7 @@ import {
   Info,
   ChevronRight,
   LogOut,
+  Github,
   DownloadCloud,
   Upload,
   RefreshCcw,
@@ -32,6 +33,7 @@ interface SettingItem {
   label: string;
   icon: FunctionalComponent;
   action?: () => void | Promise<void>;
+  link?: string;
 }
 
 interface SettingGroup {
@@ -253,6 +255,14 @@ const settingsGroups: SettingGroup[] = [
     title: "關於",
     items: [
       {
+        id: "github",
+        label: "GitHub 專案源碼",
+        icon: Github as FunctionalComponent,
+        action: () => {
+          window.open("https://github.com/final898y/Travelogue", "_blank");
+        },
+      },
+      {
         id: "help",
         label: "使用幫助",
         icon: HelpCircle as FunctionalComponent,
@@ -264,7 +274,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "version",
-        label: "版本資訊 (v2.1.1)",
+        label: "版本資訊 (v2.1.2)",
         icon: Info as FunctionalComponent,
       },
     ],
