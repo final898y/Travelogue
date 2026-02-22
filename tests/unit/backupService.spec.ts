@@ -92,6 +92,8 @@ describe("Backup Service", () => {
             endDate: "2024-01-02",
             days: 2,
             status: "upcoming",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
           plans: [{ tripId: "old-id", date: "2024-01-01", activities: [] }],
           expenses: [],

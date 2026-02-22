@@ -135,7 +135,7 @@ const handleCloseSheet = () => {
 };
 
 const handleSaveTrip = async (
-  tripData: Omit<Trip, "id" | "userId" | "createdAt">,
+  tripData: Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">,
 ) => {
   if (!authStore.user || isSaving.value) return;
 

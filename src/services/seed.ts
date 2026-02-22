@@ -552,7 +552,7 @@ const planSeeds: Record<string, Omit<DailyPlan, "tripId">[]> = {
 };
 
 // 子集合範例資料
-const expenseSeeds: Record<string, Omit<Expense, "id">[]> = {
+const expenseSeeds: Record<string, Omit<Expense, "id" | "createdAt">[]> = {
   "2024 東京賞櫻之旅": [
     {
       date: "2024-03-20",

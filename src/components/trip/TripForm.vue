@@ -14,7 +14,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "save", trip: Omit<Trip, "id" | "userId" | "createdAt">): void;
+  (
+    e: "save",
+    trip: Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">,
+  ): void;
   (e: "cancel"): void;
   (e: "update:dirty", isDirty: boolean): void;
 }>();

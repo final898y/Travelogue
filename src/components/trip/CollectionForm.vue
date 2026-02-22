@@ -100,7 +100,22 @@ const handleSave = () => {
   if (formData.websiteUrl && !isValidUrl(formData.websiteUrl))
     return uiStore.showToast("請輸入有效的官網網址", "warning");
 
-  emit("save", { ...formData });
+  const cleanData: Partial<Collection> = {
+    title: formData.title,
+    url: formData.url,
+    mapUrl: formData.mapUrl,
+    websiteUrl: formData.websiteUrl,
+    source: formData.source,
+    category: formData.category,
+    note: formData.note,
+    imageUrl: formData.imageUrl,
+  };
+
+  // Conditionally add id if it exists (meaning it's an edit operation)
+  if (formData.id) {
+    cleanData.id = formData.id;
+  }
+  emit("save", cleanData);
 };
 </script>
 

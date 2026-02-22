@@ -122,7 +122,7 @@ export const useTripStore = defineStore("trip", () => {
 
   // Add a new trip
   const addTrip = async (
-    tripData: Omit<Trip, "id" | "userId" | "createdAt">,
+    tripData: Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">,
   ) => {
     if (!authStore.user)
       throw new Error("User must be logged in to create a trip");
@@ -134,6 +134,7 @@ export const useTripStore = defineStore("trip", () => {
       ...cleanData,
       userId: authStore.user.email || authStore.user.uid,
       createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
     return docRef.id;
   };
@@ -141,11 +142,17 @@ export const useTripStore = defineStore("trip", () => {
   // Update an existing trip
   const updateTrip = async (
     tripId: string,
-    tripData: Partial<Omit<Trip, "id" | "userId" | "createdAt">>,
+    tripData: Partial<Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">>,
   ) => {
     if (!authStore.user) throw new Error("User must be logged in");
     const docRef = doc(db, "trips", tripId);
-    await updateDoc(docRef, tripData);
+
+    const dataToUpdate = tripData;
+
+    await updateDoc(docRef, {
+      ...dataToUpdate,
+      updatedAt: Timestamp.now(),
+    });
   };
 
   // Delete a trip
@@ -182,7 +189,7 @@ export const useTripStore = defineStore("trip", () => {
       bookings.push(bookingToSave);
     }
 
-    await updateDoc(tripRef, { bookings });
+    await updateDoc(tripRef, { bookings, updatedAt: Timestamp.now() });
   };
 
   /**
@@ -199,7 +206,7 @@ export const useTripStore = defineStore("trip", () => {
       (b: Booking) => b.id !== bookingId,
     );
 
-    await updateDoc(tripRef, { bookings });
+    await updateDoc(tripRef, { bookings, updatedAt: Timestamp.now() });
   };
 
   /**
@@ -235,7 +242,7 @@ export const useTripStore = defineStore("trip", () => {
       preparation.push(itemToSave as ChecklistItem);
     }
 
-    await updateDoc(tripRef, { preparation });
+    await updateDoc(tripRef, { preparation, updatedAt: Timestamp.now() });
   };
 
   /**
@@ -252,7 +259,7 @@ export const useTripStore = defineStore("trip", () => {
       (p: ChecklistItem) => p.id !== itemId,
     );
 
-    await updateDoc(tripRef, { preparation });
+    await updateDoc(tripRef, { preparation, updatedAt: Timestamp.now() });
   };
 
   /**
@@ -272,7 +279,7 @@ export const useTripStore = defineStore("trip", () => {
       return p;
     });
 
-    await updateDoc(tripRef, { preparation });
+    await updateDoc(tripRef, { preparation, updatedAt: Timestamp.now() });
   };
 
   return {

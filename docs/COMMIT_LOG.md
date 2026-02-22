@@ -8,6 +8,20 @@
 
 ## [2026-02-20]
 
+## [2026-02-22] fix(core): 強化時間戳管理與表單行為一致性
+
+- **Version**: `2.1.6`
+- **改動方向**: 統一時間戳欄位為必填、修正 Zod 驗證錯誤、確保表單正確更新現有文件。
+- **具體內容**:
+  - 將 `src/types/trip.ts` 中的 `createdAt` 和 `updatedAt` 欄位設為必填。
+  - 修正 `src/stores/tripStore.ts` 中 `addTrip` 和 `updateTrip` 函式，確保在新增和更新旅程時，能正確地設定 `createdAt` 和 `updatedAt`。
+  - 修正 `src/components/trip/TripForm.vue` 和 `src/views/HomeView.vue` 的型別定義，使其與 `tripStore` 的參數保持一致。
+  - 修正 `src/services/seed.ts` 中的 `expenseSeeds` 型別定義，以符合 `Expense` Schema 的 `createdAt` 必填要求。
+  - 修正 `src/components/trip/CollectionForm.vue` 的 `handleSave` 邏輯，確保在編輯模式下，會將文件 `id` 包含在 `save` 事件中，以避免錯誤地新增文件。
+  - 修正 `src/types/trip.ts` 中 `FirestoreTimestampSchema` 的 `any` 型別使用，以通過 Lint 檢查。
+  - 解決 Zod `z.date()` 錯誤訊息配置與版本不符的問題。
+  - 更新 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.1.6`。
+
 ## [2026-02-20] refactor(store): 全站 Store 架構同步與 ID 衝突防禦
 
 - **Version**: `2.1.5`
