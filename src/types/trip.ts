@@ -218,6 +218,7 @@ export const CollectionSchema = z.object({
   note: z.string().optional(),
   imageUrl: z.url().or(z.string().optional()),
   category: z.string().optional(),
+  tags: z.array(z.string()).default([]),
   createdAt: FirestoreTimestampSchema,
 });
 export type Collection = z.infer<typeof CollectionSchema>;

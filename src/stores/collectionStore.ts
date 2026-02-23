@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   collection,
   query,
@@ -22,6 +22,23 @@ export const useCollectionStore = defineStore("collection", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const authStore = useAuthStore();
+
+  /**
+   * 提取所有不重複的標籤
+   */
+  const allTags = computed(() => {
+    const tagsSet = new Set<string>();
+    collections.value.forEach((item) => {
+      if (item.tags && Array.isArray(item.tags)) {
+        item.tags.forEach((tag) => {
+          if (tag && typeof tag === "string" && tag.trim() !== "") {
+            tagsSet.add(tag.trim());
+          }
+        });
+      }
+    });
+    return Array.from(tagsSet).sort();
+  });
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -119,6 +136,7 @@ export const useCollectionStore = defineStore("collection", () => {
 
   return {
     collections,
+    allTags,
     loading,
     error,
     subscribeToCollections,

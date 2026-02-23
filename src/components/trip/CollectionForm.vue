@@ -3,13 +3,15 @@
  * CollectionForm (Component)
  * Handles creating and editing travel research items.
  */
-import { reactive, computed, watch } from "vue";
+import { reactive, computed, watch, ref } from "vue";
 import {
   Globe,
   AtSign,
   Instagram,
   Youtube,
   MoreHorizontal,
+  X,
+  Plus,
 } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
 import type { Collection, CollectionSource } from "../../types/trip";
@@ -23,6 +25,8 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
+const tagInput = ref("");
+
 // 建立局部狀態副本
 const formData = reactive<Partial<Collection>>({
   title: "",
@@ -33,6 +37,7 @@ const formData = reactive<Partial<Collection>>({
   category: "未分類",
   note: "",
   imageUrl: "",
+  tags: [],
   ...props.initialData,
 });
 
@@ -51,12 +56,28 @@ watch(
         category: "未分類",
         note: "",
         imageUrl: "",
+        tags: [],
         ...props.initialData,
       });
     emit("update:dirty", isDirty);
   },
   { deep: true },
 );
+
+// 新增標籤
+const addTag = () => {
+  const tag = tagInput.value.trim();
+  if (tag && !formData.tags?.includes(tag)) {
+    if (!formData.tags) formData.tags = [];
+    formData.tags.push(tag);
+  }
+  tagInput.value = "";
+};
+
+// 移除標籤
+const removeTag = (index: number) => {
+  formData.tags?.splice(index, 1);
+};
 
 const sources: { value: CollectionSource; label: string; icon: string }[] = [
   { value: "web", label: "網頁", icon: "globe" },
@@ -81,6 +102,11 @@ const categories = [
 const handleSave = () => {
   if (!formData.title) return uiStore.showToast("請輸入標題", "warning");
   if (!formData.url) return uiStore.showToast("請輸入網址", "warning");
+
+  // 若標籤輸入框還有文字，先自動加入
+  if (tagInput.value.trim()) {
+    addTag();
+  }
 
   // 網址校驗函式
   const isValidUrl = (url?: string) => {
@@ -109,6 +135,7 @@ const handleSave = () => {
     category: formData.category,
     note: formData.note,
     imageUrl: formData.imageUrl,
+    tags: formData.tags || [],
   };
 
   // Conditionally add id if it exists (meaning it's an edit operation)
@@ -163,6 +190,37 @@ const handleSave = () => {
           placeholder="例如：東京必吃拉麵清單"
           class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
         />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-forest-300 uppercase">標籤</label>
+        <div class="flex flex-wrap gap-2 mb-2" v-if="formData.tags?.length">
+          <span
+            v-for="(tag, index) in formData.tags"
+            :key="index"
+            class="tag-chip flex items-center gap-1 px-3 py-1 bg-forest-50 text-forest-500 rounded-full text-xs font-bold"
+          >
+            #{{ tag }}
+            <button @click="removeTag(index)" class="hover:text-red-400">
+              <X :size="12" />
+            </button>
+          </span>
+        </div>
+        <div class="relative">
+          <input
+            v-model="tagInput"
+            type="text"
+            placeholder="新增標籤 (輸入後按 Enter)"
+            class="w-full p-3 pr-12 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+            @keydown.enter.prevent="addTag"
+          />
+          <button
+            @click="addTag"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-forest-300 hover:text-forest-500"
+          >
+            <Plus :size="20" />
+          </button>
+        </div>
       </div>
 
       <div class="space-y-2">

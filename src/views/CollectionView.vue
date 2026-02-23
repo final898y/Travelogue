@@ -24,10 +24,11 @@ const route = useRoute();
 const router = useRouter();
 const collectionStore = useCollectionStore();
 const uiStore = useUIStore();
-const { collections } = storeToRefs(collectionStore);
+const { collections, allTags } = storeToRefs(collectionStore);
 const tripId = route.params.id as string;
 
 const activeFilter = ref<CollectionSource | "all">("all");
+const activeTag = ref<string | null>(null);
 const isSheetOpen = ref(false);
 const isFormDirty = ref(false);
 const currentCollection = ref<Partial<Collection> | null>(null);
@@ -46,9 +47,28 @@ onUnmounted(() => {
 });
 
 const filteredCollections = computed(() => {
-  if (activeFilter.value === "all") return collections.value;
-  return collections.value.filter((item) => item.source === activeFilter.value);
+  let result = collections.value;
+
+  // 來源篩選
+  if (activeFilter.value !== "all") {
+    result = result.filter((item) => item.source === activeFilter.value);
+  }
+
+  // 標籤篩選
+  if (activeTag.value) {
+    result = result.filter((item) => item.tags?.includes(activeTag.value!));
+  }
+
+  return result;
 });
+
+const toggleTag = (tag: string) => {
+  if (activeTag.value === tag) {
+    activeTag.value = null;
+  } else {
+    activeTag.value = tag;
+  }
+};
 
 const goBack = () => {
   router.push("/");
@@ -57,8 +77,8 @@ const goBack = () => {
 const openEditSheet = (item?: Collection) => {
   isFormDirty.value = false;
   currentCollection.value = item
-    ? { ...item }
-    : { source: "web", category: "未分類" };
+    ? { ...item, tags: item.tags || [] }
+    : { source: "web", category: "未分類", tags: [] };
   isSheetOpen.value = true;
 };
 
@@ -139,20 +159,59 @@ const handleDeleteCollection = async () => {
       <p class="text-gray-500 text-sm ml-8">整理 Threads、IG 與網頁靈感</p>
 
       <!-- Filters -->
-      <div class="flex gap-2 mt-6 overflow-x-auto no-scrollbar pb-2">
-        <button
-          v-for="f in ['all', 'threads', 'instagram', 'web', 'youtube']"
-          :key="f"
-          @click="activeFilter = f as any"
-          class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap"
-          :class="
-            activeFilter === f
-              ? 'bg-forest-500 text-white shadow-soft'
-              : 'bg-white text-forest-400 border border-forest-100'
-          "
-        >
-          {{ f.toUpperCase() }}
-        </button>
+      <div class="space-y-3 mt-6">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <button
+            v-for="f in ['all', 'threads', 'instagram', 'web', 'youtube']"
+            :key="f"
+            @click="activeFilter = f as any"
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap"
+            :class="
+              activeFilter === f
+                ? 'bg-forest-500 text-white shadow-soft'
+                : 'bg-white text-forest-400 border border-forest-100'
+            "
+          >
+            {{ f.toUpperCase() }}
+          </button>
+        </div>
+
+        <!-- Tag Filters -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+          <template v-if="allTags.length > 0">
+            <!-- Reset Tag Filter -->
+            <button
+              @click="activeTag = null"
+              class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border-2"
+              :class="
+                activeTag === null
+                  ? 'bg-forest-400 text-white border-forest-400 shadow-soft-sm'
+                  : 'bg-white text-forest-300 border-forest-50'
+              "
+            >
+              # 全部
+            </button>
+            <button
+              v-for="tag in allTags"
+              :key="tag"
+              @click="toggleTag(tag)"
+              class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border-2"
+              :class="
+                activeTag === tag
+                  ? 'bg-forest-400 text-white border-forest-400 shadow-soft-sm'
+                  : 'bg-white text-forest-300 border-forest-50'
+              "
+            >
+              #{{ tag }}
+            </button>
+          </template>
+          <div
+            v-else
+            class="px-4 py-1.5 rounded-full bg-forest-50/30 text-[10px] text-forest-200 border border-dashed border-forest-100 whitespace-nowrap"
+          >
+            # 新增標籤即可在此篩選
+          </div>
+        </div>
       </div>
     </header>
 
@@ -165,7 +224,7 @@ const handleDeleteCollection = async () => {
           <Bookmark :size="40" stroke-width="1.5" />
         </div>
         <p class="text-gray-500 font-medium">
-          還沒有收集任何資料<br />點擊下方按鈕開始記錄
+          沒有符合條件的項目<br />調整篩選或新增靈感
         </p>
       </div>
 
@@ -218,11 +277,19 @@ const handleDeleteCollection = async () => {
           >
             "{{ item.note }}"
           </p>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <span
               class="px-2 py-0.5 bg-forest-50 text-forest-400 rounded text-[10px] font-bold"
             >
               {{ item.category }}
+            </span>
+            <!-- Item Tags -->
+            <span
+              v-for="tag in item.tags"
+              :key="tag"
+              class="text-[10px] text-forest-300 font-medium"
+            >
+              #{{ tag }}
             </span>
           </div>
         </div>

@@ -593,6 +593,7 @@ const collectionSeeds: Record<string, Omit<Collection, "id" | "createdAt">[]> =
         source: "web",
         category: "攻略/工具",
         note: "注意滿開時間",
+        tags: [],
       },
       {
         title: "新宿御苑官網",
@@ -601,6 +602,7 @@ const collectionSeeds: Record<string, Omit<Collection, "id" | "createdAt">[]> =
         category: "景點",
         mapUrl: "https://maps.app.goo.gl/DMZ6mqWhZpYpY6pY8",
         websiteUrl: "https://www.env.go.jp/garden/shinjukugyoen/index.html",
+        tags: [],
       },
       {
         title: "六歌仙燒肉預約",
@@ -609,6 +611,7 @@ const collectionSeeds: Record<string, Omit<Collection, "id" | "createdAt">[]> =
         category: "美食",
         mapUrl: "https://maps.app.goo.gl/rokkasen-shinjuku",
         websiteUrl: "https://www.rokkasen.co.jp/en/contents/resv.html",
+        tags: [],
       },
     ],
   };

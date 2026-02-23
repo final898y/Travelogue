@@ -11,6 +11,8 @@ vi.mock("../../src/assets/icons", () => ({
   Instagram: { template: "<svg />" },
   Youtube: { template: "<svg />" },
   MoreHorizontal: { template: "<svg />" },
+  X: { template: "<svg />" },
+  Plus: { template: "<svg />" },
 }));
 
 describe("CollectionForm.vue", () => {
@@ -54,6 +56,7 @@ describe("CollectionForm.vue", () => {
       websiteUrl: "https://tabelog.com",
       category: "美食",
       source: "instagram" as const,
+      tags: ["拉麵", "東京"],
     };
 
     const wrapper = mountWithPinia({
@@ -62,10 +65,13 @@ describe("CollectionForm.vue", () => {
       },
     });
 
-    const textInput = wrapper.find("input[type='text']");
+    const textInputs = wrapper.findAll("input[type='text']");
     const urlInputs = wrapper.findAll("input[type='url']");
 
-    expect((textInput.element as HTMLInputElement).value).toBe("好吃拉麵");
+    // 標題輸入框
+    expect((textInputs[0].element as HTMLInputElement).value).toBe("好吃拉麵");
+
+    // 網址輸入框 (現在 index 偏移了，因為多了一個標籤 input)
     expect((urlInputs[0].element as HTMLInputElement).value).toBe(
       "https://example.com",
     );
@@ -80,9 +86,35 @@ describe("CollectionForm.vue", () => {
       "美食",
     );
 
+    // 檢查標籤渲染
+    const tagChips = wrapper.findAll(".tag-chip");
+    expect(tagChips).toHaveLength(2);
+    expect(tagChips[0].text()).toContain("#拉麵");
+    expect(tagChips[1].text()).toContain("#東京");
+
     // IG 對應第三個按鈕 (index 2)
     const igBtn = wrapper.findAll(".grid-cols-5 button")[2];
     expect(igBtn.classes()).toContain("border-forest-400");
+  });
+
+  it("應能新增與移除標籤", async () => {
+    const wrapper = mountWithPinia({
+      props: { initialData: { tags: ["舊標籤"] } },
+    });
+
+    const tagInput = wrapper.findAll("input[type='text']")[1];
+    await tagInput.setValue("新標籤");
+    await tagInput.trigger("keydown.enter");
+
+    let tagChips = wrapper.findAll(".tag-chip");
+    expect(tagChips).toHaveLength(2);
+    expect(tagChips[1].text()).toContain("#新標籤");
+
+    // 點擊移除按鈕
+    await tagChips[0].find("button").trigger("click");
+    tagChips = wrapper.findAll(".tag-chip");
+    expect(tagChips).toHaveLength(1);
+    expect(tagChips[0].text()).toContain("#新標籤");
   });
 
   it("切換分類應更新 formData", async () => {
@@ -108,7 +140,8 @@ describe("CollectionForm.vue", () => {
     expect(uiStore.showToast).toHaveBeenCalledWith("請輸入標題", "warning");
 
     // Case 2: 有標題沒網址
-    await wrapper.find("input[type='text']").setValue("測試");
+    const textInputs = wrapper.findAll("input[type='text']");
+    await textInputs[0].setValue("測試");
     await wrapper.find("button.bg-forest-400").trigger("click");
     expect(uiStore.showToast).toHaveBeenCalledWith("請輸入網址", "warning");
 
@@ -127,9 +160,15 @@ describe("CollectionForm.vue", () => {
       props: { initialData: {} },
     });
 
-    await wrapper.find("input[type='text']").setValue("我的景點");
-    await wrapper.find("input[type='url']").setValue("https://google.com");
+    const textInputs = wrapper.findAll("input[type='text']");
+    await textInputs[0].setValue("我的景點");
+
+    const urlInputs = wrapper.findAll("input[type='url']");
+    await urlInputs[0].setValue("https://google.com");
     await wrapper.find("select").setValue("景點");
+
+    // 輸入標籤但未按 Enter，儲存時應自動加入
+    await textInputs[1].setValue("自動加入標籤");
 
     await wrapper.find("button.bg-forest-400").trigger("click");
 
@@ -137,5 +176,6 @@ describe("CollectionForm.vue", () => {
     const data = wrapper.emitted("save")![0][0] as any;
     expect(data.title).toBe("我的景點");
     expect(data.category).toBe("景點");
+    expect(data.tags).toContain("自動加入標籤");
   });
 });
