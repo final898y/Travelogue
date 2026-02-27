@@ -42,15 +42,63 @@ describe("Backup Service", () => {
     it("應正確抓取旅程及其所有子集合資料", async () => {
       const mockTripDoc = {
         id: "trip-abc",
-        data: () => ({ title: "東京之旅", userId: mockUserId }),
+        data: () => ({
+          title: "東京之旅",
+          userId: mockUserId,
+          startDate: "2024-01-01",
+          endDate: "2024-01-05",
+          days: 5,
+          status: "upcoming",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       };
 
       vi.mocked(firestore.getDocs)
         .mockResolvedValueOnce({
           docs: [mockTripDoc],
         } as unknown as firestore.QuerySnapshot)
-        .mockResolvedValue({
-          docs: [{ id: "sub-1", data: () => ({ value: 1 }) }],
+        .mockResolvedValueOnce({
+          docs: [
+            {
+              id: "sub-1",
+              data: () => ({
+                tripId: "trip-abc",
+                date: "2024-01-01",
+                activities: [],
+              }),
+            },
+          ],
+        } as unknown as firestore.QuerySnapshot)
+        .mockResolvedValueOnce({
+          docs: [
+            {
+              id: "exp-1",
+              data: () => ({
+                date: "2024-01-01",
+                category: "food",
+                amount: 100,
+                currency: "TWD",
+                description: "Lunch",
+                payer: "user-123",
+                splitWith: ["user-123"],
+                createdAt: new Date(),
+              }),
+            },
+          ],
+        } as unknown as firestore.QuerySnapshot)
+        .mockResolvedValueOnce({
+          docs: [
+            {
+              id: "coll-1",
+              data: () => ({
+                title: "Spot",
+                url: "https://example.com",
+                source: "web",
+                createdAt: new Date(),
+              }),
+            },
+          ],
         } as unknown as firestore.QuerySnapshot);
 
       const result = await backupService.fetchAllUserData(mockUserId);
@@ -67,7 +115,21 @@ describe("Backup Service", () => {
       vi.mocked(firestore.getDocs)
         .mockResolvedValueOnce({
           empty: false,
-          docs: [{ id: tripId, data: () => ({ title: "特定旅程" }) }],
+          docs: [
+            {
+              id: tripId,
+              data: () => ({
+                title: "特定旅程",
+                userId: mockUserId,
+                startDate: "2024-01-01",
+                endDate: "2024-01-05",
+                days: 5,
+                status: "upcoming",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }),
+            },
+          ],
         } as any)
         .mockResolvedValue({ docs: [] } as any);
 

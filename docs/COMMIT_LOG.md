@@ -6,7 +6,17 @@
 
 ## 📅 提交歷史
 
-## [2026-02-20]
+## [2026-02-27] fix(backup): 強化備份服務之資料驗證與 ID 一致性 (v2.2.1)
+
+- **Version**: `2.2.1`
+- **改動方向**: 配合 `trip.ts` 的 Schema 更新，強化 `backupService` 的資料解析能力，並修正匯入時的 ID 衝突。
+- **具體內容**:
+  - **資料驗證**: 在 `fetchSingleTripData` 與 `fetchAllUserData` 中引入 Zod Schema 解析，確保資料符合最新定義並正確轉換 `Timestamp`。
+  - **ID 修正**: 修正 `importSingleTrip` 邏輯，確保匯入為新行程時，子文件內容中的 `id` 欄位會同步更新為新的 Firestore Document ID。
+  - **還原優化**: 在 `applyDataPackage` (全域還原) 中改為保留子文件的原始 ID，確保資料結構與備份時完全一致。
+  - **測試補強**: 更新 `tests/unit/backupService.spec.ts` 模擬資料，補齊最新 Schema 要求的必填欄位。
+  - **清理**: 移除 `backupService.ts` 中未使用的型別匯入。
+  - **版本更新**: 升級 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.2.1`。
 
 ## [2026-02-23] feat(collection): 靈感收集新增標籤 (Tag) 與過濾功能 (v2.2.0)
 

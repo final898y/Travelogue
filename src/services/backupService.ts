@@ -17,7 +17,6 @@ import {
   ExpenseSchema,
   CollectionSchema,
 } from "../types/trip";
-import type { Trip, DailyPlan, Expense, Collection } from "../types/trip";
 import { z } from "zod";
 
 /**
@@ -69,7 +68,9 @@ export const backupService = {
 
     const firstDoc = tripSnap.docs[0];
     if (!firstDoc) throw new Error("找不到該旅程資料");
-    const tripData = { id: tripId, ...firstDoc.data() } as Trip;
+
+    // 使用 Schema 解析確保資料完整性與 Timestamp 轉換
+    const tripData = TripSchema.parse({ id: tripId, ...firstDoc.data() });
 
     const [plansSnap, expSnap, collSnap] = await Promise.all([
       getDocs(collection(db, "trips", tripId, "plans")),
@@ -78,18 +79,16 @@ export const backupService = {
     ]);
 
     return {
-      version: "1.0",
+      version: "1.1",
       exportedAt: new Date().toISOString(),
       trip: {
         data: tripData,
-        plans: plansSnap.docs.map(
-          (d) => ({ ...d.data() }) as unknown as DailyPlan,
+        plans: plansSnap.docs.map((d) => DailyPlanSchema.parse(d.data())),
+        expenses: expSnap.docs.map((d) =>
+          ExpenseSchema.parse({ id: d.id, ...d.data() }),
         ),
-        expenses: expSnap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as unknown as Expense,
-        ),
-        collections: collSnap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as unknown as Collection,
+        collections: collSnap.docs.map((d) =>
+          CollectionSchema.parse({ id: d.id, ...d.data() }),
         ),
       },
     };
@@ -145,12 +144,14 @@ export const backupService = {
 
     for (const exp of expenses) {
       const expRef = doc(collection(db, "trips", newTripId, "expenses"));
-      batch.set(expRef, exp);
+      // 更新內部 ID 以符合新的 document ID
+      batch.set(expRef, { ...exp, id: expRef.id });
     }
 
     for (const coll of collections) {
       const collRef = doc(collection(db, "trips", newTripId, "collections"));
-      batch.set(collRef, coll);
+      // 更新內部 ID 以符合新的 document ID
+      batch.set(collRef, { ...coll, id: collRef.id });
     }
 
     await batch.commit();
@@ -169,7 +170,8 @@ export const backupService = {
 
     for (const tripDoc of tripSnapshots.docs) {
       const tripId = tripDoc.id;
-      const tripData = { id: tripId, ...tripDoc.data() } as Trip;
+      // 使用 Schema 解析
+      const tripData = TripSchema.parse({ id: tripId, ...tripDoc.data() });
 
       // 平行抓取子集合
       const [plansSnap, expSnap, collSnap] = await Promise.all([
@@ -180,20 +182,18 @@ export const backupService = {
 
       fullTripsData.push({
         data: tripData,
-        plans: plansSnap.docs.map(
-          (d) => ({ ...d.data() }) as unknown as DailyPlan,
+        plans: plansSnap.docs.map((d) => DailyPlanSchema.parse(d.data())),
+        expenses: expSnap.docs.map((d) =>
+          ExpenseSchema.parse({ id: d.id, ...d.data() }),
         ),
-        expenses: expSnap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as unknown as Expense,
-        ),
-        collections: collSnap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as unknown as Collection,
+        collections: collSnap.docs.map((d) =>
+          CollectionSchema.parse({ id: d.id, ...d.data() }),
         ),
       });
     }
 
     return {
-      version: "1.0",
+      version: "1.1",
       exportedAt: new Date().toISOString(),
       userId,
       trips: fullTripsData,
@@ -226,11 +226,13 @@ export const backupService = {
         batch.set(planRef, plan);
       }
       for (const exp of expenses) {
-        const expRef = doc(collection(db, "trips", tripId, "expenses"));
+        // 還原時保留原始 ID 以維持資料一致性
+        const expRef = doc(db, "trips", tripId, "expenses", exp.id);
         batch.set(expRef, exp);
       }
       for (const coll of collections) {
-        const collRef = doc(collection(db, "trips", tripId, "collections"));
+        // 還原時保留原始 ID 以維持資料一致性
+        const collRef = doc(db, "trips", tripId, "collections", coll.id);
         batch.set(collRef, coll);
       }
     }
