@@ -6,6 +6,17 @@
 
 ## 📅 提交歷史
 
+## [2026-02-28] feat(ui): BaseBottomSheet 支援瀏覽器返回鍵關閉功能 (v2.2.2)
+
+- Hash: `TBD`
+- 改動方向: 提升行動裝置使用者體驗，讓返回鍵能關閉表單而不跳離頁面。
+- 具體內容:
+  - 於 BaseBottomSheet.vue 實作 History API 攔截邏輯 (pushState/popstate)。
+  - 確保 UI 點擊關閉時自動同步歷史狀態 (history.back())。
+  - 保留並優化下滑手勢關閉功能。
+  - 修正手勢拖曳時的背景捲動鎖定問題。
+  - 更新單元測試以覆蓋 History API 與手勢邏輯。
+
 ## [2026-02-27] fix(backup): 強化備份服務之資料驗證與 ID 一致性 (v2.2.1)
 
 - **Version**: `2.2.1`

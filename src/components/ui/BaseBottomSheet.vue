@@ -23,7 +23,13 @@ const startTime = ref(0);
 const handleClose = () => {
   if (props.hasUnsavedChanges) {
     const confirmClose = window.confirm("您有未儲存的變更，確定要關閉嗎？");
-    if (!confirmClose) return;
+    if (!confirmClose) {
+      // 如果是在 popstate 觸發的，使用者按了取消，我們需要補回一個 history state
+      if (window.history.state?.sheetOpen !== true) {
+        window.history.pushState({ sheetOpen: true }, "");
+      }
+      return;
+    }
   }
   emit("close");
 };
@@ -31,6 +37,13 @@ const handleClose = () => {
 // 防止背景捲動
 const toggleScroll = (disable: boolean) => {
   document.body.style.overflow = disable ? "hidden" : "";
+};
+
+// 處理瀏覽器返回鍵
+const handlePopState = (_e: PopStateEvent) => {
+  if (props.isOpen) {
+    handleClose();
+  }
 };
 
 // 手勢處理
@@ -91,15 +104,32 @@ onMounted(() => {
 
 onUnmounted(() => {
   toggleScroll(false);
+  window.removeEventListener("popstate", handlePopState);
+  // 確保組件卸載時，如果 state 還在就清掉
+  if (props.isOpen && window.history.state?.sheetOpen) {
+    window.history.back();
+  }
 });
 
-// 當外部強制關閉時（例如 isOpen 變為 false），重置拖動狀態
+// 監控開啟狀態以管理歷史紀錄與狀態重置
 watch(
   () => props.isOpen,
   (val) => {
-    if (!val) {
+    if (val) {
+      // 開啟時：推送狀態、監聽、重置拖曳
+      window.history.pushState({ sheetOpen: true }, "");
+      window.addEventListener("popstate", handlePopState);
       isDragging.value = false;
       dragOffset.value = 0;
+    } else {
+      // 關閉時：移除監聽、重置狀態
+      window.removeEventListener("popstate", handlePopState);
+      isDragging.value = false;
+      dragOffset.value = 0;
+      // 如果是因為 UI 操作（非返回鍵）導致關閉，需要把剛才 push 的 state 清掉
+      if (window.history.state?.sheetOpen) {
+        window.history.back();
+      }
     }
   },
 );

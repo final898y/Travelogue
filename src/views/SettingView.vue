@@ -99,7 +99,7 @@ const handleCloudBackup = async () => {
   try {
     isProcessing.value = true;
     await backupService.createCloudBackup(authStore.user.uid);
-    uiStore.showToast("已完成雲端備份", "success");
+    uiStore.showToast("已建立雲端備份", "success");
     await fetchBackups(); // 重新整理列表
   } catch (error) {
     console.error("Backup Error:", error);
@@ -114,8 +114,8 @@ const handleCloudRestore = async (backupId: string, dateLabel: string) => {
 
   const confirmed = await uiStore.showConfirm({
     title: "從雲端還原？",
-    message: `確定要還原 ${dateLabel} 的備份嗎？這會『完全覆蓋』目前的旅程資料且無法復原。`,
-    okText: "開始還原",
+    message: `確定要還原 ${dateLabel} 的備份嗎？這將會覆寫目前的行程資料且無法復原。`,
+    okText: "確定還原",
     cancelText: "取消",
   });
 
@@ -144,10 +144,10 @@ const handleImport = async (event: Event) => {
   if (!file || !authStore.user) return;
 
   const confirmed = await uiStore.showConfirm({
-    title: "確定要覆蓋資料嗎？",
+    title: "確定要匯入資料嗎？",
     message:
-      "導入操作將會『完全刪除』您目前的旅程資料，並以備份檔內容取代。此動作無法復原。",
-    okText: "確定導入",
+      "匯入資料將會刪除您目前的行程規劃，並以備份檔內容取代。此操作無法復原。",
+    okText: "確定匯入",
     cancelText: "取消",
   });
 
@@ -159,11 +159,11 @@ const handleImport = async (event: Event) => {
   try {
     isProcessing.value = true;
     await backupService.importFromJSON(authStore.user.uid, file);
-    uiStore.showToast("資料導入完成", "success");
+    uiStore.showToast("資料匯入完成", "success");
     window.location.reload();
   } catch (error) {
     console.error("Import Error:", error);
-    uiStore.showToast("導入失敗，格式不符", "error");
+    uiStore.showToast("匯入失敗，格式錯誤", "error");
   } finally {
     isProcessing.value = false;
     target.value = "";
@@ -194,16 +194,16 @@ const formatDate = (
 
 const settingsGroups: SettingGroup[] = [
   {
-    title: "旅程管理",
+    title: "行程管理",
     items: [
       {
         id: "members",
-        label: "旅伴成員管理",
+        label: "夥伴團員管理",
         icon: Users as FunctionalComponent,
       },
       {
         id: "archive",
-        label: "已封存的旅程",
+        label: "已封存行程",
         icon: Archive as FunctionalComponent,
       },
     ],
@@ -219,7 +219,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "export",
-        label: "匯出本地 JSON 檔案",
+        label: "導出本地 JSON 檔案",
         icon: Download as FunctionalComponent,
         action: handleExport,
       },
@@ -236,7 +236,7 @@ const settingsGroups: SettingGroup[] = [
     items: [
       {
         id: "notifications",
-        label: "通知提醒",
+        label: "通知設定",
         icon: Bell as FunctionalComponent,
       },
       {
@@ -274,7 +274,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "version",
-        label: "版本資訊 (v2.2.1)",
+        label: "版本資訊 (v2.2.2)",
         icon: Info as FunctionalComponent,
       },
     ],
@@ -353,7 +353,7 @@ const settingsGroups: SettingGroup[] = [
           <div v-if="group.title === '資料安全'" class="pt-2">
             <div class="flex justify-between items-center mb-2 px-1">
               <h4 class="text-[10px] font-bold text-forest-300 uppercase">
-                最近的雲端備份
+                最近雲端備份
               </h4>
               <button
                 @click="fetchBackups"
@@ -383,7 +383,7 @@ const settingsGroups: SettingGroup[] = [
                       {{ formatDate(b.createdAt) }}
                     </p>
                     <p class="text-[9px] text-gray-400">
-                      包含 {{ b.trips?.length || 0 }} 趟旅程
+                      包含 {{ b.trips?.length || 0 }} 趟行程
                     </p>
                   </div>
                 </div>
@@ -425,7 +425,7 @@ const settingsGroups: SettingGroup[] = [
       <div
         class="w-12 h-12 border-4 border-forest-100 border-t-forest-400 rounded-full animate-spin"
       ></div>
-      <p class="text-forest-800 font-bold font-rounded">正在處理資料...</p>
+      <p class="text-forest-800 font-bold font-rounded">處理資料中...</p>
     </div>
   </div>
 </template>
