@@ -45,6 +45,15 @@ export const usePlanStore = defineStore("plan", () => {
   };
 
   /**
+   * 根據日期獲取活動 (按時間 HH:mm 排序)
+   */
+  const getActivitiesByDate = (date: string) => {
+    const plan = currentTripPlans.value.find((p) => p.date === date);
+    if (!plan) return [];
+    return [...plan.activities].sort((a, b) => a.time.localeCompare(b.time));
+  };
+
+  /**
    * 輔助函式：取得或建立特定日期的 Plan 文件
    */
   const getOrCreatePlanDoc = async (tripId: string, date: string) => {
@@ -74,6 +83,7 @@ export const usePlanStore = defineStore("plan", () => {
         const rawData = snapshot.docs.map((doc) => ({
           ...doc.data(),
           tripId, // 確保 tripId 正確
+          id: doc.id,
         }));
         currentTripPlans.value = validateAndFilter<DailyPlan>(
           DailyPlanSchema,
@@ -108,9 +118,9 @@ export const usePlanStore = defineStore("plan", () => {
 
     const idx = activities.findIndex((a) => a.id === activityToSave.id);
     if (idx !== -1) {
-      activities[idx] = activityToSave;
+      activities[idx] = activityToSave as Activity;
     } else {
-      activities.push(activityToSave);
+      activities.push(activityToSave as Activity);
     }
 
     if (docId) {
@@ -135,13 +145,21 @@ export const usePlanStore = defineStore("plan", () => {
     if (!docId) return;
 
     const activities = plan.activities.filter((a) => a.id !== activityId);
-    await updateDoc(doc(db, "trips", tripId, "plans", docId), { activities });
+
+    if (activities.length === 0) {
+      // 若無活動，直接刪除文件
+      const { deleteDoc } = await import("firebase/firestore");
+      await deleteDoc(doc(db, "trips", tripId, "plans", docId));
+    } else {
+      await updateDoc(doc(db, "trips", tripId, "plans", docId), { activities });
+    }
   };
 
   return {
     currentTripPlans,
     loading,
     error,
+    getActivitiesByDate,
     subscribeToPlans,
     updateTripActivity,
     deleteTripActivity,

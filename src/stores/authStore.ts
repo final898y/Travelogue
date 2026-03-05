@@ -31,33 +31,43 @@ export const useAuthStore = defineStore("auth", () => {
     } catch (err) {
       console.error("Whitelist check failed:", err);
       isAdmin.value = false;
-      return false;
+      error.value = (err as Error).message;
+      throw err; // 拋出原始錯誤以利外部捕捉
     }
   };
 
   // Initialize and listen to auth changes
   const init = () => {
     onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser && firebaseUser.email) {
-        const isAllowed = await checkWhitelist(firebaseUser.email);
-        if (isAllowed) {
-          user.value = firebaseUser;
+      try {
+        if (firebaseUser && firebaseUser.email) {
+          const isAllowed = await checkWhitelist(firebaseUser.email);
+          if (isAllowed) {
+            user.value = firebaseUser;
+          } else {
+            await signOut(auth);
+            user.value = null;
+            isAdmin.value = false;
+            error.value = "您的帳號不在授權白名單內，請聯繫管理員。";
+          }
         } else {
-          await signOut(auth);
           user.value = null;
           isAdmin.value = false;
-          error.value = "您的帳號不在授權白名單內，請聯繫管理員。";
         }
-      } else {
+      } catch (_err) {
+        // 若白名單檢查拋出錯誤 (如 Firestore 網路錯誤)
+        await signOut(auth);
         user.value = null;
         isAdmin.value = false;
+      } finally {
+        loading.value = false;
       }
-      loading.value = false;
     });
   };
 
   const loginWithGoogle = async () => {
     error.value = null;
+    loading.value = true; // 確保點擊登入時開啟 loading
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -73,11 +83,18 @@ export const useAuthStore = defineStore("auth", () => {
       }
       user.value = result.user;
     } catch (err) {
+      // 不論什麼錯誤（彈窗關閉、API 失敗、不在白名單），只要有登入跡象就登出以策安全
+      await signOut(auth);
+      user.value = null;
+      isAdmin.value = false;
+
       if ((err as Error).message !== "NOT_IN_WHITELIST") {
         console.error("Login failed:", err);
         error.value = "登入失敗，請稍後再試。";
       }
       throw err;
+    } finally {
+      loading.value = false;
     }
   };
 

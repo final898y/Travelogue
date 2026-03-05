@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   collection,
   query,
@@ -22,6 +22,31 @@ export const useExpenseStore = defineStore("expense", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const authStore = useAuthStore();
+
+  /**
+   * 總支出金額 (自動過濾無效數值)
+   */
+  const totalAmount = computed(() => {
+    return expenses.value.reduce((sum, item) => {
+      const amount = Number(item.amount);
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
+  });
+
+  /**
+   * 分類統計資訊
+   */
+  const categoryStats = computed(() => {
+    const stats: Record<string, number> = {};
+    expenses.value.forEach((item) => {
+      const cat = (item.category || "未分類").trim();
+      const amount = Number(item.amount);
+      if (!isNaN(amount)) {
+        stats[cat] = (stats[cat] || 0) + amount;
+      }
+    });
+    return stats;
+  });
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -116,6 +141,8 @@ export const useExpenseStore = defineStore("expense", () => {
 
   return {
     expenses,
+    totalAmount,
+    categoryStats,
     loading,
     error,
     subscribeToExpenses,

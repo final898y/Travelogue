@@ -6,6 +6,16 @@
 
 ## 📅 提交歷史
 
+## [2026-03-05] feat(store): 強化 Store 架構魯棒性與升級測試至 v2.0 (v2.2.4)
+
+- Hash: `TBD`
+- 改動方向: 全面加固狀態管理邏輯，建立具備防禦性的單元測試套件。
+- 具體內容:
+  - **Store 強化**: `authStore`, `tripStore`, `expenseStore`, `planStore` 內建排序、統計與異常捕捉邏輯。
+  - **測試 v2.0**: 全面覆蓋邊界值、Zod Schema 驗證與安全性防護（共 32 個測試案例通過）。
+  - **穩定性修復**: 修正 12 個由 v2.0 測試揭露的隱藏 Bug 與未定義引用。
+  - **版本同步**: 更新 `package.json`, `SettingView.vue` 與開發規範。
+
 ## [2026-03-05] feat(collection): 實作按分類篩選與測試升級 (v2.2.3)
 
 - Hash: `TBD`

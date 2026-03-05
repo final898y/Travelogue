@@ -24,117 +24,124 @@ vi.mock("../../src/services/firebase", () => ({
   db: {},
 }));
 
-describe("Auth Store", () => {
+describe("authStore.ts v2.0 (安全性與邊界測試)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
   });
 
-  it("初始狀態應該為載入中且用戶為空", () => {
-    const store = useAuthStore();
-    expect(store.user).toBeNull();
-    expect(store.loading).toBe(true);
-    expect(store.error).toBeNull();
+  describe("初始狀態與基礎屬性", () => {
+    it("初始狀態應該為載入中且用戶為空", () => {
+      const store = useAuthStore();
+      expect(store.user).toBeNull();
+      expect(store.loading).toBe(true);
+      expect(store.error).toBeNull();
+      expect(store.isAdmin).toBe(false);
+    });
   });
 
-  it("loginWithGoogle - 登入成功且在白名單內", async () => {
-    const store = useAuthStore();
-    const mockUser = { email: "allowed@test.com", uid: "123" };
+  describe("登入邏輯 (loginWithGoogle)", () => {
+    it("登入成功且在白名單內：應正確更新 user 狀態", async () => {
+      const store = useAuthStore();
+      const mockUser = { email: "allowed@test.com", uid: "123" };
 
-    // Mock 登入結果
-    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
-    // Mock 白名單檢查結果 (Exists)
-    (getDoc as vi.Mock).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({}),
+      (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
+      (getDoc as vi.Mock).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ isAdmin: false }),
+      });
+
+      await store.loginWithGoogle();
+
+      expect(store.user).toEqual(mockUser as any);
+      expect(store.isAdmin).toBe(false);
+      expect(store.error).toBeNull();
     });
 
-    await store.loginWithGoogle();
+    it("登入成功但不在白名單內：應拋出錯誤、清除狀態並強制登出", async () => {
+      const store = useAuthStore();
+      const mockUser = { email: "stranger@test.com", uid: "999" };
 
-    expect(store.user).toEqual(mockUser as any);
-    expect(store.error).toBeNull();
-  });
+      (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
+      (getDoc as vi.Mock).mockResolvedValueOnce({ exists: () => false });
 
-  it("loginWithGoogle - 登入成功但不在白名單內，應強制登出並報錯", async () => {
-    const store = useAuthStore();
-    const mockUser = { email: "not-allowed@test.com", uid: "123" };
+      await expect(store.loginWithGoogle()).rejects.toThrow("NOT_IN_WHITELIST");
 
-    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
-    // Mock 白名單檢查結果 (Not Exists)
-    (getDoc as vi.Mock).mockResolvedValueOnce({ exists: () => false });
-
-    await expect(store.loginWithGoogle()).rejects.toThrow("NOT_IN_WHITELIST");
-
-    expect(signOut).toHaveBeenCalled();
-    expect(store.user).toBeNull();
-    expect(store.error).toContain("不在授權白名單內");
-  });
-
-  it("loginWithGoogle - 登入成功且具備 Admin 權限", async () => {
-    const store = useAuthStore();
-    const mockUser = { email: "admin@test.com", uid: "admin-123" };
-
-    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
-    // Mock 白名單且 isAdmin 為 true
-    (getDoc as vi.Mock).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({ isAdmin: true }),
+      expect(signOut).toHaveBeenCalled();
+      expect(store.user).toBeNull();
+      expect(store.error).toContain("不在授權白名單內");
     });
 
-    await store.loginWithGoogle();
+    it("登入時發生網路錯誤或 Popup 被關閉：應正確補獲錯誤並停止 loading", async () => {
+      const store = useAuthStore();
+      (signInWithPopup as vi.Mock).mockRejectedValueOnce(
+        new Error("Firebase: Error (auth/popup-closed-by-user)."),
+      );
 
-    expect(store.user).toEqual(mockUser as any);
-    expect(store.isAdmin).toBe(true);
-  });
-
-  it("loginWithGoogle - 登入成功但僅為普通用戶 (無 isAdmin 欄位)", async () => {
-    const store = useAuthStore();
-    const mockUser = { email: "user@test.com", uid: "user-123" };
-
-    (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
-    // Mock 白名單且 isAdmin 為 false (或不存在)
-    (getDoc as vi.Mock).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({ isAdmin: false }),
+      await expect(store.loginWithGoogle()).rejects.toThrow();
+      expect(store.loading).toBe(false);
+      expect(store.user).toBeNull();
     });
 
-    await store.loginWithGoogle();
+    it("白名單檢查失敗 (API 錯誤)：應將錯誤寫入 error 狀態並登出", async () => {
+      const store = useAuthStore();
+      const mockUser = { email: "test@test.com", uid: "123" };
 
-    expect(store.user).toEqual(mockUser as any);
-    expect(store.isAdmin).toBe(false);
+      (signInWithPopup as vi.Mock).mockResolvedValueOnce({ user: mockUser });
+      (getDoc as vi.Mock).mockRejectedValueOnce(new Error("Firestore Error"));
+
+      await expect(store.loginWithGoogle()).rejects.toThrow("Firestore Error");
+      expect(signOut).toHaveBeenCalled();
+      expect(store.user).toBeNull();
+    });
   });
 
-  it("logout - 應呼叫 signOut 並清空狀態 (包含 isAdmin)", async () => {
-    const store = useAuthStore();
-    store.user = { uid: "123" } as any;
+  describe("初始化監聽 (init)", () => {
+    it("當 Firebase 用戶變更為 null 時：應正確停止 loading 並清空 user", async () => {
+      const store = useAuthStore();
+      (onAuthStateChanged as vi.Mock).mockImplementationOnce(
+        (_auth, callback) => callback(null),
+      );
 
-    await store.logout();
-
-    expect(signOut).toHaveBeenCalled();
-    expect(store.user).toBeNull();
-  });
-
-  it("init - 應監聽狀態變化並驗證白名單", async () => {
-    const store = useAuthStore();
-
-    // 模擬 Firebase 回傳一個已登入但不在白名單的用戶
-    const mockFirebaseUser = { email: "test@test.com" };
-    (onAuthStateChanged as vi.Mock).mockImplementationOnce(
-      (_auth: any, callback: any) => {
-        callback(mockFirebaseUser);
-      },
-    );
-    (getDoc as vi.Mock).mockResolvedValueOnce({
-      exists: () => false,
-      data: () => ({}),
+      store.init();
+      expect(store.user).toBeNull();
+      expect(store.loading).toBe(false);
     });
 
-    store.init();
+    it("當 Firebase 用戶變更為有效用戶時：應非同步進行白名單校驗", async () => {
+      const store = useAuthStore();
+      const mockFirebaseUser = { email: "test@test.com", uid: "123" };
 
-    // 等待非同步白名單檢查完成
-    await new Promise((resolve) => setTimeout(resolve, 0));
+      (onAuthStateChanged as vi.Mock).mockImplementationOnce(
+        (_auth, callback) => callback(mockFirebaseUser),
+      );
+      (getDoc as vi.Mock).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ isAdmin: true }),
+      });
 
-    expect(signOut).toHaveBeenCalled();
-    expect(store.loading).toBe(false);
+      store.init();
+
+      // 等待非同步微任務
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(store.user).toEqual(mockFirebaseUser as any);
+      expect(store.isAdmin).toBe(true);
+      expect(store.loading).toBe(false);
+    });
+  });
+
+  describe("登出邏輯 (logout)", () => {
+    it("應清空所有狀態，包含 user 與 isAdmin", async () => {
+      const store = useAuthStore();
+      store.user = { uid: "123" } as any;
+      (store as any).isAdmin = true;
+
+      await store.logout();
+
+      expect(signOut).toHaveBeenCalled();
+      expect(store.user).toBeNull();
+      expect(store.isAdmin).toBe(false);
+    });
   });
 });

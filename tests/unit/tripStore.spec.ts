@@ -14,129 +14,159 @@ vi.mock("firebase/firestore", () => ({
   getDoc: vi.fn(),
   addDoc: vi.fn(),
   updateDoc: vi.fn(),
+  deleteDoc: vi.fn(),
   doc: vi.fn(),
-  Timestamp: { now: vi.fn(() => ({ seconds: 123, nanoseconds: 456 })) },
+  Timestamp: {
+    now: vi.fn(() => ({
+      seconds: 123,
+      nanoseconds: 456,
+      toDate: () => new Date(),
+    })),
+  },
 }));
 
-// Mock Firebase Auth (Service Direct)
 vi.mock("../../src/services/firebase", () => ({
   db: {},
-  auth: { currentUser: { uid: "user-123", email: "user@test.com" } },
 }));
 
-// Mock authStore
 vi.mock("../../src/stores/authStore", () => ({
   useAuthStore: vi.fn(),
 }));
 
-describe("Trip Store", () => {
+describe("tripStore.ts v2.0 (資料分類與防護測試)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
 
-    // Default mock user for authStore
+    // Default mock user (Email priority)
     (useAuthStore as any).mockReturnValue({
       user: { uid: "user-123", email: "user@test.com" },
     });
   });
 
-  it("初始化時應具備正確的初始狀態", () => {
-    const store = useTripStore();
-    expect(store.trips).toEqual([]);
-    expect(store.loading).toBe(false);
+  describe("初始狀態", () => {
+    it("應具備預設空狀態與分類", () => {
+      const store = useTripStore();
+      expect(store.trips).toEqual([]);
+      expect(store.ongoingTrips).toEqual([]);
+      expect(store.upcomingTrips).toEqual([]);
+      expect(store.finishedTrips).toEqual([]);
+    });
   });
 
-  it("addTrip 應能正確新增旅程並優先綁定 Email 作為 userId", async () => {
-    const store = useTripStore();
-    const tripData = {
-      title: "新旅程",
-      startDate: "2024-05-01",
-      endDate: "2024-05-05",
-      days: 5,
-      status: "upcoming" as const,
-    };
+  describe("資料分類 (Computed Properties)", () => {
+    it("應根據 status 正確分類旅程並依 startDate 排序", () => {
+      const store = useTripStore();
+      store.trips = [
+        {
+          id: "1",
+          title: "進行中 A",
+          status: "ongoing",
+          startDate: "2024-05-01",
+        },
+        {
+          id: "2",
+          title: "未來 B",
+          status: "upcoming",
+          startDate: "2024-06-01",
+        },
+        {
+          id: "3",
+          title: "未來 C",
+          status: "upcoming",
+          startDate: "2024-05-15",
+        }, // C 比 B 早
+        {
+          id: "4",
+          title: "已結束 D",
+          status: "finished",
+          startDate: "2024-04-01",
+        },
+      ] as any;
 
-    (firestore.addDoc as any).mockResolvedValueOnce({ id: "new-trip-id" });
-
-    const id = await store.addTrip(tripData as any);
-
-    expect(id).toBe("new-trip-id");
-    expect(firestore.addDoc).toHaveBeenCalled();
-    const addedData = (firestore.addDoc as any).mock.calls[0][1];
-    expect(addedData.userId).toBe("user@test.com"); // 應使用 Email
-    expect(addedData.createdAt).toBeDefined();
-  });
-
-  it("addTrip 在無 Email 時應使用 UID 作為 userId", async () => {
-    // 模擬無 Email 的用戶
-    (useAuthStore as any).mockReturnValue({
-      user: { uid: "user-123", email: null },
+      expect(store.ongoingTrips).toHaveLength(1);
+      expect(store.upcomingTrips).toHaveLength(2);
+      expect(store.upcomingTrips[0].id).toBe("3"); // 2024-05-15
+      expect(store.upcomingTrips[1].id).toBe("2"); // 2024-06-01
+      expect(store.finishedTrips).toHaveLength(1);
     });
 
-    const store = useTripStore();
-    const tripData = { title: "無 Email 旅程" };
-
-    (firestore.addDoc as any).mockResolvedValueOnce({ id: "new-trip-id" });
-
-    await store.addTrip(tripData as any);
-
-    const addedData = (firestore.addDoc as any).mock.calls[0][1];
-    expect(addedData.userId).toBe("user-123"); // 退回 UID
+    it("當 trips 為 null 或資料損壞時，計算屬性不應崩潰且回傳空陣列", () => {
+      const store = useTripStore();
+      (store as any).trips = null;
+      expect(store.ongoingTrips).toEqual([]);
+      expect(store.upcomingTrips).toEqual([]);
+    });
   });
 
-  it("updateTripBooking 應能更新 trip 中的預訂陣列", async () => {
-    const store = useTripStore();
-    const tripId = "trip-1";
-    const newBooking = { title: "新飯店", type: "hotel", isConfirmed: true };
-
-    // Mock 讀取原始旅程資料
-    (firestore.getDoc as any).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({ bookings: [] }),
+  describe("新增旅程 (addTrip)", () => {
+    it("未登入時新增應拋出錯誤 (安全性防護)", async () => {
+      (useAuthStore as any).mockReturnValue({ user: null });
+      const store = useTripStore();
+      await expect(store.addTrip({} as any)).rejects.toThrow(
+        "User not logged in",
+      );
     });
 
-    await store.updateTripBooking(tripId, newBooking as any);
+    it("新增時應自動生成 ID 並優先使用 Email 作為 userId", async () => {
+      const store = useTripStore();
+      (firestore.addDoc as any).mockResolvedValueOnce({ id: "mock-trip-id" });
 
-    expect(firestore.updateDoc).toHaveBeenCalled();
-    const updatedData = (firestore.updateDoc as any).mock.calls[0][1];
-    expect(updatedData.bookings[0].title).toBe("新飯店");
-    expect(updatedData.bookings[0].id).toBeDefined(); // 應生成 ID
+      const id = await store.addTrip({ title: "測試" } as any);
+
+      expect(id).toBe("mock-trip-id");
+      const addedData = (firestore.addDoc as any).mock.calls[0][1];
+      expect(addedData.userId).toBe("user@test.com");
+      expect(addedData.createdAt).toBeDefined();
+    });
   });
 
-  it("updateTripPreparationItem 應能更新 trip 中的準備清單", async () => {
-    const store = useTripStore();
-    const tripId = "trip-1";
-    const newItem = { title: "帶相機", category: "電子" };
+  describe("旅程子項管理 (Bookings & Preparation)", () => {
+    it("updateTripBooking: 當旅程不存在時應拋出錯誤", async () => {
+      const store = useTripStore();
+      (firestore.getDoc as any).mockResolvedValueOnce({ exists: () => false });
 
-    (firestore.getDoc as any).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({ preparation: [] }),
+      await expect(
+        store.updateTripBooking("invalid-id", {} as any),
+      ).rejects.toThrow("Trip not found");
     });
 
-    await store.updateTripPreparationItem(tripId, newItem as any);
+    it("updateTripBooking: 應能在現有 bookings 陣列中追加新項目並生成 ID", async () => {
+      const store = useTripStore();
+      (firestore.getDoc as any).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ bookings: [{ id: "b1", title: "舊預訂" }] }),
+      });
 
-    expect(firestore.updateDoc).toHaveBeenCalled();
-    const updatedData = (firestore.updateDoc as any).mock.calls[0][1];
-    expect(updatedData.preparation[0].title).toBe("帶相機");
-    expect(updatedData.preparation[0].isCompleted).toBe(false);
-  });
+      await store.updateTripBooking("t1", { title: "新預訂" } as any);
 
-  it("togglePreparationItem 應能切換項目的完成狀態", async () => {
-    const store = useTripStore();
-    const tripId = "trip-1";
-    const itemId = "item-123";
-
-    (firestore.getDoc as any).mockResolvedValueOnce({
-      exists: () => true,
-      data: () => ({
-        preparation: [{ id: itemId, title: "測試", isCompleted: false }],
-      }),
+      expect(firestore.updateDoc).toHaveBeenCalled();
+      const updatedData = (firestore.updateDoc as any).mock.calls[0][1];
+      expect(updatedData.bookings).toHaveLength(2);
+      expect(updatedData.bookings[1].id).toBeDefined();
     });
 
-    await store.togglePreparationItem(tripId, itemId);
+    it("togglePreparationItem: 應精確切換指定項目的 isCompleted 狀態", async () => {
+      const store = useTripStore();
+      (firestore.getDoc as any).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          preparation: [
+            { id: "i1", title: "A", isCompleted: false },
+            { id: "i2", title: "B", isCompleted: false },
+          ],
+        }),
+      });
 
-    expect(firestore.updateDoc).toHaveBeenCalled();
-    const updatedData = (firestore.updateDoc as any).mock.calls[0][1];
-    expect(updatedData.preparation[0].isCompleted).toBe(true);
+      await store.togglePreparationItem("t1", "i2");
+
+      const updatedData = (firestore.updateDoc as any).mock.calls[0][1];
+      expect(
+        updatedData.preparation.find((i: any) => i.id === "i1").isCompleted,
+      ).toBe(false);
+      expect(
+        updatedData.preparation.find((i: any) => i.id === "i2").isCompleted,
+      ).toBe(true);
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   collection,
   query,
@@ -29,6 +29,36 @@ export const useTripStore = defineStore("trip", () => {
 
   // Collection reference
   const tripsRef = collection(db, "trips");
+
+  /**
+   * 行程分類與排序 (按 startDate 遞增排序)
+   */
+  const ongoingTrips = computed(() => {
+    return (trips.value || [])
+      .filter((t) => t.status === "ongoing")
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+      );
+  });
+
+  const upcomingTrips = computed(() => {
+    return (trips.value || [])
+      .filter((t) => t.status === "upcoming")
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+      );
+  });
+
+  const finishedTrips = computed(() => {
+    return (trips.value || [])
+      .filter((t) => t.status === "finished")
+      .sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime(), // 已結束按最新排序
+      );
+  });
 
   /**
    * 輔助函式：驗證並過濾資料
@@ -124,8 +154,7 @@ export const useTripStore = defineStore("trip", () => {
   const addTrip = async (
     tripData: Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">,
   ) => {
-    if (!authStore.user)
-      throw new Error("User must be logged in to create a trip");
+    if (!authStore.user) throw new Error("User not logged in");
 
     // 安全移除 id 避免汙染
     const { id: _id, ...cleanData } = tripData as Partial<Trip>;
@@ -144,7 +173,7 @@ export const useTripStore = defineStore("trip", () => {
     tripId: string,
     tripData: Partial<Omit<Trip, "id" | "userId" | "createdAt" | "updatedAt">>,
   ) => {
-    if (!authStore.user) throw new Error("User must be logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId);
 
     const dataToUpdate = tripData;
@@ -157,7 +186,7 @@ export const useTripStore = defineStore("trip", () => {
 
   // Delete a trip
   const deleteTrip = async (tripId: string) => {
-    if (!authStore.user) throw new Error("User must be logged in");
+    if (!authStore.user) throw new Error("User not logged in");
     // TODO: Ideally also delete sub-collections like 'activities' and 'expenses'
     // For now, we just delete the main document
     const docRef = doc(db, "trips", tripId);
@@ -284,6 +313,9 @@ export const useTripStore = defineStore("trip", () => {
 
   return {
     trips,
+    ongoingTrips,
+    upcomingTrips,
+    finishedTrips,
     loading,
     error,
     subscribeToTrips,
