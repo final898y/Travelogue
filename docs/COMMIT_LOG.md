@@ -6,6 +6,17 @@
 
 ## 📅 提交歷史
 
+## [2026-03-05] docs(agents): 重構標準開發流程 (Pipeline) 與版本更新 (v2.2.3)
+
+- Hash: `TBD`
+- 改動方向: 建立 6 個步驟的 Execution Pipeline，確保人機協作一致性與 Token 成本控制。
+- 具體內容:
+  - 重構 AGENTS.md 流程：實作 -> 驗證 -> 意圖確認 -> 深度分析 -> 版本同步 -> 正式提交。
+  - 新增「意圖確認 (Wait for User)」步驟，避免未確認提交前的無效 Token 消耗。
+  - 新增「變更深度分析 (Deep Audit)」步驟，確保掌握所有（含人類手動）改動。
+  - 優化 README.md 排版。
+  - 更新版本號至 2.2.3 (package.json, README.md, SettingView.vue)。
+
 ## [2026-02-28] feat(ui): BaseBottomSheet 支援瀏覽器返回鍵關閉功能 (v2.2.2)
 
 - Hash: `TBD`
