@@ -27,97 +27,119 @@ vi.mock("../../src/services/firebase", () => ({
   db: {},
 }));
 
-describe("collectionStore.ts", () => {
+describe("collectionStore.ts v2.0 (邊界與極端測試)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    // Mock Auth Store
-    const authStore = useAuthStore();
-    authStore.user = { uid: "test-user-123" } as any;
   });
 
-  it("應能正確提取所有項目中的不重複標籤並排序 (allTags)", () => {
-    const store = useCollectionStore();
+  describe("計算屬性 (Computed Properties)", () => {
+    it("應能在 collections 為空陣列時，回傳空陣列", () => {
+      const store = useCollectionStore();
+      store.collections = [];
+      expect(store.allTags).toEqual([]);
+      expect(store.allCategories).toEqual([]);
+    });
 
-    // 手動設置 mock 資料
-    store.collections = [
-      {
-        id: "1",
-        title: "景點 A",
-        url: "https://a.com",
-        source: "web",
-        tags: ["日本", "賞櫻"],
-        createdAt: new Date(),
-      },
-      {
-        id: "2",
-        title: "美食 B",
-        url: "https://b.com",
-        source: "instagram",
-        tags: ["美食", "日本"],
-        createdAt: new Date(),
-      },
-      {
-        id: "3",
-        title: "無標籤 C",
-        url: "https://c.com",
-        source: "web",
-        tags: [],
-        createdAt: new Date(),
-      },
-    ] as any;
+    it("應能處理 null/undefined 的標籤與分類並正確過濾", () => {
+      const store = useCollectionStore();
+      store.collections = [
+        {
+          id: "1",
+          tags: ["日本", null, undefined, "", "  ", 123],
+          category: null,
+        },
+        {
+          id: "2",
+          tags: undefined,
+          category: " 美食 ", // 應修剪空白
+        },
+        {
+          id: "3",
+          category: "", // 空字串不應被加入
+        },
+      ] as any;
 
-    expect(store.allTags).toEqual(["日本", "美食", "賞櫻"]);
+      expect(store.allTags).toEqual(["日本"]);
+      expect(store.allCategories).toEqual(["美食"]);
+    });
+
+    it("應能處理高度重複且帶有空格的標籤/分類並保持唯一性與排序", () => {
+      const store = useCollectionStore();
+      store.collections = [
+        { id: "1", tags: ["A", "B", "a "], category: "景點" },
+        { id: "2", tags: ["B", "C"], category: " 景點" },
+        { id: "3", tags: ["A"], category: "景點 " },
+      ] as any;
+
+      // 目前實作 Set 是區分大小寫的 (A 與 a)，符合多數 UI 的分類需求
+      expect(store.allTags).toEqual(["A", "B", "C", "a"]);
+      expect(store.allCategories).toEqual(["景點"]);
+    });
   });
 
-  it("當部分項目沒有 tags 欄位時，應能正常運作並補上預設空陣列", () => {
-    const store = useCollectionStore();
+  describe("驗證與過濾邏輯 (validateAndFilter)", () => {
+    it("應能完全排除不符合 Zod Schema 的髒資料", () => {
+      const store = useCollectionStore();
+      const mockDate = new Date();
+      const dirtyData = [
+        {
+          id: "valid",
+          title: "正確",
+          url: "https://test.com",
+          source: "web",
+          createdAt: mockDate,
+        }, // 有效
+        {
+          id: "invalid-url",
+          title: "網址錯誤",
+          url: "not-a-url",
+          source: "web",
+          createdAt: mockDate,
+        }, // 無效 URL
+        {
+          id: "missing-title",
+          url: "https://ok.com",
+          source: "web",
+          createdAt: mockDate,
+        }, // 缺標題
+        {
+          id: "wrong-source",
+          title: "來源錯誤",
+          url: "https://ok.com",
+          source: "bad-source",
+          createdAt: mockDate,
+        }, // 來源不符
+      ];
 
-    // 模擬從 Firestore 讀取的原始資料 (其中一筆沒有 tags 欄位)
-    const rawData = [
-      {
-        id: "old-doc",
-        title: "舊資料",
-        url: "https://old.com",
-        source: "web",
-        createdAt: { toDate: () => new Date() },
-      },
-      {
-        id: "new-doc",
-        title: "新資料",
-        url: "https://new.com",
-        source: "web",
-        tags: ["新標籤"],
-        createdAt: { toDate: () => new Date() },
-      },
-    ];
+      // 模擬從 Firestore 取得 rawData 並透過 store 處理
+      const validated = dirtyData
+        .map((item) => {
+          const result = CollectionSchema.safeParse(item);
+          return result.success ? result.data : null;
+        })
+        .filter(Boolean);
 
-    const validatedData = rawData
-      .map((item) => {
-        const result = CollectionSchema.safeParse(item);
-        return result.success ? result.data : (null as any);
-      })
-      .filter(Boolean);
-
-    store.collections = validatedData as any;
-
-    expect(store.collections[0].tags).toEqual([]); // 應自動補上空陣列
-    expect(store.collections[1].tags).toEqual(["新標籤"]);
-    expect(store.allTags).toEqual(["新標籤"]);
+      store.collections = validated as any;
+      expect(store.collections).toHaveLength(1);
+      expect(store.collections[0].title).toBe("正確");
+    });
   });
 
-  it("allTags 應能排除無效或空白的標籤", () => {
-    const store = useCollectionStore();
-    store.collections = [
-      {
-        id: "1",
-        title: "測試",
-        url: "https://test.com",
-        source: "web",
-        tags: [" ", "", null, undefined, " 有效標籤 "],
-        createdAt: new Date(),
-      },
-    ] as any;
+  describe("安全性與操作行為 (Security & Actions)", () => {
+    it("當用戶未登入時，執行新增/更新/刪除操作應拋出錯誤", async () => {
+      const authStore = useAuthStore();
+      authStore.user = null; // 強制設定為未登入
+      const store = useCollectionStore();
 
-    expect(store.allTags).toEqual(["有效標籤"]);
+      await expect(store.addCollection("trip-1", {} as any)).rejects.toThrow(
+        "User not logged in",
+      );
+      await expect(
+        store.updateCollection("trip-1", "doc-1", {}),
+      ).rejects.toThrow("User not logged in");
+      await expect(store.deleteCollection("trip-1", "doc-1")).rejects.toThrow(
+        "User not logged in",
+      );
+    });
   });
 });

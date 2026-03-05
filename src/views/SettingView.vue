@@ -274,7 +274,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "version",
-        label: "版本資訊 (v2.2.2)",
+        label: "版本資訊 (v2.2.3)",
         icon: Info as FunctionalComponent,
       },
     ],

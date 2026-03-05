@@ -18,7 +18,7 @@ import {
   Bookmark,
   ExternalLink,
 } from "../assets/icons";
-import type { Collection, CollectionSource } from "../types/trip";
+import type { Collection } from "../types/trip";
 
 const route = useRoute();
 const router = useRouter();
@@ -27,7 +27,19 @@ const uiStore = useUIStore();
 const { collections, allTags } = storeToRefs(collectionStore);
 const tripId = route.params.id as string;
 
-const activeFilter = ref<CollectionSource | "all">("all");
+const categories = [
+  "全部",
+  "美食",
+  "景點",
+  "住宿",
+  "交通",
+  "購物",
+  "攻略/工具",
+  "行程參考",
+  "其他",
+];
+
+const activeFilter = ref("全部");
 const activeTag = ref<string | null>(null);
 const isSheetOpen = ref(false);
 const isFormDirty = ref(false);
@@ -49,9 +61,9 @@ onUnmounted(() => {
 const filteredCollections = computed(() => {
   let result = collections.value;
 
-  // 來源篩選
-  if (activeFilter.value !== "all") {
-    result = result.filter((item) => item.source === activeFilter.value);
+  // 分類篩選
+  if (activeFilter.value !== "全部") {
+    result = result.filter((item) => item.category === activeFilter.value);
   }
 
   // 標籤篩選
@@ -162,17 +174,17 @@ const handleDeleteCollection = async () => {
       <div class="space-y-3 mt-6">
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
-            v-for="f in ['all', 'threads', 'instagram', 'web', 'youtube']"
-            :key="f"
-            @click="activeFilter = f as any"
+            v-for="cat in categories"
+            :key="cat"
+            @click="activeFilter = cat"
             class="px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap"
             :class="
-              activeFilter === f
+              activeFilter === cat
                 ? 'bg-forest-500 text-white shadow-soft'
                 : 'bg-white text-forest-400 border border-forest-100'
             "
           >
-            {{ f.toUpperCase() }}
+            {{ cat }}
           </button>
         </div>
 

@@ -6,6 +6,16 @@
 
 ## 📅 提交歷史
 
+## [2026-03-05] feat(collection): 實作按分類篩選與測試升級 (v2.2.3)
+
+- Hash: `TBD`
+- 改動方向: 將資料收集的篩選邏輯從「來源」改為「分類」，並強化系統魯棒性。
+- 具體內容:
+  - `CollectionView.vue`: 徹底切換篩選邏輯，新增具體分類快捷按鈕。
+  - `collectionStore.ts`: 強化 `allTags` 與 `allCategories` 的 `null`/`undefined` 與髒資料過濾。
+  - `collectionStore.spec.ts`: 升級測試至 v2.0，涵蓋邊界值、Zod Schema 驗證與安全性檢查。
+  - `package.json`: 同步版本號至 2.2.3。
+
 ## [2026-03-05] docs(agents): 重構標準開發流程 (Pipeline) 與版本更新 (v2.2.3)
 
 - Hash: `TBD`

@@ -29,15 +29,35 @@ export const useCollectionStore = defineStore("collection", () => {
   const allTags = computed(() => {
     const tagsSet = new Set<string>();
     collections.value.forEach((item) => {
-      if (item.tags && Array.isArray(item.tags)) {
+      // 確保 item.tags 存在且為陣列
+      if (item && Array.isArray(item.tags)) {
         item.tags.forEach((tag) => {
-          if (tag && typeof tag === "string" && tag.trim() !== "") {
+          // 嚴格檢查：必須是字串且 trim 後不為空
+          if (typeof tag === "string" && tag.trim() !== "") {
             tagsSet.add(tag.trim());
           }
         });
       }
     });
     return Array.from(tagsSet).sort();
+  });
+
+  /**
+   * 提取所有不重複的分類
+   */
+  const allCategories = computed(() => {
+    const catSet = new Set<string>();
+    collections.value.forEach((item) => {
+      // 確保 item.category 為字串且 trim 後不為空
+      if (
+        item &&
+        typeof item.category === "string" &&
+        item.category.trim() !== ""
+      ) {
+        catSet.add(item.category.trim());
+      }
+    });
+    return Array.from(catSet).sort();
   });
 
   /**
@@ -137,6 +157,7 @@ export const useCollectionStore = defineStore("collection", () => {
   return {
     collections,
     allTags,
+    allCategories,
     loading,
     error,
     subscribeToCollections,
