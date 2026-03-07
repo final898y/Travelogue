@@ -6,6 +6,15 @@
 
 ## 📅 提交歷史
 
+## [2026-03-07] feat(plan): 實作旅程剩餘天數動態計算 (v2.2.5)
+
+- Hash: `TBD`
+- 改動方向: 將 PlanView 中硬編碼的 daysToTrip 改為根據 startDate 動態計算。
+- 具體內容:
+  - `PlanView.vue`: 導入 `computed` 屬性，根據 `trip.startDate` 與當前日期（今日 00:00）計算剩餘天數。
+  - `PlanView.vue`: 若旅程已開始或已結束，剩餘天數顯示為 0。
+  - **版本同步**: 更新 `package.json`, `README.md`, `SettingView.vue` 與開發日誌至 v2.2.5。
+
 ## [2026-03-05] feat(store): 強化 Store 架構魯棒性與升級測試至 v2.0 (v2.2.4)
 
 - Hash: `TBD`

@@ -82,5 +82,5 @@ npm run test
 
 ---
 
-**Version**: 2.2.3
+**Version**: 2.2.5
 **License**: MIT
