@@ -193,6 +193,7 @@ export const ExpenseSchema = z.object({
   description: z.string().min(1, "描述不可為空"),
   payer: z.string().min(1, "需指定付款人"), // 付款人
   splitWith: z.array(z.string()).min(1, "至少需有一位對象"), // 支出時為分帳者，還款時為收款人
+  customAmounts: z.record(z.string(), z.number()).optional(), // 自訂分帳金額 { memberId: amount }
   createdAt: FirestoreTimestampSchema,
 });
 export type Expense = z.infer<typeof ExpenseSchema>;

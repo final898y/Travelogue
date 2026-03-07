@@ -109,14 +109,27 @@ const settlementSummary = computed(() => {
       }
     } else {
       // 支出邏輯
-      const perPerson = exp.amount / (exp.splitWith?.length || 1);
+      // 決定每個人該出的錢
+      const shares: Record<string, number> = {};
+      if (exp.customAmounts && Object.keys(exp.customAmounts).length > 0) {
+        // 使用自訂金額
+        exp.splitWith?.forEach((memberId) => {
+          shares[memberId] = exp.customAmounts?.[memberId] || 0;
+        });
+      } else {
+        // 使用平均分攤
+        const perPerson = exp.amount / (exp.splitWith?.length || 1);
+        exp.splitWith?.forEach((memberId) => {
+          shares[memberId] = perPerson;
+        });
+      }
 
       // 付款人支出增加 (墊錢)
       balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
 
       // 每個參與者債務增加 (欠錢)
-      exp.splitWith?.forEach((memberId) => {
-        balances[memberId] = (balances[memberId] || 0) - perPerson;
+      Object.entries(shares).forEach(([memberId, share]) => {
+        balances[memberId] = (balances[memberId] || 0) - share;
       });
     }
   });
@@ -261,11 +274,13 @@ const handleRepayFromExpense = (data: {
     currentExpense.value = {
       type: "repayment",
       date: new Date().toISOString().split("T")[0],
+      category: "Repayment",
       amount: data.amount,
       currency: "TWD",
       description: data.description,
       payer: currentUserEmail,
       splitWith: [data.receiver],
+      customAmounts: {},
     };
     isSheetOpen.value = true;
   }, 300);
@@ -421,7 +436,7 @@ const filteredExpenses = computed(() => {
             class="card-base !p-4 flex items-center gap-4 cursor-pointer hover:shadow-soft-md active:scale-[0.98] transition-all"
             :class="
               tx.type === 'repayment'
-                ? 'bg-sky-blue/5 border-sky-blue/20 border'
+                ? 'bg-honey-orange/5 border-honey-orange/20 border'
                 : ''
             "
           >
@@ -429,7 +444,7 @@ const filteredExpenses = computed(() => {
               class="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
               :class="
                 tx.type === 'repayment'
-                  ? 'bg-sky-blue/20 text-sky-blue'
+                  ? 'bg-honey-orange/20 text-honey-orange'
                   : 'bg-cream text-forest-400'
               "
             >
@@ -463,7 +478,7 @@ const filteredExpenses = computed(() => {
               <div
                 class="font-bold"
                 :class="
-                  tx.type === 'repayment' ? 'text-sky-blue' : 'text-forest-900'
+                  tx.type === 'repayment' ? 'text-honey-orange' : 'text-forest-900'
                 "
               >
                 {{ tx.amount.toLocaleString() }}

@@ -3,7 +3,7 @@
  * ExpenseForm (Component)
  * Handles creating and editing expense items with splitting logic.
  */
-import { reactive, computed, watch } from "vue";
+import { reactive, computed, watch, ref } from "vue";
 import {
   Utensils,
   Car,
@@ -44,8 +44,11 @@ const formData = reactive<Partial<Expense>>({
   description: "",
   payer: currentUserEmail, // 預設付款人 ID
   splitWith: [currentUserEmail], // 預設均分者 ID 包含自己
+  customAmounts: {}, // 自訂金額
   ...props.initialData,
 });
+
+const isCustomMode = ref(Object.keys(formData.customAmounts || {}).length > 0);
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
@@ -62,6 +65,7 @@ watch(
         description: "",
         payer: currentUserEmail,
         splitWith: [currentUserEmail],
+        customAmounts: {},
         ...props.initialData,
       });
     emit("update:dirty", isDirty);
@@ -80,6 +84,18 @@ const categories = [
 
 const currencies = ["TWD", "JPY", "USD", "EUR", "KRW"];
 
+const currentCustomTotal = computed(() => {
+  return Object.values(formData.customAmounts || {}).reduce(
+    (sum, val) => sum + (Number(val) || 0),
+    0,
+  );
+});
+
+const customTotalMatches = computed(() => {
+  if (!isCustomMode.value) return true;
+  return Math.abs(currentCustomTotal.value - (formData.amount || 0)) < 0.01;
+});
+
 const handleSave = () => {
   if (formData.type === "expense" && !formData.description)
     return uiStore.showToast("請輸入支出描述", "warning");
@@ -97,6 +113,19 @@ const handleSave = () => {
     formData.payer === formData.splitWith[0]
   ) {
     return uiStore.showToast("付款人與收款人不能相同", "warning");
+  }
+
+  // 自訂模式金額驗證
+  if (formData.type === "expense" && isCustomMode.value) {
+    if (!customTotalMatches.value) {
+      return uiStore.showToast(
+        `自訂金額總和 (${currentCustomTotal.value}) 與支出金額 (${formData.amount}) 不符`,
+        "warning",
+      );
+    }
+  } else {
+    // 均分模式清空自訂金額
+    formData.customAmounts = {};
   }
 
   // 還款自動生成描述 (若未手動輸入)
@@ -122,9 +151,31 @@ const toggleSplitMember = (memberId: string) => {
   if (idx > -1) {
     if (formData.splitWith.length > 1) {
       formData.splitWith.splice(idx, 1);
+      // 同步移除自訂金額
+      if (formData.customAmounts) {
+        delete formData.customAmounts[memberId];
+      }
     }
   } else {
     formData.splitWith.push(memberId);
+    // 同步新增自訂金額 (如果是自訂模式)
+    if (isCustomMode.value && formData.customAmounts) {
+      formData.customAmounts[memberId] = 0;
+    }
+  }
+};
+
+// 切換均分/自訂模式
+const toggleCustomMode = () => {
+  isCustomMode.value = !isCustomMode.value;
+  if (isCustomMode.value) {
+    // 初始化自訂金額為 0
+    formData.customAmounts = {};
+    formData.splitWith?.forEach((id) => {
+      if (formData.customAmounts) formData.customAmounts[id] = 0;
+    });
+  } else {
+    formData.customAmounts = {};
   }
 };
 
@@ -183,7 +234,7 @@ const handleRepayClick = () => {
         class="flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
         :class="
           formData.type === 'repayment'
-            ? 'bg-white text-sky-blue shadow-sm font-bold'
+            ? 'bg-white text-honey-orange shadow-sm font-bold'
             : 'text-forest-300'
         "
       >
@@ -208,7 +259,7 @@ const handleRepayClick = () => {
             class="w-full p-4 rounded-2xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-2xl font-rounded font-bold shadow-sm pl-10 transition-colors"
             :class="
               formData.type === 'repayment'
-                ? 'text-sky-blue'
+                ? 'text-honey-orange'
                 : 'text-forest-800'
             "
           />
@@ -267,12 +318,14 @@ const handleRepayClick = () => {
 
     <!-- Details -->
     <div class="space-y-4">
-      <div v-if="formData.type === 'expense'" class="space-y-2 animate-fade-in">
+      <div class="space-y-2 animate-fade-in">
         <label class="text-xs font-bold text-forest-300 uppercase">描述</label>
         <input
           v-model="formData.description"
           type="text"
-          placeholder="例如：築地市場壽司"
+          :placeholder="
+            formData.type === 'repayment' ? '例如：還款給某人' : '例如：築地市場壽司'
+          "
           class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
         />
       </div>
@@ -306,7 +359,7 @@ const handleRepayClick = () => {
             :class="
               formData.payer === m.id
                 ? formData.type === 'repayment'
-                  ? 'bg-sky-blue text-white shadow-soft-sm'
+                  ? 'bg-honey-orange text-white shadow-soft-sm'
                   : 'bg-forest-500 text-white shadow-soft-sm'
                 : 'bg-forest-50 text-forest-400 hover:bg-forest-100'
             "
@@ -317,12 +370,28 @@ const handleRepayClick = () => {
       </div>
 
       <div class="space-y-2">
-        <label
-          class="text-xs font-bold text-forest-300 uppercase tracking-wider"
-          >{{
-            formData.type === "repayment" ? "收款人 (被還錢的人)" : "均分對象"
-          }}</label
-        >
+        <div class="flex justify-between items-center">
+          <label
+            class="text-xs font-bold text-forest-300 uppercase tracking-wider"
+            >{{
+              formData.type === "repayment" ? "收款人 (被還錢的人)" : "均分對象"
+            }}</label
+          >
+          <!-- Custom Split Toggle (Only for Expense) -->
+          <button
+            v-if="formData.type === 'expense'"
+            @click="toggleCustomMode"
+            class="text-[10px] font-bold px-2 py-1 rounded-lg transition-colors cursor-pointer"
+            :class="
+              isCustomMode
+                ? 'bg-honey-orange text-white'
+                : 'bg-forest-50 text-forest-400'
+            "
+          >
+            {{ isCustomMode ? "自訂金額" : "平均分攤" }}
+          </button>
+        </div>
+
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
             v-for="m in members"
@@ -333,7 +402,7 @@ const handleRepayClick = () => {
             :class="
               formData.splitWith?.includes(m.id)
                 ? formData.type === 'repayment'
-                  ? 'bg-sky-blue text-white shadow-soft-sm'
+                  ? 'bg-honey-orange text-white shadow-soft-sm'
                   : 'bg-earth-400 text-white shadow-soft-sm'
                 : 'bg-earth-50 text-earth-300 hover:bg-earth-100'
             "
@@ -346,20 +415,58 @@ const handleRepayClick = () => {
             {{ m.name }}
           </button>
         </div>
+
+        <!-- Custom Amount Inputs -->
+        <div
+          v-if="isCustomMode && formData.type === 'expense'"
+          class="space-y-2 pt-2 animate-fade-in"
+        >
+          <div
+            v-for="id in formData.splitWith"
+            :key="id"
+            class="flex items-center gap-3 p-3 bg-white border border-forest-50 rounded-xl shadow-sm"
+          >
+            <span class="text-xs font-bold text-forest-600 flex-1 truncate">{{
+              members.find((m) => m.id === id)?.name
+            }}</span>
+            <div class="relative w-32">
+              <input
+                v-if="formData.customAmounts"
+                v-model.number="formData.customAmounts[id]"
+                type="number"
+                inputmode="decimal"
+                class="w-full pl-6 pr-3 py-1 rounded-lg border border-forest-100 outline-none text-right font-mono font-bold text-sm"
+              />
+              <span
+                class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-forest-200"
+                >$</span
+              >
+            </div>
+          </div>
+          <div
+            class="flex justify-between items-center px-2 py-1 text-[10px] font-bold"
+            :class="customTotalMatches ? 'text-forest-400' : 'text-red-400'"
+          >
+            <span>合計: {{ currentCustomTotal }}</span>
+            <span>剩餘: {{ (formData.amount || 0) - currentCustomTotal }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Settlement Preview -->
       <div
-        v-if="formData.amount && formData.amount > 0"
+        v-if="formData.amount && formData.amount > 0 && !isCustomMode"
         class="p-4 rounded-2xl space-y-2 border border-forest-100/50 shadow-inner transition-colors"
         :class="
-          formData.type === 'repayment' ? 'bg-sky-blue/10' : 'bg-forest-50'
+          formData.type === 'repayment' ? 'bg-honey-orange/10' : 'bg-forest-50'
         "
       >
         <div
           class="flex justify-between items-center text-xs font-bold"
           :class="
-            formData.type === 'repayment' ? 'text-sky-blue' : 'text-forest-600'
+            formData.type === 'repayment'
+              ? 'text-honey-orange'
+              : 'text-forest-600'
           "
         >
           <span>{{
@@ -391,12 +498,10 @@ const handleRepayClick = () => {
         v-if="canRepay"
         @click="handleRepayClick"
         type="button"
-        class="w-full py-4 rounded-2xl bg-sky-blue text-white font-bold shadow-soft-lg hover:bg-sky-600 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+        class="w-full py-4 rounded-2xl bg-honey-orange text-white font-bold shadow-soft-lg hover:bg-honey-600 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
       >
         <RefreshCcw :size="20" />
-        還款給 {{ members.find((m) => m.id === formData.payer)?.name }} ({{
-          perPersonAmount
-        }})
+        即刻還款
       </button>
 
       <button
