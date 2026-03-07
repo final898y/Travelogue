@@ -12,6 +12,8 @@ import {
   ShoppingBag,
   MoreHorizontal,
   Check,
+  RefreshCcw,
+  FileText,
 } from "../../assets/icons";
 import { useAuthStore } from "../../stores/authStore";
 import { useUIStore } from "../../stores/uiStore";
@@ -22,7 +24,7 @@ const props = defineProps<{
   tripMembers?: TripMember[]; // 接收 TripMember 物件陣列
 }>();
 
-const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
+const emit = defineEmits(["save", "cancel", "delete", "update:dirty", "repay"]);
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
@@ -34,6 +36,7 @@ const isEditMode = computed(() => !!props.initialData.id);
 
 // 建立局部狀態副本
 const formData = reactive<Partial<Expense>>({
+  type: "expense",
   date: new Date().toISOString().split("T")[0],
   category: "Food",
   amount: 0,
@@ -51,6 +54,7 @@ watch(
     const isDirty =
       JSON.stringify(newVal) !==
       JSON.stringify({
+        type: "expense",
         date: new Date().toISOString().split("T")[0],
         category: "Food",
         amount: 0,
@@ -77,19 +81,43 @@ const categories = [
 const currencies = ["TWD", "JPY", "USD", "EUR", "KRW"];
 
 const handleSave = () => {
-  if (!formData.description)
+  if (formData.type === "expense" && !formData.description)
     return uiStore.showToast("請輸入支出描述", "warning");
   if (!formData.amount || formData.amount <= 0)
     return uiStore.showToast("請輸入有效金額", "warning");
   if (!formData.payer) return uiStore.showToast("請指定付款人", "warning");
   if (!formData.splitWith || formData.splitWith.length === 0)
-    return uiStore.showToast("至少需有一人均分", "warning");
+    return uiStore.showToast(
+      formData.type === "repayment" ? "請指定收款人" : "至少需有一人均分",
+      "warning",
+    );
+
+  if (
+    formData.type === "repayment" &&
+    formData.payer === formData.splitWith[0]
+  ) {
+    return uiStore.showToast("付款人與收款人不能相同", "warning");
+  }
+
+  // 還款自動生成描述 (若未手動輸入)
+  if (formData.type === "repayment" && !formData.description) {
+    formData.description = "還款紀錄";
+    formData.category = "Repayment";
+  }
 
   emit("save", { ...formData });
 };
 
 const toggleSplitMember = (memberId: string) => {
   if (!formData.splitWith) formData.splitWith = [];
+
+  if (formData.type === "repayment") {
+    // 還款模式：單選收款人
+    formData.splitWith = [memberId];
+    return;
+  }
+
+  // 支出模式：複選均分
   const idx = formData.splitWith.indexOf(memberId);
   if (idx > -1) {
     if (formData.splitWith.length > 1) {
@@ -114,12 +142,56 @@ const perPersonAmount = computed(() => {
     formData.splitWith.length === 0
   )
     return 0;
+  if (formData.type === "repayment") return formData.amount;
   return Math.round((formData.amount / formData.splitWith.length) * 100) / 100;
 });
+
+// 是否可以顯示還款按鈕 (編輯模式、支出類型)
+const canRepay = computed(() => {
+  return isEditMode.value && formData.type === "expense";
+});
+
+const handleRepayClick = () => {
+  emit("repay", {
+    amount: perPersonAmount.value,
+    description: `還款：${formData.description}`,
+    receiver: formData.payer,
+  });
+};
 </script>
 
 <template>
   <div class="space-y-6">
+    <!-- Type Selector -->
+    <div class="flex p-1 bg-forest-50 rounded-2xl border border-forest-100/50">
+      <button
+        @click="formData.type = 'expense'"
+        type="button"
+        class="flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+        :class="
+          formData.type === 'expense'
+            ? 'bg-white text-forest-800 shadow-sm font-bold'
+            : 'text-forest-300'
+        "
+      >
+        <FileText :size="18" />
+        <span>新增支出</span>
+      </button>
+      <button
+        @click="formData.type = 'repayment'"
+        type="button"
+        class="flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+        :class="
+          formData.type === 'repayment'
+            ? 'bg-white text-sky-blue shadow-sm font-bold'
+            : 'text-forest-300'
+        "
+      >
+        <RefreshCcw :size="18" />
+        <span>紀錄還款</span>
+      </button>
+    </div>
+
     <!-- Amount & Currency -->
     <div class="flex gap-3">
       <div class="flex-1 space-y-2">
@@ -133,7 +205,12 @@ const perPersonAmount = computed(() => {
             type="number"
             inputmode="decimal"
             placeholder="0.00"
-            class="w-full p-4 rounded-2xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-2xl font-rounded font-bold shadow-sm pl-10"
+            class="w-full p-4 rounded-2xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-2xl font-rounded font-bold shadow-sm pl-10 transition-colors"
+            :class="
+              formData.type === 'repayment'
+                ? 'text-sky-blue'
+                : 'text-forest-800'
+            "
           />
           <span
             class="absolute left-4 top-1/2 -translate-y-1/2 text-forest-200 font-bold"
@@ -155,8 +232,8 @@ const perPersonAmount = computed(() => {
       </div>
     </div>
 
-    <!-- Category Selector -->
-    <div class="space-y-2">
+    <!-- Category Selector (Only for Expense) -->
+    <div v-if="formData.type === 'expense'" class="space-y-2 animate-fade-in">
       <label class="text-xs font-bold text-forest-300 uppercase tracking-wider"
         >支出類別</label
       >
@@ -190,7 +267,7 @@ const perPersonAmount = computed(() => {
 
     <!-- Details -->
     <div class="space-y-4">
-      <div class="space-y-2">
+      <div v-if="formData.type === 'expense'" class="space-y-2 animate-fade-in">
         <label class="text-xs font-bold text-forest-300 uppercase">描述</label>
         <input
           v-model="formData.description"
@@ -210,11 +287,14 @@ const perPersonAmount = computed(() => {
       </div>
     </div>
 
-    <!-- Splitting Logic -->
+    <!-- Splitting / Repayment Logic -->
     <div class="space-y-4 pt-2">
       <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >付款人</label
+        <label
+          class="text-xs font-bold text-forest-300 uppercase tracking-wider"
+          >{{
+            formData.type === "repayment" ? "付款人 (還錢的人)" : "付款人"
+          }}</label
         >
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
@@ -225,7 +305,9 @@ const perPersonAmount = computed(() => {
             class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
             :class="
               formData.payer === m.id
-                ? 'bg-forest-500 text-white shadow-soft-sm'
+                ? formData.type === 'repayment'
+                  ? 'bg-sky-blue text-white shadow-soft-sm'
+                  : 'bg-forest-500 text-white shadow-soft-sm'
                 : 'bg-forest-50 text-forest-400 hover:bg-forest-100'
             "
           >
@@ -235,8 +317,11 @@ const perPersonAmount = computed(() => {
       </div>
 
       <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >均分對象</label
+        <label
+          class="text-xs font-bold text-forest-300 uppercase tracking-wider"
+          >{{
+            formData.type === "repayment" ? "收款人 (被還錢的人)" : "均分對象"
+          }}</label
         >
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button
@@ -247,7 +332,9 @@ const perPersonAmount = computed(() => {
             class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer"
             :class="
               formData.splitWith?.includes(m.id)
-                ? 'bg-earth-400 text-white shadow-soft-sm'
+                ? formData.type === 'repayment'
+                  ? 'bg-sky-blue text-white shadow-soft-sm'
+                  : 'bg-earth-400 text-white shadow-soft-sm'
                 : 'bg-earth-50 text-earth-300 hover:bg-earth-100'
             "
           >
@@ -264,18 +351,32 @@ const perPersonAmount = computed(() => {
       <!-- Settlement Preview -->
       <div
         v-if="formData.amount && formData.amount > 0"
-        class="p-4 bg-forest-50 rounded-2xl space-y-2 border border-forest-100/50 shadow-inner"
+        class="p-4 rounded-2xl space-y-2 border border-forest-100/50 shadow-inner transition-colors"
+        :class="
+          formData.type === 'repayment' ? 'bg-sky-blue/10' : 'bg-forest-50'
+        "
       >
         <div
-          class="flex justify-between items-center text-xs font-bold text-forest-600"
+          class="flex justify-between items-center text-xs font-bold"
+          :class="
+            formData.type === 'repayment' ? 'text-sky-blue' : 'text-forest-600'
+          "
         >
-          <span>均分試算</span>
-          <span>每人需支付</span>
+          <span>{{
+            formData.type === "repayment" ? "還款試算" : "均分試算"
+          }}</span>
+          <span>{{
+            formData.type === "repayment" ? "總還款額" : "每人需支付"
+          }}</span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="text-[10px] text-forest-400 font-medium"
-            >共 {{ formData.splitWith?.length }} 人均分</span
-          >
+          <span class="text-[10px] text-forest-400 font-medium">
+            {{
+              formData.type === "repayment"
+                ? `從 ${members.find((m) => m.id === formData.payer)?.name} 到 ${members.find((m) => m.id === formData.splitWith?.[0])?.name}`
+                : `共 ${formData.splitWith?.length} 人均分`
+            }}
+          </span>
           <span class="text-lg font-rounded font-bold text-forest-800"
             >{{ perPersonAmount }}
             <span class="text-[10px]">{{ formData.currency }}</span></span
@@ -287,10 +388,22 @@ const perPersonAmount = computed(() => {
     <!-- Action Buttons -->
     <div class="pt-4 flex flex-col gap-3">
       <button
+        v-if="canRepay"
+        @click="handleRepayClick"
+        type="button"
+        class="w-full py-4 rounded-2xl bg-sky-blue text-white font-bold shadow-soft-lg hover:bg-sky-600 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+      >
+        <RefreshCcw :size="20" />
+        還款給 {{ members.find((m) => m.id === formData.payer)?.name }} ({{
+          perPersonAmount
+        }})
+      </button>
+
+      <button
         @click="handleSave"
         class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all cursor-pointer"
       >
-        {{ isEditMode ? "儲存變更" : "新增支出" }}
+        {{ isEditMode ? "儲存變更" : "新增紀錄" }}
       </button>
 
       <button

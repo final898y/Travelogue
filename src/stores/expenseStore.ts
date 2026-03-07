@@ -24,27 +24,31 @@ export const useExpenseStore = defineStore("expense", () => {
   const authStore = useAuthStore();
 
   /**
-   * 總支出金額 (自動過濾無效數值)
+   * 總支出金額 (僅計算 type 為 'expense' 且自動過濾無效數值)
    */
   const totalAmount = computed(() => {
-    return expenses.value.reduce((sum, item) => {
-      const amount = Number(item.amount);
-      return sum + (isNaN(amount) ? 0 : amount);
-    }, 0);
+    return expenses.value
+      .filter((item) => item.type === "expense")
+      .reduce((sum, item) => {
+        const amount = Number(item.amount);
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
   });
 
   /**
-   * 分類統計資訊
+   * 分類統計資訊 (僅計算 type 為 'expense')
    */
   const categoryStats = computed(() => {
     const stats: Record<string, number> = {};
-    expenses.value.forEach((item) => {
-      const cat = (item.category || "未分類").trim();
-      const amount = Number(item.amount);
-      if (!isNaN(amount)) {
-        stats[cat] = (stats[cat] || 0) + amount;
-      }
-    });
+    expenses.value
+      .filter((item) => item.type === "expense")
+      .forEach((item) => {
+        const cat = (item.category || "未分類").trim();
+        const amount = Number(item.amount);
+        if (!isNaN(amount)) {
+          stats[cat] = (stats[cat] || 0) + amount;
+        }
+      });
     return stats;
   });
 

@@ -555,6 +555,7 @@ const planSeeds: Record<string, Omit<DailyPlan, "tripId">[]> = {
 const expenseSeeds: Record<string, Omit<Expense, "id" | "createdAt">[]> = {
   "2024 東京賞櫻之旅": [
     {
+      type: "expense",
       date: "2024-03-20",
       category: "Food",
       amount: 4500,
@@ -564,6 +565,7 @@ const expenseSeeds: Record<string, Omit<Expense, "id" | "createdAt">[]> = {
       splitWith: ["final898y@gmail.com", "p1", "p2"],
     },
     {
+      type: "expense",
       date: "2024-03-20",
       category: "Transport",
       amount: 1500,
@@ -573,6 +575,7 @@ const expenseSeeds: Record<string, Omit<Expense, "id" | "createdAt">[]> = {
       splitWith: ["final898y@gmail.com"],
     },
     {
+      type: "expense",
       date: "2024-03-21",
       category: "Food",
       amount: 3200,

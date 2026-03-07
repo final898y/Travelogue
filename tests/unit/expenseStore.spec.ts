@@ -45,10 +45,10 @@ describe("expenseStore.ts v2.0 (統計精準度與安全性測試)", () => {
     it("totalAmount: 應正確累加有效金額，並自動忽略無效金額 (NaN/null/undefined)", () => {
       const store = useExpenseStore();
       store.expenses = [
-        { amount: 1000, currency: "TWD" },
-        { amount: 500.5, currency: "TWD" },
-        { amount: null, currency: "TWD" }, // 無效
-        { amount: "invalid", currency: "TWD" }, // 無效
+        { type: "expense", amount: 1000, currency: "TWD" },
+        { type: "expense", amount: 500.5, currency: "TWD" },
+        { type: "expense", amount: null, currency: "TWD" }, // 無效
+        { type: "expense", amount: "invalid", currency: "TWD" }, // 無效
       ] as any;
 
       expect(store.totalAmount).toBe(1500.5);
@@ -57,9 +57,9 @@ describe("expenseStore.ts v2.0 (統計精準度與安全性測試)", () => {
     it("categoryStats: 應正確統計各類別金額，並自動 trim 類別名稱空白", () => {
       const store = useExpenseStore();
       store.expenses = [
-        { category: "美食", amount: 100 },
-        { category: " 美食 ", amount: 200 }, // 應歸類為同類
-        { category: "住宿", amount: 1500 },
+        { type: "expense", category: "美食", amount: 100 },
+        { type: "expense", category: " 美食 ", amount: 200 }, // 應歸類為同類
+        { type: "expense", category: "住宿", amount: 1500 },
       ] as any;
 
       const stats = store.categoryStats;
@@ -71,12 +71,22 @@ describe("expenseStore.ts v2.0 (統計精準度與安全性測試)", () => {
     it("應能正確處理幣別統計 (雖然目前僅支援 TWD，但需具備防護邏輯)", () => {
       const store = useExpenseStore();
       store.expenses = [
-        { amount: 100, currency: "TWD" },
-        { amount: 50, currency: "JPY" }, // 異幣別
+        { type: "expense", amount: 100, currency: "TWD" },
+        { type: "expense", amount: 50, currency: "JPY" }, // 異幣別
       ] as any;
 
       // 假設目前 totalAmount 僅加總數值，未來需支援匯率轉換
       expect(store.totalAmount).toBe(150);
+    });
+
+    it("repayment 類型應不計入總支出 totalAmount", () => {
+      const store = useExpenseStore();
+      store.expenses = [
+        { type: "expense", amount: 1000 },
+        { type: "repayment", amount: 500 }, // 還款不應計入
+      ] as any;
+
+      expect(store.totalAmount).toBe(1000);
     });
   });
 

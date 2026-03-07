@@ -20,7 +20,7 @@ import {
   ShoppingBag,
   MoreHorizontal,
   Wallet,
-  Pencil,
+  RefreshCcw,
 } from "../assets/icons";
 import type { Expense, TripMember } from "../types/trip";
 
@@ -52,6 +52,7 @@ const isFormDirty = ref(false);
 const isMemberFormDirty = ref(false);
 const currentExpense = ref<Partial<Expense> | null>(null);
 const isSaving = ref(false);
+const filterType = ref<"all" | "expense" | "repayment">("all");
 
 let unsubscribeExpenses: (() => void) | null = null;
 let unsubscribeTrip: (() => void) | null = null;
@@ -87,7 +88,9 @@ const handleSaveMembers = async (newMembers: TripMember[]) => {
 };
 
 const totalExpense = computed(() => {
-  return expenses.value.reduce((sum, item) => sum + item.amount, 0);
+  return expenses.value
+    .filter((e) => e.type === "expense")
+    .reduce((sum, item) => sum + item.amount, 0);
 });
 
 // 計算結算現況 (誰該給誰多少錢)
@@ -95,15 +98,27 @@ const settlementSummary = computed(() => {
   const balances: Record<string, number> = {};
 
   expenses.value.forEach((exp) => {
-    const perPerson = exp.amount / (exp.splitWith?.length || 1);
+    if (exp.type === "repayment") {
+      // 還款邏輯：付款人 A 給收款人 B
+      // A 的餘額增加 (債務減少)
+      balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
+      // B 的餘額減少 (收到了錢)
+      const receiver = exp.splitWith?.[0];
+      if (receiver) {
+        balances[receiver] = (balances[receiver] || 0) - exp.amount;
+      }
+    } else {
+      // 支出邏輯
+      const perPerson = exp.amount / (exp.splitWith?.length || 1);
 
-    // 付款人支出增加 (墊錢)
-    balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
+      // 付款人支出增加 (墊錢)
+      balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
 
-    // 每個參與者債務增加 (欠錢)
-    exp.splitWith?.forEach((memberId) => {
-      balances[memberId] = (balances[memberId] || 0) - perPerson;
-    });
+      // 每個參與者債務增加 (欠錢)
+      exp.splitWith?.forEach((memberId) => {
+        balances[memberId] = (balances[memberId] || 0) - perPerson;
+      });
+    }
   });
 
   return Object.entries(balances)
@@ -116,9 +131,11 @@ const settlementSummary = computed(() => {
 
 const categoryMap = computed(() => {
   const map: Record<string, number> = {};
-  expenses.value.forEach((item) => {
-    map[item.category] = (map[item.category] || 0) + item.amount;
-  });
+  expenses.value
+    .filter((e) => e.type === "expense")
+    .forEach((item) => {
+      map[item.category] = (map[item.category] || 0) + item.amount;
+    });
   return map;
 });
 
@@ -164,6 +181,7 @@ const openEditSheet = (item?: Expense) => {
   currentExpense.value = item
     ? { ...item }
     : {
+        type: "expense",
         date: new Date().toISOString().split("T")[0],
         category: "Food",
         amount: 0,
@@ -186,14 +204,14 @@ const handleSaveExpense = async (updatedItem: Expense) => {
     isSaving.value = true;
     if (updatedItem.id) {
       await expenseStore.updateExpense(tripId, updatedItem.id, updatedItem);
-      uiStore.showToast("支出更新成功", "success");
+      uiStore.showToast("紀錄更新成功", "success");
     } else {
       await expenseStore.addExpense(tripId, updatedItem);
-      uiStore.showToast("新增支出成功", "success");
+      uiStore.showToast("新增紀錄成功", "success");
     }
     handleCloseSheet();
   } catch (error) {
-    console.error("儲存支出失敗:", error);
+    console.error("儲存紀錄失敗:", error);
     uiStore.showToast("儲存失敗，請稍後再試", "error");
   } finally {
     isSaving.value = false;
@@ -204,8 +222,8 @@ const handleDeleteExpense = async () => {
   if (!tripId || !currentExpense.value?.id || isSaving.value) return;
 
   const confirmed = await uiStore.showConfirm({
-    title: "確定刪除支出？",
-    message: "這筆消費紀錄將會被永久移除，且無法復原。",
+    title: "確定刪除紀錄？",
+    message: "此筆紀錄將會被永久移除，且無法復原。",
     okText: "刪除",
     cancelText: "取消",
   });
@@ -214,34 +232,71 @@ const handleDeleteExpense = async () => {
     try {
       isSaving.value = true;
       await expenseStore.deleteExpense(tripId, currentExpense.value.id);
-      uiStore.showToast("支出已移除", "success");
+      uiStore.showToast("紀錄已移除", "success");
       handleCloseSheet();
     } catch (error) {
-      console.error("刪除支出失敗:", error);
+      console.error("刪除紀錄失敗:", error);
       uiStore.showToast("刪除失敗", "error");
     } finally {
       isSaving.value = false;
     }
   }
 };
+
+const handleRepayFromExpense = (data: {
+  amount: number;
+  description: string;
+  receiver: string;
+}) => {
+  // 先關閉目前的編輯視窗，然後開啟一個新的還款視窗
+  handleCloseSheet();
+  setTimeout(() => {
+    isFormDirty.value = false;
+    currentExpense.value = {
+      type: "repayment",
+      date: new Date().toISOString().split("T")[0],
+      amount: data.amount,
+      currency: "TWD",
+      description: data.description,
+      payer: currentUserEmail,
+      splitWith: [data.receiver],
+    };
+    isSheetOpen.value = true;
+  }, 300);
+};
+
+const filteredExpenses = computed(() => {
+  if (filterType.value === "all") return expenses.value;
+  return expenses.value.filter((e) => e.type === filterType.value);
+});
 </script>
 
 <template>
   <div class="min-h-screen pb-32 animate-fade-in bg-cream-light/30">
     <!-- Header -->
-    <header class="px-6 pt-8 pb-4">
-      <div class="flex items-center gap-2 mb-1">
-        <button
-          @click="goBack"
-          class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors"
-        >
-          <ChevronLeft :size="24" :stroke-width="2.5" />
-        </button>
-        <h1 class="text-2xl font-rounded font-bold text-forest-800">
-          記帳帳本
-        </h1>
+    <header class="px-6 pt-8 pb-4 flex justify-between items-start">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+          <button
+            @click="goBack"
+            class="p-1 -ml-1 text-forest-300 hover:text-forest-500 transition-colors cursor-pointer"
+          >
+            <ChevronLeft :size="24" :stroke-width="2.5" />
+          </button>
+          <h1 class="text-2xl font-rounded font-bold text-forest-800">
+            記帳帳本
+          </h1>
+        </div>
+        <p class="text-gray-500 text-sm ml-8">掌握每一筆旅行支出</p>
       </div>
-      <p class="text-gray-500 text-sm ml-8">掌握每一筆旅行支出</p>
+
+      <button
+        @click="isMemberSheetOpen = true"
+        class="mt-1 flex items-center gap-2 px-3 py-1.5 bg-forest-50 text-forest-600 rounded-full hover:bg-forest-100 transition-colors cursor-pointer border border-forest-100 shadow-soft-sm"
+      >
+        <Users :size="16" />
+        <span class="text-xs font-bold">旅伴</span>
+      </button>
     </header>
 
     <main class="px-6 space-y-6 mt-4">
@@ -292,12 +347,6 @@ const handleDeleteExpense = async () => {
             <Users :size="16" />
             分帳結算匯總
           </h3>
-          <button
-            @click="isMemberSheetOpen = true"
-            class="p-1 text-forest-300 hover:text-forest-500 transition-colors cursor-pointer"
-          >
-            <Pencil :size="14" />
-          </button>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div
@@ -325,32 +374,65 @@ const handleDeleteExpense = async () => {
       <!-- Transactions List -->
       <section class="space-y-4">
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-bold text-forest-800">支出明細</h3>
+          <h3 class="text-lg font-bold text-forest-800">交易明細</h3>
+          <!-- Filter UI -->
+          <div
+            class="flex gap-1 bg-forest-50 p-1 rounded-xl border border-forest-100/50"
+          >
+            <button
+              v-for="type in (['all', 'expense', 'repayment'] as const)"
+              :key="type"
+              @click="filterType = type"
+              class="px-3 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+              :class="
+                filterType === type
+                  ? 'bg-white text-forest-800 shadow-sm'
+                  : 'text-forest-300'
+              "
+            >
+              {{
+                type === "all" ? "全部" : type === "expense" ? "支出" : "還款"
+              }}
+            </button>
+          </div>
         </div>
 
         <div
-          v-if="expenses.length === 0"
+          v-if="filteredExpenses.length === 0"
           class="py-12 text-center bg-white/50 rounded-3xl border-2 border-dashed border-forest-100"
         >
           <div class="text-forest-200 mb-2 flex justify-center">
             <Wallet :size="40" stroke-width="1.5" />
           </div>
-          <p class="text-gray-500">尚無支出記錄</p>
+          <p class="text-gray-500">尚無相關交易記錄</p>
         </div>
 
         <div class="space-y-3">
           <div
-            v-for="tx in expenses"
+            v-for="tx in filteredExpenses"
             :key="tx.id"
             @click="openEditSheet(tx)"
             class="card-base !p-4 flex items-center gap-4 cursor-pointer hover:shadow-soft-md active:scale-[0.98] transition-all"
+            :class="
+              tx.type === 'repayment'
+                ? 'bg-sky-blue/5 border-sky-blue/20 border'
+                : ''
+            "
           >
             <div
-              class="w-10 h-10 rounded-xl bg-cream flex items-center justify-center text-forest-400 shadow-inner"
+              class="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
+              :class="
+                tx.type === 'repayment'
+                  ? 'bg-sky-blue/20 text-sky-blue'
+                  : 'bg-cream text-forest-400'
+              "
             >
               <component
                 :is="
-                  categories.find((c) => c.name === tx.category)?.icon || Wallet
+                  tx.type === 'repayment'
+                    ? RefreshCcw
+                    : categories.find((c) => c.name === tx.category)?.icon ||
+                      Wallet
                 "
                 :size="20"
               />
@@ -360,12 +442,24 @@ const handleDeleteExpense = async () => {
                 {{ tx.description }}
               </h4>
               <p class="text-[10px] text-gray-400 font-medium">
-                {{ formatDate(tx.date) }} • {{ tx.category }} •
-                {{ getMemberName(tx.payer) }} 付款
+                {{ formatDate(tx.date) }} •
+                {{
+                  tx.type === "repayment"
+                    ? `還款給 ${getMemberName(tx.splitWith?.[0] || "")}`
+                    : tx.category
+                }}
+                •
+                {{ getMemberName(tx.payer) }}
+                {{ tx.type === "repayment" ? "支付" : "付款" }}
               </p>
             </div>
             <div class="text-right">
-              <div class="font-bold text-forest-900">
+              <div
+                class="font-bold"
+                :class="
+                  tx.type === 'repayment' ? 'text-sky-blue' : 'text-forest-900'
+                "
+              >
                 {{ tx.amount.toLocaleString() }}
               </div>
               <div class="text-[10px] text-gray-400 uppercase font-mono">
@@ -398,6 +492,7 @@ const handleDeleteExpense = async () => {
         :trip-members="tripMembers"
         @save="handleSaveExpense"
         @delete="handleDeleteExpense"
+        @repay="handleRepayFromExpense"
         @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
