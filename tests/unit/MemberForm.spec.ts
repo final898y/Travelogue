@@ -90,7 +90,7 @@ describe("MemberForm.vue", () => {
     ).toBe(2);
   });
 
-  it("應能刪除成員且不能刪除自己", async () => {
+  it("應能刪除成員且現在包含自己 (取消限制)", async () => {
     const wrapper = mountWithPinia({
       props: {
         initialMembers,
@@ -101,20 +101,46 @@ describe("MemberForm.vue", () => {
     // 模擬使用者點擊確認
     vi.mocked(uiStore.showConfirm).mockResolvedValue(true);
 
-    // 嘗試刪除夥伴A (id: p1)
+    // 以前只有一個 X，現在應該有兩個
     const xIcons = wrapper.findAll('[data-icon="X"]');
-    expect(xIcons.length).toBe(1); // 只有一個 X 圖示 (給夥伴A)
+    expect(xIcons.length).toBe(2);
 
+    // 刪除我自己 (me@example.com)
     const xBtn = xIcons[0].element.parentElement as HTMLButtonElement;
     await xBtn.click();
     await nextTick();
-    await nextTick(); // 等待 Promise resolve
+    await nextTick();
 
-    expect(
-      wrapper.findAll(".rounded-full.bg-white.border-forest-100").length,
-    ).toBe(1);
-    expect(wrapper.text()).not.toContain("夥伴A");
-    expect(wrapper.text()).toContain("我");
+    expect(wrapper.text()).not.toContain("我");
+    expect(wrapper.text()).toContain("夥伴A");
+  });
+
+  it("不應允許儲存空名單", async () => {
+    const wrapper = mountWithPinia({
+      props: {
+        initialMembers: [{ id: "p1", name: "最後一人" }],
+        currentUserEmail,
+      },
+    });
+    const uiStore = useUIStore();
+    vi.mocked(uiStore.showConfirm).mockResolvedValue(true);
+
+    // 刪除最後一人
+    const xBtn = wrapper.find('[data-icon="X"]').element
+      .parentElement as HTMLButtonElement;
+    await xBtn.click();
+    await nextTick();
+    await nextTick();
+
+    // 嘗試儲存
+    const saveBtn = wrapper.find("button.bg-forest-400");
+    await saveBtn.trigger("click");
+
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "旅伴名單不能為空",
+      "warning",
+    );
+    expect(wrapper.emitted("save")).toBeFalsy();
   });
 
   it("點擊儲存按鈕應發送 save 事件", async () => {

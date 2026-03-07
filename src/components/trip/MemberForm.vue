@@ -55,8 +55,6 @@ const addMember = () => {
 };
 
 const removeMember = async (id: string) => {
-  if (id === props.currentUserEmail) return;
-
   const confirmed = await uiStore.showConfirm({
     title: "移除旅伴？",
     message:
@@ -150,7 +148,6 @@ const vFocus = {
               {{ member.name }}
             </span>
             <button
-              v-if="member.id !== currentUserEmail"
               @click="removeMember(member.id)"
               class="text-forest-200 hover:text-red-400 p-0.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
             >

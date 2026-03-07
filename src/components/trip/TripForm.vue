@@ -55,6 +55,25 @@ const formData = reactive<TripFormData>({
 });
 
 const newMemberName = ref("");
+const editingMemberId = ref<string | null>(null);
+const editValue = ref("");
+
+const startEdit = (member: TripMember) => {
+  editingMemberId.value = member.id;
+  editValue.value = member.name;
+};
+
+const saveEdit = () => {
+  if (!editingMemberId.value) return;
+  const name = editValue.value.trim();
+  if (name) {
+    const targetMember = formData.members.find(
+      (m) => m.id === editingMemberId.value,
+    );
+    if (targetMember) targetMember.name = name;
+  }
+  editingMemberId.value = null;
+};
 
 const addMember = () => {
   const name = newMemberName.value.trim();
@@ -69,8 +88,10 @@ const addMember = () => {
 };
 
 const removeMember = (id: string) => {
-  if (id === currentUserEmail) return; // 不能刪除自己
   formData.members = formData.members.filter((m) => m.id !== id);
+  if (editingMemberId.value === id) {
+    editingMemberId.value = null;
+  }
 };
 
 const isEditing = computed(() => !!props.initialData?.id);
@@ -100,9 +121,8 @@ watch(
         newVal.startDate !== today ||
         newVal.endDate !== tomorrow ||
         newVal.coverImage !== defaultCoverImage ||
-        newVal.members.length > 1 ||
-        newVal.members?.[0]?.id !== currentUserEmail ||
-        newVal.members?.[0]?.name !== defaultMemberName;
+        JSON.stringify(newVal.members) !==
+          JSON.stringify([{ id: currentUserEmail, name: defaultMemberName }]);
     }
     emit("update:dirty", isDirty);
   },
@@ -139,6 +159,11 @@ const coverImages = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop", // Nature
   "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop", // Lake
 ];
+
+// 自定義指令讓輸入框自動聚焦
+const vFocus = {
+  mounted: (el: HTMLInputElement) => el.focus(),
+};
 </script>
 
 <template>
@@ -230,18 +255,36 @@ const coverImages = [
         <div
           v-for="member in formData.members"
           :key="member.id"
-          class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-forest-100 text-xs font-bold text-forest-600 shadow-soft-sm"
+          class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-forest-100 text-xs font-bold text-forest-600 shadow-soft-sm group animate-fade-in"
         >
-          <span>{{ member.name }}</span>
-          <button
-            v-if="member.id !== currentUserEmail"
-            @click="removeMember(member.id)"
-            class="text-forest-300 hover:text-red-400 p-0.5 cursor-pointer"
-          >
-            <X :size="14" :stroke-width="2.5" />
-          </button>
+          <template v-if="editingMemberId === member.id">
+            <input
+              v-model="editValue"
+              v-focus
+              class="w-20 outline-none border-b border-forest-300 bg-transparent"
+              @blur="saveEdit"
+              @keyup.enter="saveEdit"
+            />
+          </template>
+          <template v-else>
+            <span
+              class="cursor-pointer hover:text-forest-400"
+              @click="startEdit(member)"
+            >
+              {{ member.name }}
+            </span>
+            <button
+              @click="removeMember(member.id)"
+              class="text-forest-300 hover:text-red-400 p-0.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X :size="14" :stroke-width="2.5" />
+            </button>
+          </template>
         </div>
       </div>
+      <p class="text-[10px] text-forest-300 mt-2 px-1 italic">
+        提示：點擊名稱可編輯。修改後系統會自動關聯既有紀錄。
+      </p>
     </div>
 
     <!-- Cover Image Selection -->

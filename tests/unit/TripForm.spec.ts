@@ -145,7 +145,7 @@ describe("TripForm.vue", () => {
     expect(wrapper.emitted("update:dirty")![0][0]).toBe(true);
   });
 
-  it("應能新增與刪除旅伴", async () => {
+  it("應能新增與刪除旅伴 (包含預設使用者)", async () => {
     const wrapper = mountWithPinia();
     const expectedDefaultName = "test"; // derived from test@example.com
 
@@ -163,18 +163,20 @@ describe("TripForm.vue", () => {
     await nextTick();
 
     // 檢查標籤數量 (原本 1 個，現在應有 2 個)
-    const tags = wrapper.findAll(".rounded-full.bg-white.border-forest-100");
+    let tags = wrapper.findAll(".rounded-full.bg-white.border-forest-100");
     expect(tags.length).toBe(2);
     expect(tags.some((t) => t.text().includes("夥伴X"))).toBe(true);
 
-    // 刪除旅伴
-    const xBtn = wrapper.find('[data-icon="X"]').element
-      .parentElement as HTMLButtonElement;
-    await xBtn.click();
+    // 刪除預設旅伴 (以前不能刪，現在應該可以)
+    const xBtns = wrapper.findAll('[data-icon="X"]');
+    expect(xBtns.length).toBe(2); // 兩個人都有 X 按鈕
+
+    await xBtns[0].element.parentElement?.click(); // 刪除第一個人 (預設的 test)
     await nextTick();
 
-    expect(
-      wrapper.findAll(".rounded-full.bg-white.border-forest-100").length,
-    ).toBe(1);
+    tags = wrapper.findAll(".rounded-full.bg-white.border-forest-100");
+    expect(tags.length).toBe(1);
+    expect(wrapper.text()).not.toContain(expectedDefaultName);
+    expect(wrapper.text()).toContain("夥伴X");
   });
 });

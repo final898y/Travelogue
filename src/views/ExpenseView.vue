@@ -178,6 +178,12 @@ const goBack = () => {
 
 const openEditSheet = (item?: Expense) => {
   isFormDirty.value = false;
+  
+  // 決定預設付款人：如果目前使用者在名單中，用目前使用者，否則用名單第一個人
+  const defaultPayer = tripMembers.value.some(m => m.id === currentUserEmail)
+    ? currentUserEmail
+    : (tripMembers.value[0]?.id || currentUserEmail);
+
   currentExpense.value = item
     ? { ...item }
     : {
@@ -186,7 +192,7 @@ const openEditSheet = (item?: Expense) => {
         category: "Food",
         amount: 0,
         currency: "TWD",
-        payer: currentUserEmail,
+        payer: defaultPayer,
         splitWith: tripMembers.value.map((m) => m.id),
       };
   isSheetOpen.value = true;
