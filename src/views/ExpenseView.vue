@@ -191,11 +191,11 @@ const goBack = () => {
 
 const openEditSheet = (item?: Expense) => {
   isFormDirty.value = false;
-  
+
   // 決定預設付款人：如果目前使用者在名單中，用目前使用者，否則用名單第一個人
-  const defaultPayer = tripMembers.value.some(m => m.id === currentUserEmail)
+  const defaultPayer = tripMembers.value.some((m) => m.id === currentUserEmail)
     ? currentUserEmail
-    : (tripMembers.value[0]?.id || currentUserEmail);
+    : tripMembers.value[0]?.id || currentUserEmail;
 
   currentExpense.value = item
     ? { ...item }
@@ -401,7 +401,7 @@ const filteredExpenses = computed(() => {
             class="flex gap-1 bg-forest-50 p-1 rounded-xl border border-forest-100/50"
           >
             <button
-              v-for="type in (['all', 'expense', 'repayment'] as const)"
+              v-for="type in ['all', 'expense', 'repayment'] as const"
               :key="type"
               @click="filterType = type"
               class="px-3 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
@@ -478,7 +478,9 @@ const filteredExpenses = computed(() => {
               <div
                 class="font-bold"
                 :class="
-                  tx.type === 'repayment' ? 'text-honey-orange' : 'text-forest-900'
+                  tx.type === 'repayment'
+                    ? 'text-honey-orange'
+                    : 'text-forest-900'
                 "
               >
                 {{ tx.amount.toLocaleString() }}
@@ -495,7 +497,7 @@ const filteredExpenses = computed(() => {
     <!-- FAB: Add Expense -->
     <button
       @click="openEditSheet()"
-      class="fixed bottom-28 right-6 w-14 h-14 bg-earth-400 text-white rounded-2xl shadow-soft-lg hover:bg-earth-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
+      class="fixed bottom-28 right-6 w-14 h-14 bg-forest-400 text-white rounded-2xl shadow-soft-lg hover:bg-forest-500 hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer z-50"
     >
       <Plus :size="28" :stroke-width="2.5" />
     </button>

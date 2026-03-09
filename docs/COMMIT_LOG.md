@@ -109,6 +109,21 @@
   - **清理**: 移除 `backupService.ts` 中未使用的型別匯入。
   - **版本更新**: 升級 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.2.1`。
 
+## [2026-03-09]
+
+### `v2.2.9` - feat(ui): 整合 BaseConfirmDialog 至 BottomSheet 並修正 FAB 顏色一致性
+
+- **UI/UX 核心交互優化**:
+  - 將 `BaseBottomSheet.vue` 中的原生 `window.confirm` 替換為 `uiStore.showConfirm`，實現全站統一的 Soft UI 設計風格對話框。
+  - 將 `handleClose` 邏輯重構為非同步模式，確保在關閉前的「未儲存變更」提醒能正確等待使用者操作。
+  - 修正 `ExpenseView.vue` 的 FAB (Add Expense) 顏色，從 `bg-earth-400` 改為 `bg-forest-400`，達成全站操作按鈕的視覺一致性。
+- **測試與品質工程**:
+  - 更新 `BaseBottomSheet.spec.ts`：導入 `createTestingPinia` 以支援 Pinia 測試環境，並改用 `uiStore.showConfirm` 的模擬 (Mock) 邏輯。
+  - 新增針對「確認關閉」分支的測試案例，確保非同步互動邏輯的正確性。
+  - 通過全域 `lint`, `format`, `test` 與 `build` 驗證，維持 100% 測試通過率。
+- **版本更新**:
+  - 升級版本號至 `2.2.9` 並同步更新 `package.json`, `README.md` 與 `SettingView.vue`。
+
 ## [2026-02-23] feat(collection): 靈感收集新增標籤 (Tag) 與過濾功能 (v2.2.0)
 
 - **Version**: `2.2.0`

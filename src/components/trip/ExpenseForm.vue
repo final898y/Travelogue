@@ -324,7 +324,9 @@ const handleRepayClick = () => {
           v-model="formData.description"
           type="text"
           :placeholder="
-            formData.type === 'repayment' ? '例如：還款給某人' : '例如：築地市場壽司'
+            formData.type === 'repayment'
+              ? '例如：還款給某人'
+              : '例如：築地市場壽司'
           "
           class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-bold shadow-sm"
         />

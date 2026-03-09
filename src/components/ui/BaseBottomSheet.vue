@@ -4,6 +4,7 @@
  * A reusable mobile-first bottom sheet drawer.
  */
 import { onMounted, onUnmounted, ref, computed, watch } from "vue";
+import { useUIStore } from "../../stores/uiStore";
 
 const props = defineProps<{
   isOpen: boolean;
@@ -13,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["close"]);
 
+const uiStore = useUIStore();
 const contentRef = ref<HTMLElement | null>(null);
 const isDragging = ref(false);
 const startY = ref(0);
@@ -20,9 +22,15 @@ const dragOffset = ref(0);
 const startTime = ref(0);
 
 // 統一關閉邏輯，包含未儲存檢查
-const handleClose = () => {
+const handleClose = async () => {
   if (props.hasUnsavedChanges) {
-    const confirmClose = window.confirm("您有未儲存的變更，確定要關閉嗎？");
+    const confirmClose = await uiStore.showConfirm({
+      title: "提醒",
+      message: "您有未儲存的變更，確定要關閉嗎？",
+      okText: "確定關閉",
+      cancelText: "返回",
+    });
+
     if (!confirmClose) {
       // 如果是在 popstate 觸發的，使用者按了取消，我們需要補回一個 history state
       if (window.history.state?.sheetOpen !== true) {

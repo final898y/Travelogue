@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
+import { createTestingPinia } from "@pinia/testing";
 import BaseBottomSheet from "../../src/components/ui/BaseBottomSheet.vue";
+import { useUIStore } from "../../src/stores/uiStore";
 
 // Mock Teleport needed for testing
 const TeleportStub = {
@@ -11,7 +13,7 @@ const TeleportStub = {
 describe("BaseBottomSheet.vue", () => {
   let pushStateSpy: any;
   let backSpy: any;
-  let confirmSpy: any;
+  let uiStore: any;
 
   beforeEach(() => {
     // Mock History API
@@ -19,7 +21,6 @@ describe("BaseBottomSheet.vue", () => {
       .spyOn(window.history, "pushState")
       .mockImplementation(() => {});
     backSpy = vi.spyOn(window.history, "back").mockImplementation(() => {});
-    confirmSpy = vi.spyOn(window, "confirm");
 
     // Mock initial history state
     Object.defineProperty(window.history, "state", {
@@ -33,12 +34,18 @@ describe("BaseBottomSheet.vue", () => {
   });
 
   const mountComponent = (props = {}) => {
-    return mount(BaseBottomSheet, {
+    const wrapper = mount(BaseBottomSheet, {
       props: {
         isOpen: false,
         ...props,
       },
       global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            stubActions: false,
+          }),
+        ],
         stubs: {
           Teleport: TeleportStub,
           Transition: {
@@ -47,6 +54,9 @@ describe("BaseBottomSheet.vue", () => {
         },
       },
     });
+
+    uiStore = useUIStore();
+    return wrapper;
   };
 
   describe("基礎渲染", () => {
@@ -101,13 +111,27 @@ describe("BaseBottomSheet.vue", () => {
 
   describe("未儲存變更處理", () => {
     it("有未儲存變更時，關閉應顯示確認對話框", async () => {
-      confirmSpy.mockReturnValue(false); // 使用者點擊「取消」
       const wrapper = mountComponent({ isOpen: true, hasUnsavedChanges: true });
+
+      // Mock showConfirm 回傳 false (取消)
+      uiStore.showConfirm = vi.fn().mockResolvedValue(false);
 
       await wrapper.find(".fixed.inset-0").trigger("click");
 
-      expect(confirmSpy).toHaveBeenCalled();
+      expect(uiStore.showConfirm).toHaveBeenCalled();
       expect(wrapper.emitted("close")).toBeFalsy();
+    });
+
+    it("有未儲存變更時，使用者確認後應觸發關閉", async () => {
+      const wrapper = mountComponent({ isOpen: true, hasUnsavedChanges: true });
+
+      // Mock showConfirm 回傳 true (確定)
+      uiStore.showConfirm = vi.fn().mockResolvedValue(true);
+
+      await wrapper.find(".fixed.inset-0").trigger("click");
+
+      expect(uiStore.showConfirm).toHaveBeenCalled();
+      expect(wrapper.emitted("close")).toBeTruthy();
     });
   });
 
