@@ -109,6 +109,25 @@
   - **清理**: 移除 `backupService.ts` 中未使用的型別匯入。
   - **版本更新**: 升級 `package.json`, `README.md`, `SettingView.vue` 版本號至 `2.2.1`。
 
+## [2026-03-10]
+
+### `v2.3.0` - feat(exchange): 實作多組織匯率換算工具與 Cloud Functions 快取機制
+
+- **雲端函式 (Backend) 實作**:
+  - 建立 `functions/` 目錄並實作 `getExchangeRate` 函式，支援 Visa 與 Mastercard 官方 API 匯率查詢。
+  - **智慧快取**: 以「幣別對 + 組織 + 日期」為 Key 緩存於 Firestore，大幅減少外部 API 請求次數。
+  - **安全強化**: 實作嚴謹的 CORS 網域允許清單，並強制 Firebase Auth 身份驗證以防 API 濫用。
+  - **架構升級**: 將 `functions` 目錄的 ESLint 配置全面升級至 **Flat Config (v9+)** 模式，並解決多層級 TSConfig 解析衝突。
+- **前端 (Frontend) 功能整合**:
+  - 建立 `CurrencyCalculator.vue`: 參考專案標準 Soft UI 風格，提供即時匯率換算與「1.5% 海外手續費」試算參考。
+  - 建立 `exchangeStore.ts`: 整合 Pinia 與 `localStorage`，自動記憶使用者上次選擇的幣別與發卡組織。
+  - 在 `SettingView.vue` 新增功能入口，並統一管理 `functions` 實例。
+- **文件與規範**:
+  - 新增 `CURRENCY_API_SPEC.md` 與 `CURRENCY_EXCHANGE_IMPLEMENTATION.md` 技術規格書。
+  - 更新根目錄 `eslint.config.js` 隔離 `functions` 目錄並修正 `tsconfigRootDir` 配置問題。
+- **工程驗證**:
+  - 通過全專案 117 項單元測試、全域 Lint 檢查與 TypeScript 建置驗證。
+
 ## [2026-03-09]
 
 ### `v2.2.9` - feat(ui): 整合 BaseConfirmDialog 至 BottomSheet 並修正 FAB 顏色一致性

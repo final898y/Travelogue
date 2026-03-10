@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
+import CurrencyCalculator from "../components/trip/CurrencyCalculator.vue";
 import { useAuthStore } from "../stores/authStore";
 import { useUIStore } from "../stores/uiStore";
 import { useRouter } from "vue-router";
@@ -26,6 +28,7 @@ import {
   RefreshCcw,
   Clock,
   RotateCcw,
+  CreditCard,
 } from "../assets/icons";
 
 interface SettingItem {
@@ -53,6 +56,9 @@ const isProcessing = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const cloudBackups = ref<CloudBackupRecord[]>([]);
 const isFetchingBackups = ref(false);
+
+// Sheet Control
+const isExchangeSheetOpen = ref(false);
 
 const handleLogout = async () => {
   try {
@@ -235,6 +241,12 @@ const settingsGroups: SettingGroup[] = [
     title: "系統設定",
     items: [
       {
+        id: "exchange",
+        label: "匯率換算工具",
+        icon: CreditCard as FunctionalComponent,
+        action: () => (isExchangeSheetOpen.value = true),
+      },
+      {
         id: "notifications",
         label: "通知設定",
         icon: Bell as FunctionalComponent,
@@ -274,7 +286,7 @@ const settingsGroups: SettingGroup[] = [
       },
       {
         id: "version",
-        label: "版本資訊 (v2.2.9)",
+        label: "版本資訊 (v2.3.0)",
         icon: Info as FunctionalComponent,
       },
     ],
@@ -416,6 +428,15 @@ const settingsGroups: SettingGroup[] = [
         </button>
       </div>
     </main>
+
+    <!-- Currency Exchange Sheet -->
+    <BaseBottomSheet
+      :is-open="isExchangeSheetOpen"
+      title="匯率換算工具"
+      @close="isExchangeSheetOpen = false"
+    >
+      <CurrencyCalculator />
+    </BaseBottomSheet>
 
     <!-- Global Processing Overlay -->
     <div

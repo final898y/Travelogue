@@ -14,6 +14,7 @@ export default defineConfig([
       "**/public/**",
       "**/temp/**",
       "**/*.config.js",
+      "**/functions/**",
     ],
   },
 
@@ -22,7 +23,12 @@ export default defineConfig([
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,vue}"],
     plugins: { js },
     extends: [js.configs.recommended],
-    languageOptions: { globals: globals.browser },
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
   },
 
   // 3. 繼承 TypeScript 與 Vue 的推薦設定
