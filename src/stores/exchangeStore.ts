@@ -17,7 +17,7 @@ export const useExchangeStore = defineStore("exchange", () => {
   const lastUsed = ref({
     from: "TWD",
     to: "JPY",
-    provider: "Visa",
+    provider: "BOT", // 預設改為 BOT
   });
 
   const ratesCache = ref<Record<string, ExchangeRateResult>>({});
@@ -28,6 +28,10 @@ export const useExchangeStore = defineStore("exchange", () => {
     if (saved) {
       try {
         lastUsed.value = JSON.parse(saved);
+        // 若舊資料是 Visa/Mastercard，強制轉為 BOT
+        if (lastUsed.value.provider !== "BOT") {
+          lastUsed.value.provider = "BOT";
+        }
       } catch (e) {
         console.error("Failed to parse exchange history", e);
       }
@@ -48,7 +52,7 @@ export const useExchangeStore = defineStore("exchange", () => {
   const fetchRate = async (
     from: string,
     to: string,
-    provider: string,
+    _provider: string = "BOT",
     forceUpdate = false,
   ): Promise<ExchangeRateResult> => {
     const getExchangeRate = httpsCallable(functions, "getExchangeRate");
@@ -56,17 +60,16 @@ export const useExchangeStore = defineStore("exchange", () => {
     const result = await getExchangeRate({
       from,
       to,
-      provider,
       forceUpdate,
     });
 
     const data = result.data as ExchangeRateResult;
 
     // 更新快取與最後使用紀錄
-    const cacheKey = `${from}_${to}_${provider}`;
+    const cacheKey = `${from}_${to}_BOT`;
     ratesCache.value[cacheKey] = data;
 
-    lastUsed.value = { from, to, provider };
+    lastUsed.value = { from, to, provider: "BOT" };
 
     return data;
   };

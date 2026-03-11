@@ -63,4 +63,5 @@ export {
   Upload,
   RefreshCcw,
   RotateCcw,
+  BookOpen,
 } from "lucide-vue-next";

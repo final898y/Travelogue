@@ -4,8 +4,8 @@ import globals from "globals";
 
 export default [
   {
-    // 排除編譯後的檔案與產生檔案
-    ignores: ["lib/**/*", "generated/**/*"],
+    // 排除編譯後的檔案、產生檔案與測試檔案
+    ignores: ["lib/**/*", "generated/**/*", "**/*.spec.ts"],
   },
   // 1. 通用 JS 設定 (套用於所有 JS 檔案，如 eslint.config.js)
   {

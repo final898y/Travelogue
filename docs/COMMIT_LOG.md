@@ -6,6 +6,24 @@
 
 ## 📅 提交歷史
 
+## [2026-03-11] feat(exchange): 匯率引擎切換至台灣銀行 (BOT) 並導入 Functions 單元測試 (v2.4.0)
+
+- Hash: `TBD`
+- 改動方向: 切換穩定且具開放性的匯率來源 (BOT)，並針對 Cloud Functions 建立完整的測試與部署規範。
+- 具體內容:
+  - **匯率引擎 (Exchange Engine)**:
+    - 匯率獲取從 Visa/Mastercard API 切換至 **台灣銀行 (BOT) CSV**，解決 API 安全性限制導致的阻擋問題。
+    - Cloud Functions 實作 CSV 解析與自動快取邏輯，支援跨幣別即時換算（USD <-> JPY 等）。
+  - **測試與品質 (Tests & Quality)**:
+    - 導入 `firebase-functions-test` 搭配 `vitest`，撰寫 `functions/src/index.spec.ts` 驗證權限、參數與精度。
+    - 新增 `tests/unit/exchangeStore.spec.ts` 強化前端 Pinia Store 的邊界測試與舊版資料相容性。
+    - 清理 Lint 警告，修正 Windows 下 `firebase deploy` 的環境變數相容性。
+  - **文件與介面 (Docs & UI)**:
+    - 重構 `CURRENCY_API_SPEC.md` 並更新 `README.md` 以反映最新架構。
+    - `CurrencyCalculator.vue` 介面重構，新增 Visa/Mastercard 官方連結作為輔助參考。
+    - 數字換算精度提升至小數點後 4 位。
+
+
 ## [2026-03-07] feat(expense): 實作自訂分帳金額與色彩體系優化 (v2.2.8)
 
 - Hash: `TBD`
