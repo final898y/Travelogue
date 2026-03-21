@@ -62,20 +62,23 @@ const openMap = () => {
     </div>
 
     <!-- Right Content Card -->
-    <div class="flex-1 pb-8">
+    <div class="flex-1 pb-8 min-w-0">
       <div
         @click="emit('click-item')"
-        class="card-base !p-4 group-hover:shadow-soft-lg transition-all cursor-pointer active:scale-[0.98]"
+        class="card-base !p-4 group-hover:shadow-soft-lg transition-all cursor-pointer active:scale-[0.98] w-full"
         :class="
           options && options.length > 0
             ? 'border-2 border-dashed border-forest-100 bg-forest-50/30'
             : ''
         "
       >
-        <div class="flex justify-between items-start">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <div :class="categoryStyles[category].textColor">
+        <div class="flex justify-between items-start gap-3">
+          <div class="space-y-1 min-w-0 flex-1">
+            <div class="flex items-start gap-2">
+              <div
+                :class="categoryStyles[category].textColor"
+                class="mt-0.5 flex-shrink-0"
+              >
                 <!-- Lucide Icons mapping -->
                 <Landmark v-if="category === 'sight'" :size="16" />
                 <Utensils v-if="category === 'food'" :size="16" />
@@ -83,13 +86,13 @@ const openMap = () => {
                 <Bed v-if="category === 'hotel'" :size="16" />
               </div>
 
-              <div class="flex flex-col">
-                <h4 class="font-bold text-forest-800 leading-tight">
+              <div class="flex flex-col min-w-0">
+                <h4 class="font-bold text-forest-800 leading-tight break-words">
                   {{ title }}
                 </h4>
                 <p
                   v-if="subtitle"
-                  class="text-[10px] text-forest-400 font-medium"
+                  class="text-[10px] text-forest-400 font-medium break-words"
                 >
                   {{ subtitle }}
                 </p>
@@ -98,15 +101,15 @@ const openMap = () => {
 
             <p
               v-if="location"
-              class="text-xs text-gray-400 flex items-center gap-1"
+              class="text-xs text-gray-400 flex items-center gap-1 truncate"
             >
-              <MapPin :size="12" />
+              <MapPin :size="12" class="flex-shrink-0" />
               {{ location }}
             </p>
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 flex-shrink-0">
             <button
               @click="openMap"
               class="w-8 h-8 flex items-center justify-center rounded-xl bg-forest-50 text-forest-400 hover:bg-forest-100 hover:text-forest-600 transition-all cursor-pointer shadow-sm active:scale-90"

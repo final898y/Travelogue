@@ -248,7 +248,21 @@ const handleDeleteCollection = async () => {
           class="card-base group cursor-pointer hover:shadow-soft-lg active:scale-[0.98] transition-all"
         >
           <div class="flex justify-between items-start mb-2">
-            <div class="text-forest-400">
+            <a
+              v-if="item.url"
+              :href="item.url"
+              target="_blank"
+              @click.stop
+              class="text-forest-400 hover:text-forest-600 transition-colors"
+              title="查看原始連結"
+            >
+              <AtSign v-if="item.source === 'threads'" :size="20" />
+              <Instagram v-if="item.source === 'instagram'" :size="20" />
+              <Globe v-if="item.source === 'web'" :size="20" />
+              <Youtube v-if="item.source === 'youtube'" :size="20" />
+              <MoreHorizontal v-if="item.source === 'other'" :size="20" />
+            </a>
+            <div v-else class="text-forest-400">
               <AtSign v-if="item.source === 'threads'" :size="20" />
               <Instagram v-if="item.source === 'instagram'" :size="20" />
               <Globe v-if="item.source === 'web'" :size="20" />

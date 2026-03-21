@@ -6,6 +6,15 @@
 
 ## 📅 提交歷史
 
+## [2026-03-21] fix(ui): 優化行動版佈局與非同步資料初始化 (v2.4.1)
+
+- Hash: `TBD`
+- 變更範圍: `PlanView.vue`, `TimelineItem.vue`, `CollectionView.vue`
+- 詳細內容:
+    - `PlanView.vue`: 新增 `watch` 監聽 `trip` 資料，解決重新整理後非同步載入導致日期初始化失敗（頁面空白）的問題。
+    - `TimelineItem.vue`: 加入 `min-w-0` 與 `break-words` 樣式，防止長標題撐開 Flex 容器導致手機版水平溢出。
+    - `CollectionView.vue`: 將來源圖示轉換為可點擊連結 (`item.url`)，提升查閱原始靈感（Threads/IG）的效率。
+
 ## [2026-03-11] feat(exchange): 匯率引擎切換至台灣銀行 (BOT) 並導入 Functions 單元測試 (v2.4.0)
 
 - Hash: `TBD`
@@ -22,7 +31,6 @@
     - 重構 `CURRENCY_API_SPEC.md` 並更新 `README.md` 以反映最新架構。
     - `CurrencyCalculator.vue` 介面重構，新增 Visa/Mastercard 官方連結作為輔助參考。
     - 數字換算精度提升至小數點後 4 位。
-
 
 ## [2026-03-07] feat(expense): 實作自訂分帳金額與色彩體系優化 (v2.2.8)
 

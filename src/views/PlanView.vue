@@ -3,7 +3,7 @@
  * PlanView (Page)
  * The main view for a trip's plan.
  */
-import { ref, computed, onMounted, onUnmounted, toRefs } from "vue";
+import { ref, computed, onMounted, onUnmounted, toRefs, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTripStore } from "../stores/tripStore";
 import { usePlanStore } from "../stores/planStore";
@@ -57,14 +57,22 @@ const isSaving = ref(false);
 
 let unsubscribePlans: (() => void) | null = null;
 
+// 當 trip 資料載入後，自動設定初始顯示日期
+watch(
+  trip,
+  (newTrip) => {
+    if (newTrip && !selectedDate.value) {
+      selectedDate.value = newTrip.startDate;
+    }
+  },
+  { immediate: true },
+);
+
 // Set initial date when trip is loaded
 onMounted(async () => {
   if (tripStore.trips.length === 0) {
     // 若直接進入此頁面，啟動訂閱以獲取旅程清單
     tripStore.subscribeToTrips();
-  }
-  if (trip.value && !selectedDate.value) {
-    selectedDate.value = trip.value.startDate;
   }
 
   // 監聽行程子集合
