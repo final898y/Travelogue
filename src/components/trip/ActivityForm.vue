@@ -3,7 +3,7 @@
  * ActivityForm (Component)
  * Handles viewing and editing activity details.
  */
-import { reactive, computed, watch } from "vue";
+import { reactive, computed, watch, ref, onMounted } from "vue";
 import {
   Landmark,
   Utensils,
@@ -12,6 +12,8 @@ import {
   MapPin,
   Plus,
   X,
+  Globe,
+  Map,
 } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
 import type { Activity } from "../../types/trip";
@@ -24,6 +26,18 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const uiStore = useUIStore();
 
+// 地點輸入類型
+type LocationType = "name" | "address" | "coordinates" | "link";
+const activeLocationType = ref<LocationType>("name");
+
+// 初始化時判斷地點類型
+onMounted(() => {
+  if (formData.mapUrl) activeLocationType.value = "link";
+  else if (formData.coordinates?.lat) activeLocationType.value = "coordinates";
+  else if (formData.address) activeLocationType.value = "address";
+  else activeLocationType.value = "name";
+});
+
 // 建立局部狀態副本以供編輯
 const formData = reactive<Partial<Activity>>({
   time: "09:00",
@@ -32,16 +46,24 @@ const formData = reactive<Partial<Activity>>({
   location: "",
   category: "sight",
   address: "",
+  mapUrl: "",
+  coordinates: { lat: 0, lng: 0 },
   note: "",
   ...props.initialData,
 });
+
+const locationOptions = [
+  { value: "name", label: "名稱", icon: MapPin },
+  { value: "address", label: "地址", icon: Landmark },
+  { value: "coordinates", label: "座標", icon: Map },
+  { value: "link", label: "連結", icon: Globe },
+];
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
   formData,
   (newVal) => {
     // 簡單比較，如果與初始值不同則視為 dirty
-    // 注意：這裡使用 JSON 序列化來做深層比較
     const isDirty =
       JSON.stringify(newVal) !==
       JSON.stringify({
@@ -51,6 +73,8 @@ watch(
         location: "",
         category: "sight",
         address: "",
+        mapUrl: "",
+        coordinates: { lat: 0, lng: 0 },
         note: "",
         ...props.initialData,
       });
@@ -156,19 +180,101 @@ const removeOption = (idx: number) => {
         />
       </div>
 
-      <!-- Location -->
-      <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >地點名稱</label
-        >
-        <div class="relative">
+      <!-- Location Section -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold text-forest-300 uppercase"
+            >地點資訊</label
+          >
+          <div class="flex bg-forest-50 p-0.5 rounded-lg">
+            <button
+              v-for="opt in locationOptions"
+              :key="opt.value"
+              type="button"
+              @click="activeLocationType = opt.value as LocationType"
+              class="px-2 py-1 rounded-md text-[10px] font-bold transition-all flex items-center gap-1"
+              :class="
+                activeLocationType === opt.value
+                  ? 'bg-white text-forest-500 shadow-sm'
+                  : 'text-forest-200 hover:text-forest-300'
+              "
+            >
+              <component :is="opt.icon" :size="10" />
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Location Name Input -->
+        <div v-if="activeLocationType === 'name'" class="relative">
           <input
             v-model="formData.location"
             type="text"
-            placeholder="搜尋地點或手動輸入"
+            placeholder="例如：東京鐵塔"
             class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
           />
           <MapPin
+            :size="16"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
+          />
+        </div>
+
+        <!-- Address Input -->
+        <div v-if="activeLocationType === 'address'" class="relative">
+          <input
+            v-model="formData.address"
+            type="text"
+            placeholder="請輸入完整地址"
+            class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+          />
+          <Landmark
+            :size="16"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
+          />
+        </div>
+
+        <!-- Coordinates Input -->
+        <div
+          v-if="activeLocationType === 'coordinates'"
+          class="grid grid-cols-2 gap-3"
+        >
+          <div class="relative">
+            <input
+              v-model.number="formData.coordinates!.lat"
+              type="number"
+              step="any"
+              placeholder="緯度 (Lat)"
+              class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+            />
+            <Map
+              :size="16"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
+            />
+          </div>
+          <div class="relative">
+            <input
+              v-model.number="formData.coordinates!.lng"
+              type="number"
+              step="any"
+              placeholder="經度 (Lng)"
+              class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+            />
+            <Map
+              :size="16"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
+            />
+          </div>
+        </div>
+
+        <!-- Map URL Input -->
+        <div v-if="activeLocationType === 'link'" class="relative">
+          <input
+            v-model="formData.mapUrl"
+            type="url"
+            placeholder="貼上 Google Maps 或其他地圖連結"
+            class="w-full p-3 pl-10 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm"
+          />
+          <Globe
             :size="16"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-forest-200"
           />

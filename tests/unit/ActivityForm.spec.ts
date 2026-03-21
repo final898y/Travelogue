@@ -13,6 +13,8 @@ vi.mock("../../src/assets/icons", () => ({
   MapPin: { template: "<svg />" },
   Plus: { template: "<svg />" },
   X: { template: "<svg />" },
+  Globe: { template: "<svg />" },
+  Map: { template: "<svg />" },
 }));
 
 describe("ActivityForm.vue", () => {

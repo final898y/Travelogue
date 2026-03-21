@@ -6,14 +6,23 @@
 
 ## 📅 提交歷史
 
+## [2026-03-21] feat(trip): 支援多種地點輸入類型與 mapUrl 欄位 (v2.4.2)
+
+- Hash: `TBD`
+- 變更範圍: `ActivityForm.vue`, `trip.ts`, `mapUtils.ts`
+- 詳細內容:
+  - `ActivityForm.vue`: 重構地點輸入區塊，支援「名稱、地址、座標、連結」四種輸入模式的切換，優化 UI 導向。
+  - `trip.ts`: 在 `ActivitySchema` 與 `ActivityOptionSchema` 中新增 `mapUrl` 欄位並使用 `z.url()` 驗證。
+  - `mapUtils.ts`: 更新地圖連結生成邏輯，優先採用 `mapUrl` 欄位。
+
 ## [2026-03-21] fix(ui): 優化行動版佈局與非同步資料初始化 (v2.4.1)
 
 - Hash: `TBD`
 - 變更範圍: `PlanView.vue`, `TimelineItem.vue`, `CollectionView.vue`
 - 詳細內容:
-    - `PlanView.vue`: 新增 `watch` 監聽 `trip` 資料，解決重新整理後非同步載入導致日期初始化失敗（頁面空白）的問題。
-    - `TimelineItem.vue`: 加入 `min-w-0` 與 `break-words` 樣式，防止長標題撐開 Flex 容器導致手機版水平溢出。
-    - `CollectionView.vue`: 將來源圖示轉換為可點擊連結 (`item.url`)，提升查閱原始靈感（Threads/IG）的效率。
+  - `PlanView.vue`: 新增 `watch` 監聽 `trip` 資料，解決重新整理後非同步載入導致日期初始化失敗（頁面空白）的問題。
+  - `TimelineItem.vue`: 加入 `min-w-0` 與 `break-words` 樣式，防止長標題撐開 Flex 容器導致手機版水平溢出。
+  - `CollectionView.vue`: 將來源圖示轉換為可點擊連結 (`item.url`)，提升查閱原始靈感（Threads/IG）的效率。
 
 ## [2026-03-11] feat(exchange): 匯率引擎切換至台灣銀行 (BOT) 並導入 Functions 單元測試 (v2.4.0)
 

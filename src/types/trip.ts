@@ -64,6 +64,7 @@ export const ActivityOptionSchema = z.object({
   address: z.string().optional(),
   placeId: z.string().optional(),
   coordinates: CoordinatesSchema.optional(),
+  mapUrl: z.url().or(z.string().optional()),
 });
 export type ActivityOption = z.infer<typeof ActivityOptionSchema>;
 
@@ -90,6 +91,7 @@ export const ActivitySchema = z.object({
   address: z.string().optional(),
   placeId: z.string().optional(),
   coordinates: CoordinatesSchema.optional(),
+  mapUrl: z.url().or(z.string().optional()),
   category: ActivityCategorySchema,
   note: z.string().optional(),
   imageUrl: z.url().or(z.string().optional()),

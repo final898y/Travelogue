@@ -11,23 +11,30 @@ export interface MapLocation {
     lat: number;
     lng: number;
   };
+  mapUrl?: string; // 外部地圖連結 (優先採用)
 }
 
 export function getGoogleMapsUrl(location: MapLocation): string {
-  const baseUrl = "https://www.google.com/maps/search/?api=1";
-  const { subtitle, address, placeId, coordinates } = location;
+  const { subtitle, address, placeId, coordinates, mapUrl } = location;
 
-  // 1. 優先級：Place ID (最精準)
+  // 1. 絕對優先級：若已有完整的地圖連結，直接返回
+  if (mapUrl && mapUrl.startsWith("http")) {
+    return mapUrl;
+  }
+
+  const baseUrl = "https://www.google.com/maps/search/?api=1";
+
+  // 2. 優先級：Place ID (最精準)
   if (placeId) {
     return `${baseUrl}&query=${encodeURIComponent(subtitle)}&query_place_id=${placeId}`;
   }
 
-  // 2. 次優先級：座標 (經緯度)
+  // 3. 次優先級：座標 (經緯度)
   if (coordinates) {
     return `${baseUrl}&query=${coordinates.lat},${coordinates.lng}`;
   }
 
-  // 3. 備案：搜尋模式 (地點名稱 + 地址)
+  // 4. 備案：搜尋模式 (地點名稱 + 地址)
   const searchQuery = address ? `${subtitle} ${address}` : subtitle;
   return `${baseUrl}&query=${encodeURIComponent(searchQuery)}`;
 }
