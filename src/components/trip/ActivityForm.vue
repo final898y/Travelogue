@@ -14,6 +14,9 @@ import {
   X,
   Globe,
   Map,
+  Pencil,
+  BookOpen,
+  ExternalLink,
 } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
 import type { Activity } from "../../types/trip";
@@ -25,6 +28,9 @@ const props = defineProps<{
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const uiStore = useUIStore();
+
+// 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
+const isReadOnly = ref(!!props.initialData.id);
 
 // 地點輸入類型
 type LocationType = "name" | "address" | "coordinates" | "link";
@@ -50,6 +56,14 @@ const formData = reactive<Partial<Activity>>({
   coordinates: { lat: 0, lng: 0 },
   note: "",
   ...props.initialData,
+});
+
+// 從座標生成 Google Maps 連結
+const coordinatesLink = computed(() => {
+  if (formData.coordinates?.lat && formData.coordinates?.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${formData.coordinates.lat},${formData.coordinates.lng}`;
+  }
+  return "#";
 });
 
 const locationOptions = [
@@ -109,12 +123,45 @@ const removeOption = (idx: number) => {
 
 <template>
   <div class="space-y-6">
+    <!-- Mode Toggle Header -->
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-bold text-forest-400 flex items-center gap-2">
+        <component :is="isReadOnly ? BookOpen : Pencil" :size="18" />
+        {{ isReadOnly ? "閱覽內容" : "編輯活動" }}
+      </h3>
+      <button
+        @click="isReadOnly = !isReadOnly"
+        v-if="isEditMode"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-all active:scale-95"
+        :class="
+          isReadOnly
+            ? 'border-forest-100 bg-white text-forest-400 hover:border-forest-200'
+            : 'border-forest-400 bg-forest-50 text-forest-600 shadow-soft-sm'
+        "
+      >
+        <span class="text-xs font-bold">{{
+          isReadOnly ? "切換編輯" : "結束編輯"
+        }}</span>
+      </button>
+    </div>
+
     <!-- Category Selector -->
     <div class="space-y-2">
       <label class="text-xs font-bold text-forest-300 uppercase tracking-wider"
         >活動類型</label
       >
-      <div class="grid grid-cols-4 gap-2">
+      <div v-if="isReadOnly" class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-soft-sm border border-forest-50 w-fit">
+        <div :class="categories.find(c => c.value === formData.category)?.color || 'text-forest-400'">
+            <Landmark v-if="formData.category === 'sight'" :size="20" />
+            <Utensils v-if="formData.category === 'food'" :size="20" />
+            <Car v-if="formData.category === 'transport'" :size="20" />
+            <Bed v-if="formData.category === 'hotel'" :size="20" />
+          </div>
+          <span class="text-sm font-bold text-forest-600">{{ 
+            categories.find(c => c.value === formData.category)?.label || '景點'
+          }}</span>
+      </div>
+      <div v-else class="grid grid-cols-4 gap-2">
         <button
           v-for="cat in categories"
           :key="cat.value"
@@ -148,7 +195,11 @@ const removeOption = (idx: number) => {
           <label class="text-xs font-bold text-forest-300 uppercase"
             >時間</label
           >
+          <div v-if="isReadOnly" class="p-3 text-sm font-mono text-forest-800">
+            {{ formData.time }}
+          </div>
           <input
+            v-else
             v-model="formData.time"
             type="time"
             class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-mono shadow-sm"
@@ -158,7 +209,11 @@ const removeOption = (idx: number) => {
           <label class="text-xs font-bold text-forest-300 uppercase"
             >標題</label
           >
+          <div v-if="isReadOnly" class="p-1 text-lg font-bold text-forest-800">
+            {{ formData.title }}
+          </div>
           <input
+            v-else
             v-model="formData.title"
             type="text"
             placeholder="例如：東京鐵塔"
@@ -172,7 +227,11 @@ const removeOption = (idx: number) => {
         <label class="text-xs font-bold text-forest-300 uppercase"
           >副標題</label
         >
+        <div v-if="isReadOnly" class="p-1 text-sm text-forest-600">
+          {{ formData.subtitle || '無' }}
+        </div>
         <input
+          v-else
           v-model="formData.subtitle"
           type="text"
           placeholder="例如：熱門地標、晚餐地點"
@@ -181,7 +240,7 @@ const removeOption = (idx: number) => {
       </div>
 
       <!-- Location Section -->
-      <div class="space-y-3">
+      <div v-if="!isReadOnly" class="space-y-3">
         <div class="flex justify-between items-center">
           <label class="text-xs font-bold text-forest-300 uppercase"
             >地點資訊</label
@@ -280,13 +339,60 @@ const removeOption = (idx: number) => {
           />
         </div>
       </div>
+      
+      <!-- Location Section ReadOnly -->
+      <div v-else class="space-y-4">
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-forest-300 uppercase">地點名稱</label>
+          <div class="p-1 text-sm text-forest-600 flex items-center gap-2">
+            <MapPin :size="14" /> {{ formData.location || '未提供' }}
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-forest-300 uppercase">地址</label>
+          <div class="p-1 text-sm text-forest-600 flex items-center gap-2">
+            <Landmark :size="14" /> {{ formData.address || '未提供' }}
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-forest-300 uppercase">地圖連結 / 座標</label>
+          <div class="space-y-2">
+             <a
+              v-if="formData.mapUrl"
+              :href="formData.mapUrl"
+              target="_blank"
+              class="flex items-center gap-2 p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-sky-blue font-mono truncate group"
+            >
+              <Globe :size="16" class="text-forest-400" />
+              <span class="truncate flex-1">{{ formData.mapUrl }}</span>
+              <ExternalLink :size="14" class="text-forest-300 group-hover:text-sky-blue transition-colors" />
+            </a>
+             <a
+              v-if="formData.coordinates?.lat"
+              :href="coordinatesLink"
+              target="_blank"
+              class="flex items-center gap-2 p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-forest-500 font-mono truncate group"
+            >
+              <Map :size="16" class="text-forest-400" />
+              <span class="truncate flex-1">{{ formData.coordinates.lat }}, {{ formData.coordinates.lng }}</span>
+              <ExternalLink :size="14" class="text-forest-300 group-hover:text-forest-500 transition-colors" />
+            </a>
+            <p v-if="!formData.mapUrl && !formData.coordinates?.lat" class="text-xs text-forest-200 italic p-1">未提供地圖資訊</p>
+          </div>
+        </div>
+      </div>
+
 
       <!-- Note -->
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase"
           >說明 / 備註</label
         >
+        <div v-if="isReadOnly" class="p-3 rounded-xl bg-cream-light border border-forest-50 text-sm text-forest-700 whitespace-pre-wrap min-h-[4rem]">
+          {{ formData.note || '無備註內容' }}
+        </div>
         <textarea
+          v-else
           v-model="formData.note"
           rows="3"
           placeholder="補充行程細節、預約編號或注意事項..."
@@ -301,6 +407,7 @@ const removeOption = (idx: number) => {
             >備選方案 ({{ formData.options?.length || 0 }})</label
           >
           <button
+            v-if="!isReadOnly"
             @click="addOption"
             type="button"
             class="text-[10px] font-bold text-forest-400 hover:text-forest-600 flex items-center gap-1 transition-colors"
@@ -328,20 +435,25 @@ const removeOption = (idx: number) => {
 
             <!-- Delete Button -->
             <button
+              v-if="!isReadOnly"
               @click="removeOption(idx)"
-              class="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-white border border-red-50 text-red-300 flex items-center justify-center hover:text-red-500 hover:border-red-100 shadow-sm transition-all opacity-0 group-hover:opacity-100"
+              class="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-white border border-red-50 text-red-300 flex items-center justify-center hover:text-red-500 hover:border-red-100 shadow-sm transition-all"
             >
               <X :size="12" :stroke-width="3" />
             </button>
 
             <div class="space-y-2">
+              <div v-if="isReadOnly" class="text-xs font-bold text-forest-700">{{ opt.title }}</div>
               <input
+                v-else
                 v-model="opt.title"
                 type="text"
                 placeholder="方案標題 (例如：另一個景點)"
                 class="w-full p-2 bg-transparent border-b border-forest-100 focus:border-forest-300 outline-none text-xs font-bold"
               />
+              <div v-if="isReadOnly" class="text-[10px] text-forest-500">{{ opt.subtitle }}</div>
               <input
+                v-else
                 v-model="opt.subtitle"
                 type="text"
                 placeholder="方案副標題 (例如：門票更便宜)"
@@ -354,7 +466,7 @@ const removeOption = (idx: number) => {
           v-else
           class="text-center py-4 border-2 border-dashed border-forest-50 rounded-2xl text-[10px] text-forest-200 italic"
         >
-          目前沒有備選方案，點擊上方按鈕新增
+          {{ isReadOnly ? '沒有備選方案' : '目前沒有備選方案，點擊上方按鈕新增' }}
         </p>
       </div>
     </div>
@@ -362,6 +474,7 @@ const removeOption = (idx: number) => {
     <!-- Action Buttons -->
     <div class="pt-4 flex flex-col gap-3">
       <button
+        v-if="!isReadOnly"
         @click="handleSave"
         class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
       >

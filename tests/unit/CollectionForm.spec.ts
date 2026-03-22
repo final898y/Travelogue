@@ -4,7 +4,6 @@ import { createTestingPinia } from "@pinia/testing";
 import CollectionForm from "../../src/components/trip/CollectionForm.vue";
 import { useUIStore } from "../../src/stores/uiStore";
 
-// Mock icons
 vi.mock("../../src/assets/icons", () => ({
   Globe: { template: "<svg />" },
   AtSign: { template: "<svg />" },
@@ -13,6 +12,10 @@ vi.mock("../../src/assets/icons", () => ({
   MoreHorizontal: { template: "<svg />" },
   X: { template: "<svg />" },
   Plus: { template: "<svg />" },
+  Pencil: { template: "<!-- Pencil -->" },
+  BookOpen: { template: "<!-- BookOpen -->" },
+  ExternalLink: { template: "<!-- ExternalLink -->" },
+  ChevronDown: { template: "<!-- ChevronDown -->" },
 }));
 
 describe("CollectionForm.vue", () => {
@@ -47,7 +50,7 @@ describe("CollectionForm.vue", () => {
     expect(firstBtn.classes()).toContain("border-forest-400");
   });
 
-  it("應正確渲染編輯模式並填入資料", () => {
+  it("應正確渲染編輯模式並填入資料", async () => {
     const initialData = {
       id: "coll-1",
       title: "好吃拉麵",
@@ -64,6 +67,11 @@ describe("CollectionForm.vue", () => {
         initialData,
       },
     });
+
+    // [FIX]: Since the component now defaults to read-only mode,
+    // we need to switch to edit mode first.
+    const toggleButton = wrapper.find("button.text-forest-400"); // '切換編輯' 按鈕
+    await toggleButton.trigger("click");
 
     const textInputs = wrapper.findAll("input[type='text']");
     const urlInputs = wrapper.findAll("input[type='url']");
@@ -177,5 +185,78 @@ describe("CollectionForm.vue", () => {
     expect(data.title).toBe("我的景點");
     expect(data.category).toBe("景點");
     expect(data.tags).toContain("自動加入標籤");
+  });
+
+  describe("閱覽/編輯模式 (Read/Edit Mode)", () => {
+    it("當有 id 時, 預設應為閱覽模式", () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123", title: "Test" } },
+      });
+      // 閱覽模式下，輸入框不該存在
+      expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(false);
+      // 應顯示標題文字
+      expect(wrapper.find(".text-lg.font-bold").text()).toBe("Test");
+    });
+
+    it("當沒有 id 時, 預設應為編輯模式", () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { title: "Test" } },
+      });
+      // 編輯模式下，輸入框應存在
+      expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(true);
+    });
+
+    it("閱覽模式下，URL 應為可點擊的連結", () => {
+      const wrapper = mountWithPinia({
+        props: {
+          initialData: {
+            id: "123",
+            url: "http://example.com",
+            mapUrl: "http://maps.google.com",
+          },
+        },
+      });
+
+      const links = wrapper.findAll("a");
+      const link1 = links.find((l) => l.attributes("href") === "http://example.com");
+      const link2 = links.find((l) => l.attributes("href") === "http://maps.google.com");
+      
+      expect(link1?.exists()).toBe(true);
+      expect(link1?.attributes("target")).toBe("_blank");
+
+      expect(link2?.exists()).toBe(true);
+      expect(link2?.attributes("target")).toBe("_blank");
+    });
+
+    it("點擊按鈕應能切換模式", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123", title: "Test" } },
+      });
+
+      // 初始為閱覽模式
+      expect(wrapper.find("input[type='text']").exists()).toBe(false);
+
+      // 點擊切換為編輯模式
+      const toggleButton = wrapper.find("button.text-forest-400"); // '切換編輯' 按鈕
+      await toggleButton.trigger("click");
+
+      // 檢查是否切換到編輯模式
+      expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(true);
+      expect(wrapper.find("button.bg-forest-400").exists()).toBe(true); // 儲存按鈕
+
+      // 再次點擊切換回閱覽模式
+      await toggleButton.trigger("click");
+      expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(false);
+    });
+
+    it("閱覽模式下不應顯示儲存按鈕, 但應顯示刪除按鈕", () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123" } },
+      });
+      // 儲存按鈕
+      expect(wrapper.find("button.bg-forest-400").exists()).toBe(false);
+      // 刪除按鈕
+      expect(wrapper.find("button.border-red-50").exists()).toBe(true);
+    });
   });
 });

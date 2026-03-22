@@ -15,6 +15,9 @@ vi.mock("../../src/assets/icons", () => ({
   X: { template: "<svg />" },
   Globe: { template: "<svg />" },
   Map: { template: "<svg />" },
+  Pencil: { template: "<!-- Pencil -->" },
+  BookOpen: { template: "<!-- BookOpen -->" },
+  ExternalLink: { template: "<!-- ExternalLink -->" },
 }));
 
 describe("ActivityForm.vue", () => {
@@ -53,7 +56,7 @@ describe("ActivityForm.vue", () => {
     ).toBe(0);
   });
 
-  it("應正確填入初始資料 (編輯模式)", () => {
+  it("應正確填入初始資料 (編輯模式)", async () => {
     const initialData = {
       id: "123",
       title: "午餐",
@@ -66,6 +69,10 @@ describe("ActivityForm.vue", () => {
         initialData,
       },
     });
+
+    // [FIX]: 組件現在預設為閱覽模式，需先切換到編輯模式
+    const toggleButton = wrapper.find("button.text-forest-400"); // '切換編輯' 按鈕
+    await toggleButton.trigger("click");
 
     const titleInput = wrapper.find("input[placeholder='例如：東京鐵塔']");
     expect((titleInput.element as HTMLInputElement).value).toBe("午餐");
@@ -143,5 +150,99 @@ describe("ActivityForm.vue", () => {
     await deleteBtn?.trigger("click");
 
     expect(wrapper.emitted("delete")).toBeTruthy();
+  });
+
+  describe("閱覽/編輯模式 (Read/Edit Mode)", () => {
+    it("當有 id 時, 預設應為閱覽模式", () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123", title: "Test Activity" } },
+      });
+      // 閱覽模式下，標題輸入框不該存在
+      expect(wrapper.find("input[placeholder*='東京鐵塔']").exists()).toBe(
+        false,
+      );
+      // 應顯示標題文字
+      expect(wrapper.find(".text-lg.font-bold").text()).toBe("Test Activity");
+    });
+
+    it("當沒有 id 時, 預設應為編輯模式", () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { title: "New Activity" } },
+      });
+      // 編輯模式下，標題輸入框應存在
+      expect(wrapper.find("input[placeholder*='東京鐵塔']").exists()).toBe(
+        true,
+      );
+    });
+
+    it("閱覽模式下，mapUrl 和 coordinates 應轉為可點擊連結", () => {
+      const wrapper = mountWithPinia({
+        props: {
+          initialData: {
+            id: "123",
+            mapUrl: "http://example.com/map",
+            coordinates: { lat: 35.6, lng: 139.7 },
+          },
+        },
+      });
+
+      const links = wrapper.findAll("a");
+      const mapUrlLink = links.find(
+        (l) => l.attributes("href") === "http://example.com/map",
+      );
+      const coordsLink = links.find((l) =>
+        l.attributes("href")?.includes("35.6,139.7"),
+      );
+
+      expect(mapUrlLink?.exists()).toBe(true);
+      expect(mapUrlLink?.attributes("target")).toBe("_blank");
+
+      expect(coordsLink?.exists()).toBe(true);
+      expect(coordsLink?.attributes("target")).toBe("_blank");
+      expect(coordsLink?.find("span").text()).toContain("35.6, 139.7");
+    });
+
+    it("點擊按鈕應能切換模式", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123" } },
+      });
+
+      // 初始為閱覽模式
+      expect(wrapper.find("input[type='time']").exists()).toBe(false);
+
+      // 點擊切換為編輯模式
+      const toggleButton = wrapper.find("button.text-forest-400");
+      await toggleButton.trigger("click");
+
+      // 檢查是否切換到編輯模式
+      expect(wrapper.find("input[type='time']").exists()).toBe(true);
+      expect(wrapper.find("button[aria-label*='新增方案']").exists()).toBe(false); // Label doesn't exist, check by text
+      expect(wrapper.find("button.text-forest-400").text()).toContain(
+        "新增方案",
+      );
+    });
+
+    it("閱覽模式下，備選方案應為唯讀", () => {
+      const wrapper = mountWithPinia({
+        props: {
+          initialData: {
+            id: "123",
+            options: [{ title: "Option 1", subtitle: "Sub 1" }],
+          },
+        },
+      });
+
+      // 應顯示備選方案的文字，而非輸入框
+      expect(wrapper.find(".text-xs.font-bold.text-forest-700").text()).toBe("Option 1");
+      // [FIX]: 使用更精確的選擇器來定位 subtitle
+      expect(wrapper.find(".p-4 .space-y-2 .text-\\[10px\\]").text()).toBe("Sub 1");
+      expect(wrapper.find("input[placeholder*='方案標題']").exists()).toBe(
+        false,
+      );
+
+      // 新增方案按鈕不該存在
+      const addBtn = wrapper.findAll("button").find(b => b.text().includes("新增方案"));
+      expect(addBtn).toBeFalsy();
+    });
   });
 });

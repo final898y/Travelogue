@@ -123,5 +123,5 @@ Firebase Functions v2 預設會阻擋未驗證的預檢請求 (OPTIONS)，須手
 
 ---
 
-**Version**: 2.3.0
+**Version**: 2.5.0
 **License**: MIT

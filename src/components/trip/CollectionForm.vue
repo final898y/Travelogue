@@ -12,6 +12,9 @@ import {
   MoreHorizontal,
   X,
   Plus,
+  Pencil,
+  BookOpen,
+  ExternalLink,
 } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
 import type { Collection, CollectionSource } from "../../types/trip";
@@ -24,6 +27,9 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
+
+// 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
+const isReadOnly = ref(!!props.initialData.id);
 
 const tagInput = ref("");
 
@@ -148,12 +154,46 @@ const handleSave = () => {
 
 <template>
   <div class="space-y-6">
-    <!-- Source Selector -->
+    <!-- Mode Toggle Header -->
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-bold text-forest-400 flex items-center gap-2">
+        <component :is="isReadOnly ? BookOpen : Pencil" :size="18" />
+        {{ isReadOnly ? "閱覽內容" : "編輯項目" }}
+      </h3>
+      <button
+        @click="isReadOnly = !isReadOnly"
+        v-if="isEditMode"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-all active:scale-95"
+        :class="
+          isReadOnly
+            ? 'border-forest-100 bg-white text-forest-400 hover:border-forest-200'
+            : 'border-forest-400 bg-forest-50 text-forest-600 shadow-soft-sm'
+        "
+      >
+        <span class="text-xs font-bold">{{
+          isReadOnly ? "切換編輯" : "結束編輯"
+        }}</span>
+      </button>
+    </div>
+
+    <!-- Source Selector (Read Only or Edit) -->
     <div class="space-y-2">
       <label class="text-xs font-bold text-forest-300 uppercase tracking-wider"
         >來源類型</label
       >
-      <div class="grid grid-cols-5 gap-2">
+      <div v-if="isReadOnly" class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-soft-sm border border-forest-50 w-fit">
+        <div class="text-forest-400">
+          <Globe v-if="formData.source === 'web'" :size="20" />
+          <AtSign v-if="formData.source === 'threads'" :size="20" />
+          <Instagram v-if="formData.source === 'instagram'" :size="20" />
+          <Youtube v-if="formData.source === 'youtube'" :size="20" />
+          <MoreHorizontal v-if="formData.source === 'other'" :size="20" />
+        </div>
+        <span class="text-sm font-bold text-forest-600">{{ 
+          sources.find(s => s.value === formData.source)?.label || '其他'
+        }}</span>
+      </div>
+      <div v-else class="grid grid-cols-5 gap-2">
         <button
           v-for="src in sources"
           :key="src.value"
@@ -184,7 +224,11 @@ const handleSave = () => {
     <div class="space-y-4">
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase">標題</label>
+        <div v-if="isReadOnly" class="text-lg font-bold text-forest-800 p-1">
+          {{ formData.title }}
+        </div>
         <input
+          v-else
           v-model="formData.title"
           type="text"
           placeholder="例如：東京必吃拉麵清單"
@@ -194,19 +238,20 @@ const handleSave = () => {
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase">標籤</label>
-        <div class="flex flex-wrap gap-2 mb-2" v-if="formData.tags?.length">
+        <div class="flex flex-wrap gap-2 mb-2">
           <span
             v-for="(tag, index) in formData.tags"
             :key="index"
             class="tag-chip flex items-center gap-1 px-3 py-1 bg-forest-50 text-forest-500 rounded-full text-xs font-bold"
           >
             #{{ tag }}
-            <button @click="removeTag(index)" class="hover:text-red-400">
+            <button v-if="!isReadOnly" @click="removeTag(index)" class="hover:text-red-400">
               <X :size="12" />
             </button>
           </span>
+          <p v-if="isReadOnly && (!formData.tags || formData.tags.length === 0)" class="text-xs text-forest-200 italic">無標籤</p>
         </div>
-        <div class="relative">
+        <div v-if="!isReadOnly" class="relative">
           <input
             v-model="tagInput"
             type="text"
@@ -227,7 +272,20 @@ const handleSave = () => {
         <label class="text-xs font-bold text-forest-300 uppercase"
           >網址 (來源 URL)</label
         >
+        <div v-if="isReadOnly" class="group relative overflow-hidden">
+          <a
+            v-if="formData.url"
+            :href="formData.url"
+            target="_blank"
+            class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-sky-blue font-mono truncate pr-10"
+          >
+            {{ formData.url }}
+            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-sky-blue transition-colors" />
+          </a>
+          <p v-else class="text-xs text-forest-200 italic p-1">無來源網址</p>
+        </div>
         <input
+          v-else
           v-model="formData.url"
           type="url"
           placeholder="https://... (來源貼文或網頁)"
@@ -239,7 +297,20 @@ const handleSave = () => {
         <label class="text-xs font-bold text-forest-300 uppercase"
           >地點連結 (Google Maps)</label
         >
+        <div v-if="isReadOnly" class="group relative overflow-hidden">
+          <a
+            v-if="formData.mapUrl"
+            :href="formData.mapUrl"
+            target="_blank"
+            class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-forest-500 font-mono truncate pr-10"
+          >
+            {{ formData.mapUrl }}
+            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-forest-500 transition-colors" />
+          </a>
+          <p v-else class="text-xs text-forest-200 italic p-1">未設定地點網址</p>
+        </div>
         <input
+          v-else
           v-model="formData.mapUrl"
           type="url"
           placeholder="https://maps.app.goo.gl/..."
@@ -251,7 +322,20 @@ const handleSave = () => {
         <label class="text-xs font-bold text-forest-300 uppercase"
           >官網 / 訂餐連結 (可選)</label
         >
+        <div v-if="isReadOnly" class="group relative overflow-hidden">
+          <a
+            v-if="formData.websiteUrl"
+            :href="formData.websiteUrl"
+            target="_blank"
+            class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-honey-orange font-mono truncate pr-10"
+          >
+            {{ formData.websiteUrl }}
+            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-honey-orange transition-colors" />
+          </a>
+          <p v-else class="text-xs text-forest-200 italic p-1">未設定官網網址</p>
+        </div>
         <input
+          v-else
           v-model="formData.websiteUrl"
           type="url"
           placeholder="https://tabelog.com/..."
@@ -261,7 +345,10 @@ const handleSave = () => {
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase">分類</label>
-        <div class="relative">
+        <div v-if="isReadOnly" class="p-1 text-sm font-bold text-forest-600">
+          <span class="badge-forest">{{ formData.category }}</span>
+        </div>
+        <div v-else class="relative">
           <select
             v-model="formData.category"
             class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm shadow-sm appearance-none"
@@ -273,26 +360,18 @@ const handleSave = () => {
           <div
             class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-forest-300"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <ChevronDown :size="16" />
           </div>
         </div>
       </div>
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase">備註</label>
+        <div v-if="isReadOnly" class="p-3 rounded-xl bg-cream-light border border-forest-50 text-sm text-forest-700 whitespace-pre-wrap min-h-[4rem]">
+          {{ formData.note || '無備註內容' }}
+        </div>
         <textarea
+          v-else
           v-model="formData.note"
           rows="3"
           placeholder="補充心得或注意事項..."
@@ -302,9 +381,14 @@ const handleSave = () => {
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase"
-          >預覽圖片網址 (可選)</label
+          >預覽圖片 (可選)</label
         >
+        <div v-if="isReadOnly">
+          <img v-if="formData.imageUrl" :src="formData.imageUrl" class="w-full h-40 object-cover rounded-2xl border border-forest-50 shadow-soft-sm" alt="Preview" />
+          <p v-else class="text-xs text-forest-200 italic p-1">未上傳預覽圖片</p>
+        </div>
         <input
+          v-else
           v-model="formData.imageUrl"
           type="url"
           placeholder="https://... (留空則不顯示)"
@@ -316,6 +400,7 @@ const handleSave = () => {
     <!-- Action Buttons -->
     <div class="pt-4 flex flex-col gap-3">
       <button
+        v-if="!isReadOnly"
         @click="handleSave"
         class="w-full py-4 rounded-2xl bg-forest-400 text-white font-bold shadow-soft-lg hover:bg-forest-500 active:scale-95 transition-all"
       >
