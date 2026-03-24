@@ -45,7 +45,7 @@ export interface ActivityUI {
   };
   category: "sight" | "food" | "transport" | "hotel";
   note?: string;
-  imageUrl?: string;
+  images?: Array<{ url: string; path: string }>;
   options?: ActivityOptionUI[];
   isLast?: boolean;
 }

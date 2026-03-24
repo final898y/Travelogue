@@ -15,9 +15,13 @@ import {
   Pencil,
   BookOpen,
   ExternalLink,
+  ChevronDown,
+  Palette,
 } from "../../assets/icons";
 import { useUIStore } from "../../stores/uiStore";
+import { useAuthStore } from "../../stores/authStore";
 import type { Collection, CollectionSource } from "../../types/trip";
+import ImageUploader from "../ui/ImageUploader.vue";
 
 const props = defineProps<{
   initialData: Partial<Collection>;
@@ -26,6 +30,7 @@ const props = defineProps<{
 const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 
 const uiStore = useUIStore();
+const authStore = useAuthStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
 // 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
@@ -35,6 +40,7 @@ const tagInput = ref("");
 
 // 建立局部狀態副本
 const formData = reactive<Partial<Collection>>({
+  id: props.initialData.id || crypto.randomUUID(), // 確保有 ID 用於圖片儲存路徑
   title: "",
   url: "",
   mapUrl: "",
@@ -42,7 +48,7 @@ const formData = reactive<Partial<Collection>>({
   source: "web",
   category: "未分類",
   note: "",
-  imageUrl: "",
+  images: [],
   tags: [],
   ...props.initialData,
 });
@@ -133,6 +139,7 @@ const handleSave = () => {
     return uiStore.showToast("請輸入有效的官網網址", "warning");
 
   const cleanData: Partial<Collection> = {
+    id: formData.id,
     title: formData.title,
     url: formData.url,
     mapUrl: formData.mapUrl,
@@ -140,14 +147,10 @@ const handleSave = () => {
     source: formData.source,
     category: formData.category,
     note: formData.note,
-    imageUrl: formData.imageUrl,
+    images: formData.images || [],
     tags: formData.tags || [],
   };
 
-  // Conditionally add id if it exists (meaning it's an edit operation)
-  if (formData.id) {
-    cleanData.id = formData.id;
-  }
   emit("save", cleanData);
 };
 </script>
@@ -181,7 +184,10 @@ const handleSave = () => {
       <label class="text-xs font-bold text-forest-300 uppercase tracking-wider"
         >來源類型</label
       >
-      <div v-if="isReadOnly" class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-soft-sm border border-forest-50 w-fit">
+      <div
+        v-if="isReadOnly"
+        class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-soft-sm border border-forest-50 w-fit"
+      >
         <div class="text-forest-400">
           <Globe v-if="formData.source === 'web'" :size="20" />
           <AtSign v-if="formData.source === 'threads'" :size="20" />
@@ -189,8 +195,8 @@ const handleSave = () => {
           <Youtube v-if="formData.source === 'youtube'" :size="20" />
           <MoreHorizontal v-if="formData.source === 'other'" :size="20" />
         </div>
-        <span class="text-sm font-bold text-forest-600">{{ 
-          sources.find(s => s.value === formData.source)?.label || '其他'
+        <span class="text-sm font-bold text-forest-600">{{
+          sources.find((s) => s.value === formData.source)?.label || "其他"
         }}</span>
       </div>
       <div v-else class="grid grid-cols-5 gap-2">
@@ -245,11 +251,20 @@ const handleSave = () => {
             class="tag-chip flex items-center gap-1 px-3 py-1 bg-forest-50 text-forest-500 rounded-full text-xs font-bold"
           >
             #{{ tag }}
-            <button v-if="!isReadOnly" @click="removeTag(index)" class="hover:text-red-400">
+            <button
+              v-if="!isReadOnly"
+              @click="removeTag(index)"
+              class="hover:text-red-400"
+            >
               <X :size="12" />
             </button>
           </span>
-          <p v-if="isReadOnly && (!formData.tags || formData.tags.length === 0)" class="text-xs text-forest-200 italic">無標籤</p>
+          <p
+            v-if="isReadOnly && (!formData.tags || formData.tags.length === 0)"
+            class="text-xs text-forest-200 italic"
+          >
+            無標籤
+          </p>
         </div>
         <div v-if="!isReadOnly" class="relative">
           <input
@@ -280,7 +295,10 @@ const handleSave = () => {
             class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-sky-blue font-mono truncate pr-10"
           >
             {{ formData.url }}
-            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-sky-blue transition-colors" />
+            <ExternalLink
+              :size="14"
+              class="absolute right-3 text-forest-300 group-hover:text-sky-blue transition-colors"
+            />
           </a>
           <p v-else class="text-xs text-forest-200 italic p-1">無來源網址</p>
         </div>
@@ -305,9 +323,14 @@ const handleSave = () => {
             class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-forest-500 font-mono truncate pr-10"
           >
             {{ formData.mapUrl }}
-            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-forest-500 transition-colors" />
+            <ExternalLink
+              :size="14"
+              class="absolute right-3 text-forest-300 group-hover:text-forest-500 transition-colors"
+            />
           </a>
-          <p v-else class="text-xs text-forest-200 italic p-1">未設定地點網址</p>
+          <p v-else class="text-xs text-forest-200 italic p-1">
+            未設定地點網址
+          </p>
         </div>
         <input
           v-else
@@ -330,9 +353,14 @@ const handleSave = () => {
             class="flex items-center justify-between p-3 rounded-xl bg-white border border-forest-50 shadow-soft-sm hover:shadow-soft transition-all text-sm text-honey-orange font-mono truncate pr-10"
           >
             {{ formData.websiteUrl }}
-            <ExternalLink :size="14" class="absolute right-3 text-forest-300 group-hover:text-honey-orange transition-colors" />
+            <ExternalLink
+              :size="14"
+              class="absolute right-3 text-forest-300 group-hover:text-honey-orange transition-colors"
+            />
           </a>
-          <p v-else class="text-xs text-forest-200 italic p-1">未設定官網網址</p>
+          <p v-else class="text-xs text-forest-200 italic p-1">
+            未設定官網網址
+          </p>
         </div>
         <input
           v-else
@@ -367,8 +395,11 @@ const handleSave = () => {
 
       <div class="space-y-2">
         <label class="text-xs font-bold text-forest-300 uppercase">備註</label>
-        <div v-if="isReadOnly" class="p-3 rounded-xl bg-cream-light border border-forest-50 text-sm text-forest-700 whitespace-pre-wrap min-h-[4rem]">
-          {{ formData.note || '無備註內容' }}
+        <div
+          v-if="isReadOnly"
+          class="p-3 rounded-xl bg-cream-light border border-forest-50 text-sm text-forest-700 whitespace-pre-wrap min-h-[4rem]"
+        >
+          {{ formData.note || "無備註內容" }}
         </div>
         <textarea
           v-else
@@ -379,20 +410,18 @@ const handleSave = () => {
         ></textarea>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-xs font-bold text-forest-300 uppercase"
-          >預覽圖片 (可選)</label
+      <div class="space-y-3">
+        <label
+          class="text-xs font-bold text-forest-300 uppercase tracking-wider flex items-center gap-2"
         >
-        <div v-if="isReadOnly">
-          <img v-if="formData.imageUrl" :src="formData.imageUrl" class="w-full h-40 object-cover rounded-2xl border border-forest-50 shadow-soft-sm" alt="Preview" />
-          <p v-else class="text-xs text-forest-200 italic p-1">未上傳預覽圖片</p>
-        </div>
-        <input
-          v-else
-          v-model="formData.imageUrl"
-          type="url"
-          placeholder="https://... (留空則不顯示)"
-          class="w-full p-3 rounded-xl bg-white border border-forest-50 focus:border-forest-200 outline-none text-sm font-mono shadow-sm"
+          <Palette :size="14" />
+          照片記錄
+        </label>
+        <ImageUploader
+          v-model:images="formData.images"
+          :user-id="authStore.user?.uid || ''"
+          :document-id="formData.id || 'temp'"
+          :is-read-only="isReadOnly"
         />
       </div>
     </div>

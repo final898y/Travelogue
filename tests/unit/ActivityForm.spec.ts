@@ -18,6 +18,16 @@ vi.mock("../../src/assets/icons", () => ({
   Pencil: { template: "<!-- Pencil -->" },
   BookOpen: { template: "<!-- BookOpen -->" },
   ExternalLink: { template: "<!-- ExternalLink -->" },
+  Palette: { template: "<!-- Palette -->" },
+}));
+
+// Mock ImageUploader
+vi.mock("../../src/components/ui/ImageUploader.vue", () => ({
+  default: {
+    name: "ImageUploader",
+    template: "<div class='mock-image-uploader' />",
+    props: ["images", "userId", "documentId", "isReadOnly"],
+  },
 }));
 
 describe("ActivityForm.vue", () => {
@@ -216,10 +226,70 @@ describe("ActivityForm.vue", () => {
 
       // 檢查是否切換到編輯模式
       expect(wrapper.find("input[type='time']").exists()).toBe(true);
-      expect(wrapper.find("button[aria-label*='新增方案']").exists()).toBe(false); // Label doesn't exist, check by text
       expect(wrapper.find("button.text-forest-400").text()).toContain(
         "新增方案",
       );
+    });
+
+    it("編輯模式下應能切換地點資訊類型", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: {} },
+      });
+
+      // 預設為 '名稱' (name)
+      expect(wrapper.find("input[placeholder='例如：東京鐵塔']").exists()).toBe(
+        true,
+      );
+
+      const locationButtons = wrapper.findAll(".bg-forest-50.p-0\\.5 button");
+
+      // 切換到 '地址' (address)
+      await locationButtons[1].trigger("click");
+      expect(wrapper.find("input[placeholder='請輸入完整地址']").exists()).toBe(
+        true,
+      );
+
+      // 切換到 '座標' (coordinates)
+      await locationButtons[2].trigger("click");
+      expect(wrapper.find("input[placeholder='緯度 (Lat)']").exists()).toBe(
+        true,
+      );
+      expect(wrapper.find("input[placeholder='經度 (Lng)']").exists()).toBe(
+        true,
+      );
+
+      // 切換到 '連結' (link)
+      await locationButtons[3].trigger("click");
+      expect(
+        wrapper
+          .find("input[placeholder='貼上 Google Maps 或其他地圖連結']")
+          .exists(),
+      ).toBe(true);
+    });
+
+    it("應正確處理座標輸入並儲存", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: {} },
+      });
+
+      await wrapper
+        .find("input[placeholder='例如：東京鐵塔']")
+        .setValue("座標測試");
+
+      const locationButtons = wrapper.findAll(".bg-forest-50.p-0\\.5 button");
+      await locationButtons[2].trigger("click"); // 切換到座標
+
+      const latInput = wrapper.find("input[placeholder='緯度 (Lat)']");
+      const lngInput = wrapper.find("input[placeholder='經度 (Lng)']");
+
+      await latInput.setValue(35.6895);
+      await lngInput.setValue(139.6917);
+
+      await wrapper.find("button.bg-forest-400").trigger("click");
+
+      expect(wrapper.emitted("save")).toBeTruthy();
+      const savedData = wrapper.emitted("save")![0][0] as any;
+      expect(savedData.coordinates).toEqual({ lat: 35.6895, lng: 139.6917 });
     });
 
     it("閱覽模式下，備選方案應為唯讀", () => {
@@ -233,15 +303,21 @@ describe("ActivityForm.vue", () => {
       });
 
       // 應顯示備選方案的文字，而非輸入框
-      expect(wrapper.find(".text-xs.font-bold.text-forest-700").text()).toBe("Option 1");
+      expect(wrapper.find(".text-xs.font-bold.text-forest-700").text()).toBe(
+        "Option 1",
+      );
       // [FIX]: 使用更精確的選擇器來定位 subtitle
-      expect(wrapper.find(".p-4 .space-y-2 .text-\\[10px\\]").text()).toBe("Sub 1");
+      expect(wrapper.find(".p-4 .space-y-2 .text-\\[10px\\]").text()).toBe(
+        "Sub 1",
+      );
       expect(wrapper.find("input[placeholder*='方案標題']").exists()).toBe(
         false,
       );
 
       // 新增方案按鈕不該存在
-      const addBtn = wrapper.findAll("button").find(b => b.text().includes("新增方案"));
+      const addBtn = wrapper
+        .findAll("button")
+        .find((b) => b.text().includes("新增方案"));
       expect(addBtn).toBeFalsy();
     });
   });

@@ -16,6 +16,16 @@ vi.mock("../../src/assets/icons", () => ({
   BookOpen: { template: "<!-- BookOpen -->" },
   ExternalLink: { template: "<!-- ExternalLink -->" },
   ChevronDown: { template: "<!-- ChevronDown -->" },
+  Palette: { template: "<!-- Palette -->" },
+}));
+
+// Mock ImageUploader
+vi.mock("../../src/components/ui/ImageUploader.vue", () => ({
+  default: {
+    name: "ImageUploader",
+    template: "<div class='mock-image-uploader' />",
+    props: ["images", "userId", "documentId", "isReadOnly"],
+  },
 }));
 
 describe("CollectionForm.vue", () => {
@@ -161,6 +171,46 @@ describe("CollectionForm.vue", () => {
       "請輸入有效的來源網址",
       "warning",
     );
+
+    // Case 4: 無效的地點網址
+    await urlInputs[0].setValue("https://valid.com");
+    await urlInputs[1].setValue("invalid-map-url");
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "請輸入有效的地點網址",
+      "warning",
+    );
+
+    // Case 5: 無效的官網網址
+    await urlInputs[1].setValue("https://valid-map.com");
+    await urlInputs[2].setValue("invalid-website-url");
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "請輸入有效的官網網址",
+      "warning",
+    );
+  });
+
+  it("應能正確切換所有來源類型", async () => {
+    const wrapper = mountWithPinia({
+      props: { initialData: {} },
+    });
+
+    const sourceButtons = wrapper.findAll(".grid-cols-5 button");
+    const sources = ["web", "threads", "instagram", "youtube", "other"];
+
+    for (let i = 0; i < sources.length; i++) {
+      await sourceButtons[i].trigger("click");
+      // 這裡直接透過觸發儲存來檢查 source 是否正確更新
+      await wrapper.find("input[type='text']").setValue("來源測試");
+      await wrapper
+        .findAll("input[type='url']")[0]
+        .setValue("https://test.com");
+      await wrapper.find("button.bg-forest-400").trigger("click");
+
+      const lastSave = wrapper.emitted("save")?.slice(-1)[0][0] as any;
+      expect(lastSave.source).toBe(sources[i]);
+    }
   });
 
   it("資料正確且網址有效時應觸發 save", async () => {
@@ -218,9 +268,13 @@ describe("CollectionForm.vue", () => {
       });
 
       const links = wrapper.findAll("a");
-      const link1 = links.find((l) => l.attributes("href") === "http://example.com");
-      const link2 = links.find((l) => l.attributes("href") === "http://maps.google.com");
-      
+      const link1 = links.find(
+        (l) => l.attributes("href") === "http://example.com",
+      );
+      const link2 = links.find(
+        (l) => l.attributes("href") === "http://maps.google.com",
+      );
+
       expect(link1?.exists()).toBe(true);
       expect(link1?.attributes("target")).toBe("_blank");
 

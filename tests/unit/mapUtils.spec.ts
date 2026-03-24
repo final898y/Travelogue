@@ -74,7 +74,9 @@ describe("getGoogleMapsUrl", () => {
         subtitle: "",
         placeId: "EMPTY_SUBTITLE_PLACE_ID",
       });
-      expect(url).toBe(`${BASE_URL}&query=&query_place_id=EMPTY_SUBTITLE_PLACE_ID`);
+      expect(url).toBe(
+        `${BASE_URL}&query=&query_place_id=EMPTY_SUBTITLE_PLACE_ID`,
+      );
     });
 
     it("當 `subtitle` 為空字串且無其他資訊時，應產生一個空的搜尋", () => {
@@ -122,7 +124,9 @@ describe("getGoogleMapsUrl", () => {
         subtitle: "名稱含 & 和 ?",
         address: "地址含 / 和 空格",
       });
-      const expectedQuery = encodeURIComponent("名稱含 & 和 ? 地址含 / 和 空格");
+      const expectedQuery = encodeURIComponent(
+        "名稱含 & 和 ? 地址含 / 和 空格",
+      );
       expect(url).toBe(`${BASE_URL}&query=${expectedQuery}`);
     });
   });

@@ -80,6 +80,15 @@ export const ActivityCategorySchema = z.enum([
 export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
 
 /**
+ * 圖片資料 Schema
+ */
+export const ImageSchema = z.object({
+  url: z.string().url("圖片 URL 格式不正確"),
+  path: z.string().min(1, "圖片儲存路徑不可為空"),
+});
+export type Image = z.infer<typeof ImageSchema>;
+
+/**
  * 單項活動 Schema
  */
 export const ActivitySchema = z.object({
@@ -94,7 +103,7 @@ export const ActivitySchema = z.object({
   mapUrl: z.url().or(z.string().optional()),
   category: ActivityCategorySchema,
   note: z.string().optional(),
-  imageUrl: z.url().or(z.string().optional()),
+  images: z.array(ImageSchema).max(10, "最多上傳 10 張圖片").optional(),
   options: z.array(ActivityOptionSchema).optional(),
   isLast: z.boolean().optional(),
 });
@@ -220,7 +229,7 @@ export const CollectionSchema = z.object({
   websiteUrl: z.url("請輸入有效的官網連結").or(z.string().optional()),
   source: CollectionSourceSchema,
   note: z.string().optional(),
-  imageUrl: z.url().or(z.string().optional()),
+  images: z.array(ImageSchema).max(10, "最多上傳 10 張圖片").optional(),
   category: z.string().optional(),
   tags: z.array(z.string()).default([]),
   createdAt: FirestoreTimestampSchema,

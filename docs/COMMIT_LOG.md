@@ -6,6 +6,20 @@
 
 ## 📅 提交歷史
 
+## [2026-03-23] feat(storage): 實作圖片上傳、Web Worker 壓縮與延遲刪除 (v2.6.0)
+
+- Hash: `TBD`
+- 變更範圍: `storageService.ts`, `ImageUploader.vue`, `ActivityForm.vue`, `CollectionForm.vue`, `planStore.ts`, `collectionStore.ts`
+- 詳細內容:
+  - **核心功能**: 實作完整的圖片管理系統。支援在 `Activity` 與 `Collection` 中上傳多張圖片（上限 10 張）。
+  - **圖片壓縮**: 整合 `browser-image-compression` 並啟用 **Web Worker** 模式，在客戶端將圖片壓縮至 1MB 以下，確保 UI 流暢且節省存儲空間。
+  - **資料一致性**: 實作「延遲刪除 (Delayed Deletion)」策略。只有在表單正式儲存至 Firestore 後，才清理被移除或替換的實體圖片檔案，避免因取消編輯導致檔案遺失。
+  - **UI/UX 優化**:
+    - 建立 `ImageUploader.vue` 組件，支援拖曳上傳、即時進度顯示與預覽網格。
+    - 更新 `TimelineItem` 與 `CollectionView` 卡片，自動顯示首張圖片縮圖。
+  - **安全性**: 配合實作更新 `storage.rules`，確保使用者僅能管理其名下的圖片。
+  - **工程品質**: 同步更新單元測試，達成 100% 測試通過率並修復 Lint 警告。
+
 ## [2026-03-22] feat(ui): 實作表單閱覽/編輯模式與強化測試 (v2.5.0)
 
 - Hash: `TBD`

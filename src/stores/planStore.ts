@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuthStore } from "./authStore";
+import { deleteImage } from "../services/storageService";
 import { z } from "zod";
 import { DailyPlanSchema, type DailyPlan, type Activity } from "../types/trip";
 
@@ -116,6 +117,9 @@ export const usePlanStore = defineStore("plan", () => {
       ? { ...activity }
       : { ...activity, id: crypto.randomUUID() };
 
+    // 取得舊資料以供後續比對圖片
+    const oldActivity = activities.find((a) => a.id === activityToSave.id);
+
     const idx = activities.findIndex((a) => a.id === activityToSave.id);
     if (idx !== -1) {
       activities[idx] = activityToSave as Activity;
@@ -128,6 +132,23 @@ export const usePlanStore = defineStore("plan", () => {
     } else {
       const plansRef = collection(db, "trips", tripId, "plans");
       await addDoc(plansRef, { tripId, date, activities });
+    }
+
+    // 延遲刪除邏輯：成功存檔後，比對並刪除已移除的圖片
+    if (oldActivity && oldActivity.images) {
+      const oldPaths = oldActivity.images.map((img) => img.path);
+      const newPaths = new Set(
+        (activityToSave.images || []).map((img) => img.path),
+      );
+
+      const pathsToDelete = oldPaths.filter((path) => !newPaths.has(path));
+
+      // 非同步執行刪除，不阻塞主流程
+      pathsToDelete.forEach((path) => {
+        deleteImage(path).catch((err) =>
+          console.error("延遲刪除圖片失敗:", err),
+        );
+      });
     }
   };
 
@@ -144,6 +165,9 @@ export const usePlanStore = defineStore("plan", () => {
     const { id: docId, plan } = await getOrCreatePlanDoc(tripId, date);
     if (!docId) return;
 
+    // 取得要被刪除的活動以供清理圖片
+    const activityToDelete = plan.activities.find((a) => a.id === activityId);
+
     const activities = plan.activities.filter((a) => a.id !== activityId);
 
     if (activities.length === 0) {
@@ -152,6 +176,15 @@ export const usePlanStore = defineStore("plan", () => {
       await deleteDoc(doc(db, "trips", tripId, "plans", docId));
     } else {
       await updateDoc(doc(db, "trips", tripId, "plans", docId), { activities });
+    }
+
+    // 清理被刪除活動的所有圖片
+    if (activityToDelete && activityToDelete.images) {
+      activityToDelete.images.forEach((img) => {
+        deleteImage(img.path).catch((err) =>
+          console.error("清理活動圖片失敗:", err),
+        );
+      });
     }
   };
 

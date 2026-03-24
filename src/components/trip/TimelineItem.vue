@@ -108,6 +108,13 @@ const openMap = () => {
             </p>
           </div>
 
+          <!-- Thumbnail -->
+          <div
+            v-if="images && images.length > 0"
+            class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-forest-50"
+          >
+            <img :src="images[0]?.url" class="w-full h-full object-cover" />
+          </div>
           <!-- Action Buttons -->
           <div class="flex items-center gap-1 flex-shrink-0">
             <button

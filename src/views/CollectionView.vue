@@ -292,17 +292,31 @@ const handleDeleteCollection = async () => {
               </a>
             </div>
           </div>
-          <h3
-            class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-600 transition-colors"
-          >
-            {{ item.title }}
-          </h3>
-          <p
-            v-if="item.note"
-            class="text-xs text-gray-500 line-clamp-2 mb-2 italic"
-          >
-            "{{ item.note }}"
-          </p>
+          <div class="flex gap-4 items-start">
+            <div class="flex-1 min-w-0">
+              <h3
+                class="font-bold text-forest-800 mb-1 leading-tight group-hover:text-forest-600 transition-colors"
+              >
+                {{ item.title }}
+              </h3>
+              <p
+                v-if="item.note"
+                class="text-xs text-gray-500 line-clamp-2 mb-2 italic"
+              >
+                "{{ item.note }}"
+              </p>
+            </div>
+            <!-- Thumbnail -->
+            <div
+              v-if="item.images && item.images.length > 0"
+              class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-forest-50"
+            >
+              <img
+                :src="item.images[0]?.url"
+                class="w-full h-full object-cover"
+              />
+            </div>
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <span
               class="px-2 py-0.5 bg-forest-50 text-forest-400 rounded text-[10px] font-bold"

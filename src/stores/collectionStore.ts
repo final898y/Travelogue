@@ -5,6 +5,7 @@ import {
   query,
   doc,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   orderBy,
@@ -13,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { useAuthStore } from "./authStore";
+import { deleteImage } from "../services/storageService";
 import type { Collection } from "../types/trip";
 import { CollectionSchema } from "../types/trip";
 import { z } from "zod";
@@ -113,20 +115,24 @@ export const useCollectionStore = defineStore("collection", () => {
   /**
    * 新增收集項目
    */
-  const addCollection = async (
-    tripId: string,
-    item: Omit<Collection, "id" | "createdAt">,
-  ) => {
+  const addCollection = async (tripId: string, item: Partial<Collection>) => {
     if (!authStore.user) throw new Error("User not logged in");
     const collectionsRef = collection(db, "trips", tripId, "collections");
 
-    // 明確排除 id，防止空字串或錯誤 ID 被當作欄位存入
-    const { id: _id, ...cleanItem } = item as Partial<Collection>;
-
-    return await addDoc(collectionsRef, {
+    const { id, ...cleanItem } = item;
+    const dataToSave = {
       ...cleanItem,
       createdAt: Timestamp.now(),
-    });
+    };
+
+    if (id) {
+      // 如果有預產生的 ID (為了圖片路徑一致性)，使用 setDoc
+      await setDoc(doc(db, "trips", tripId, "collections", id), dataToSave);
+      return id;
+    } else {
+      const docRef = await addDoc(collectionsRef, dataToSave);
+      return docRef.id;
+    }
   };
 
   /**
@@ -140,9 +146,25 @@ export const useCollectionStore = defineStore("collection", () => {
     if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "collections", collectionId);
 
+    // 取得舊資料以供圖片比對
+    const oldItem = collections.value.find((c) => c.id === collectionId);
+
     // 過濾掉不應手動更新的內部欄位
     const { id: _id, createdAt: _createdAt, ...dataToUpdate } = item;
-    return await updateDoc(docRef, dataToUpdate);
+    await updateDoc(docRef, dataToUpdate);
+
+    // 延遲刪除邏輯
+    if (oldItem && oldItem.images) {
+      const oldPaths = oldItem.images.map((img) => img.path);
+      const newPaths = new Set((item.images || []).map((img) => img.path));
+      const pathsToDelete = oldPaths.filter((path) => !newPaths.has(path));
+
+      pathsToDelete.forEach((path) => {
+        deleteImage(path).catch((err) =>
+          console.error("延遲刪除收集圖片失敗:", err),
+        );
+      });
+    }
   };
 
   /**
@@ -151,7 +173,19 @@ export const useCollectionStore = defineStore("collection", () => {
   const deleteCollection = async (tripId: string, collectionId: string) => {
     if (!authStore.user) throw new Error("User not logged in");
     const docRef = doc(db, "trips", tripId, "collections", collectionId);
-    return await deleteDoc(docRef);
+
+    const itemToDelete = collections.value.find((c) => c.id === collectionId);
+
+    await deleteDoc(docRef);
+
+    // 清理所有圖片
+    if (itemToDelete && itemToDelete.images) {
+      itemToDelete.images.forEach((img) => {
+        deleteImage(img.path).catch((err) =>
+          console.error("清理收集圖片失敗:", err),
+        );
+      });
+    }
   };
 
   return {
