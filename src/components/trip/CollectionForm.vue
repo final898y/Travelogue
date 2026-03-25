@@ -33,6 +33,20 @@ const uiStore = useUIStore();
 const authStore = useAuthStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
+// 統一初始資料生成邏輯
+const getInitialData = (data: Partial<Collection>) => ({
+  id: data.id || crypto.randomUUID(),
+  title: data.title || "",
+  url: data.url || "",
+  mapUrl: data.mapUrl || "",
+  websiteUrl: data.websiteUrl || "",
+  source: data.source || "web",
+  category: data.category || "未分類",
+  note: data.note || "",
+  images: data.images || [],
+  tags: data.tags || [],
+});
+
 // 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
 const isReadOnly = ref(!!props.initialData.id);
 const isDirty = ref(false);
@@ -40,38 +54,15 @@ const isDirty = ref(false);
 const tagInput = ref("");
 
 // 建立局部狀態副本
-const formData = reactive<Partial<Collection>>({
-  id: props.initialData.id || crypto.randomUUID(), // 確保有 ID 用於圖片儲存路徑
-  title: "",
-  url: "",
-  mapUrl: "",
-  websiteUrl: "",
-  source: "web",
-  category: "未分類",
-  note: "",
-  images: [],
-  tags: [],
-  ...props.initialData,
-});
+const formData = reactive<Partial<Collection>>(getInitialData(props.initialData));
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
   formData,
   (newVal) => {
+    // 使用相同的初始基準進行比較
     isDirty.value =
-      JSON.stringify(newVal) !==
-      JSON.stringify({
-        title: "",
-        url: "",
-        mapUrl: "",
-        websiteUrl: "",
-        source: "web",
-        category: "未分類",
-        note: "",
-        imageUrl: "",
-        tags: [],
-        ...props.initialData,
-      });
+      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty.value);
   },
   { deep: true },
@@ -88,18 +79,9 @@ const toggleEditMode = async () => {
     if (!confirmed) return;
 
     // 重置資料
-    Object.assign(formData, JSON.parse(JSON.stringify({
-      title: "",
-      url: "",
-      mapUrl: "",
-      websiteUrl: "",
-      source: "web",
-      category: "未分類",
-      note: "",
-      imageUrl: "",
-      tags: [],
-      ...props.initialData,
-    })));
+    Object.assign(formData, getInitialData(props.initialData));
+    isDirty.value = false;
+    emit("update:dirty", false);
   }
   isReadOnly.value = !isReadOnly.value;
 };

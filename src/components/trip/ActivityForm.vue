@@ -33,6 +33,22 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 const uiStore = useUIStore();
 const authStore = useAuthStore();
 
+// 統一初始資料生成邏輯
+const getInitialData = (data: Partial<Activity>) => ({
+  id: data.id || crypto.randomUUID(),
+  time: data.time || "09:00",
+  title: data.title || "",
+  subtitle: data.subtitle || "",
+  location: data.location || "",
+  category: data.category || "sight",
+  address: data.address || "",
+  mapUrl: data.mapUrl || "",
+  coordinates: data.coordinates || { lat: 0, lng: 0 },
+  note: data.note || "",
+  images: data.images || [],
+  options: data.options || [],
+});
+
 // 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
 const isReadOnly = ref(!!props.initialData.id);
 const isDirty = ref(false);
@@ -50,20 +66,7 @@ onMounted(() => {
 });
 
 // 建立局部狀態副本以供編輯
-const formData = reactive<Partial<Activity>>({
-  id: props.initialData.id || crypto.randomUUID(), // 確保有 ID 用於圖片儲存路徑
-  time: "09:00",
-  title: "",
-  subtitle: "",
-  location: "",
-  category: "sight",
-  address: "",
-  mapUrl: "",
-  coordinates: { lat: 0, lng: 0 },
-  note: "",
-  images: [],
-  ...props.initialData,
-});
+const formData = reactive<Partial<Activity>>(getInitialData(props.initialData));
 
 // 從座標生成 Google Maps 連結
 const coordinatesLink = computed(() => {
@@ -84,21 +87,9 @@ const locationOptions = [
 watch(
   formData,
   (newVal) => {
-    // 簡單比較，如果與初始值不同則視為 dirty
+    // 使用相同的初始基準進行比較
     isDirty.value =
-      JSON.stringify(newVal) !==
-      JSON.stringify({
-        time: "09:00",
-        title: "",
-        subtitle: "",
-        location: "",
-        category: "sight",
-        address: "",
-        mapUrl: "",
-        coordinates: { lat: 0, lng: 0 },
-        note: "",
-        ...props.initialData,
-      });
+      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty.value);
   },
   { deep: true },
@@ -115,18 +106,9 @@ const toggleEditMode = async () => {
     if (!confirmed) return;
 
     // 重置資料
-    Object.assign(formData, JSON.parse(JSON.stringify({
-      time: "09:00",
-      title: "",
-      subtitle: "",
-      location: "",
-      category: "sight",
-      address: "",
-      mapUrl: "",
-      coordinates: { lat: 0, lng: 0 },
-      note: "",
-      ...props.initialData,
-    })));
+    Object.assign(formData, getInitialData(props.initialData));
+    isDirty.value = false;
+    emit("update:dirty", false);
   }
   isReadOnly.value = !isReadOnly.value;
 };

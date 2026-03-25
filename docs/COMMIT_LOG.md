@@ -6,6 +6,16 @@
 
 ## 📅 提交歷史
 
+## [2026-03-25] fix(ui): 修正「結束編輯」後 isDirty 狀態未即時重置與欄位比對不一致問題 (v2.6.2)
+
+- Hash: `TBD`
+- 變更範圍: `ActivityForm.vue`, `CollectionForm.vue`
+- 詳細內容:
+  - **Bug 修復**: 修正了在 `ActivityForm` 與 `CollectionForm` 中選擇捨棄變更並結束編輯後，`isDirty` 狀態未立即歸零，或因基準物件欄位遺失（如 `id`）導致 `watch` 立即將其設回 `true` 的問題。
+  - **架構重構**: 引入 `getInitialData` 統一資料生成邏輯，確保「初始化」、「監聽比較」與「重置資料」使用完全相同的欄位結構與預設值。
+  - **交互強化**: 確保在 `toggleEditMode` 成功重置資料後，明確發送 `update:dirty` 事件，徹底解決外層 `BaseBottomSheet` 重複提示的問題。
+  - **版本同步**: 更新 `package.json`, `README.md`, `SettingView.vue` 與開發日誌至 v2.6.2。
+
 ## [2026-03-25] feat(ui): 為表單「結束編輯」新增未儲存變更確認對話框 (v2.6.1)
 
 - Hash: `TBD`
