@@ -303,6 +303,29 @@ describe("CollectionForm.vue", () => {
       expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(false);
     });
 
+    it("當有未儲存變更時，點擊結束編輯應顯示確認對話框", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123", title: "Original" } },
+      });
+      const uiStore = useUIStore();
+      // @ts-expect-error - mockResolvedValue is not in the type definition but injected by createTestingPinia
+      uiStore.showConfirm.mockResolvedValue(false);
+
+      // 切換為編輯模式
+      const toggleButton = wrapper.find("button.text-forest-400"); // '切換編輯' 按鈕
+      await toggleButton.trigger("click");
+
+      // 修改標題 (觸發 dirty)
+      await wrapper.find("input[placeholder*='拉麵']").setValue("Modified");
+
+      // 點擊結束編輯
+      await toggleButton.trigger("click");
+
+      expect(uiStore.showConfirm).toHaveBeenCalled();
+      // 因為模擬為 false，所以應保持在編輯模式
+      expect(wrapper.find("input[placeholder*='拉麵']").exists()).toBe(true);
+    });
+
     it("閱覽模式下不應顯示儲存按鈕, 但應顯示刪除按鈕", () => {
       const wrapper = mountWithPinia({
         props: { initialData: { id: "123" } },

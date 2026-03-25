@@ -6,6 +6,17 @@
 
 ## 📅 提交歷史
 
+## [2026-03-25] feat(ui): 為表單「結束編輯」新增未儲存變更確認對話框 (v2.6.1)
+
+- Hash: `TBD`
+- 變更範圍: `ActivityForm.vue`, `CollectionForm.vue`, `ActivityForm.spec.ts`, `CollectionForm.spec.ts`
+- 詳細內容:
+  - **交互優化**: 為 `ActivityForm` 與 `CollectionForm` 的閱覽/編輯模式切換按鈕新增安全性檢查。當使用者在編輯模式下有未儲存的變更並點擊「結束編輯」時，系統將彈出 `BaseConfirmDialog` 進行二次確認。
+  - **資料保護**: 若使用者確認結束編輯，表單資料將自動重置回初始狀態，防止髒資料殘留；若選擇繼續編輯，則保留當前輸入內容。
+  - **測試補強**: 在 `ActivityForm.spec.ts` 與 `CollectionForm.spec.ts` 中新增測試案例，模擬 `isDirty` 為 `true` 時的確認邏輯，確保對話框正確觸發且重置邏輯運作正常。
+  - **工程品質**: 將測試檔案中的 `@ts-ignore` 替換為更符合規範的 `@ts-expect-error`，並通過全域 `lint` 與 `build` 驗證。
+  - **版本同步**: 更新 `package.json`, `README.md`, `SettingView.vue` 與開發日誌至 v2.6.1。
+
 ## [2026-03-23] feat(storage): 實作圖片上傳、Web Worker 壓縮與延遲刪除 (v2.6.0)
 
 - Hash: `TBD`

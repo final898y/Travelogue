@@ -229,6 +229,33 @@ describe("ActivityForm.vue", () => {
       expect(wrapper.find("button.text-forest-400").text()).toContain(
         "新增方案",
       );
+
+      // 再次點擊切換回閱覽模式 (無變更時應直接切換)
+      await toggleButton.trigger("click");
+      expect(wrapper.find("input[type='time']").exists()).toBe(false);
+    });
+
+    it("當有未儲存變更時，點擊結束編輯應顯示確認對話框", async () => {
+      const wrapper = mountWithPinia({
+        props: { initialData: { id: "123", title: "Original" } },
+      });
+      const uiStore = useUIStore();
+      // @ts-expect-error - mockResolvedValue is not in the type definition but injected by createTestingPinia
+      uiStore.showConfirm.mockResolvedValue(false);
+
+      // 切換為編輯模式
+      const toggleButton = wrapper.find("button.text-forest-400");
+      await toggleButton.trigger("click");
+
+      // 修改標題 (觸發 dirty)
+      await wrapper.find("input[placeholder='例如：東京鐵塔']").setValue("Modified");
+
+      // 點擊結束編輯
+      await toggleButton.trigger("click");
+
+      expect(uiStore.showConfirm).toHaveBeenCalled();
+      // 因為模擬為 false，所以應保持在編輯模式
+      expect(wrapper.find("input[placeholder='例如：東京鐵塔']").exists()).toBe(true);
     });
 
     it("編輯模式下應能切換地點資訊類型", async () => {

@@ -35,6 +35,7 @@ const authStore = useAuthStore();
 
 // 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
 const isReadOnly = ref(!!props.initialData.id);
+const isDirty = ref(false);
 
 // 地點輸入類型
 type LocationType = "name" | "address" | "coordinates" | "link";
@@ -84,7 +85,7 @@ watch(
   formData,
   (newVal) => {
     // 簡單比較，如果與初始值不同則視為 dirty
-    const isDirty =
+    isDirty.value =
       JSON.stringify(newVal) !==
       JSON.stringify({
         time: "09:00",
@@ -98,10 +99,37 @@ watch(
         note: "",
         ...props.initialData,
       });
-    emit("update:dirty", isDirty);
+    emit("update:dirty", isDirty.value);
   },
   { deep: true },
 );
+
+const toggleEditMode = async () => {
+  if (!isReadOnly.value && isDirty.value) {
+    const confirmed = await uiStore.showConfirm({
+      title: "結束編輯？",
+      message: "您有未儲存的變更，確定要直接結束編輯嗎？變更內容將不會被儲存。",
+      okText: "確定結束",
+      cancelText: "繼續編輯",
+    });
+    if (!confirmed) return;
+
+    // 重置資料
+    Object.assign(formData, JSON.parse(JSON.stringify({
+      time: "09:00",
+      title: "",
+      subtitle: "",
+      location: "",
+      category: "sight",
+      address: "",
+      mapUrl: "",
+      coordinates: { lat: 0, lng: 0 },
+      note: "",
+      ...props.initialData,
+    })));
+  }
+  isReadOnly.value = !isReadOnly.value;
+};
 
 const isEditMode = computed(() => !!props.initialData.id);
 
@@ -136,7 +164,7 @@ const removeOption = (idx: number) => {
         {{ isReadOnly ? "閱覽內容" : "編輯活動" }}
       </h3>
       <button
-        @click="isReadOnly = !isReadOnly"
+        @click="toggleEditMode"
         v-if="isEditMode"
         class="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-all active:scale-95"
         :class="

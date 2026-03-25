@@ -35,6 +35,7 @@ const isEditMode = computed(() => !!props.initialData.id);
 
 // 閱覽/編輯 模式切換 (如果有 ID 則預設為閱覽模式)
 const isReadOnly = ref(!!props.initialData.id);
+const isDirty = ref(false);
 
 const tagInput = ref("");
 
@@ -57,7 +58,7 @@ const formData = reactive<Partial<Collection>>({
 watch(
   formData,
   (newVal) => {
-    const isDirty =
+    isDirty.value =
       JSON.stringify(newVal) !==
       JSON.stringify({
         title: "",
@@ -71,10 +72,37 @@ watch(
         tags: [],
         ...props.initialData,
       });
-    emit("update:dirty", isDirty);
+    emit("update:dirty", isDirty.value);
   },
   { deep: true },
 );
+
+const toggleEditMode = async () => {
+  if (!isReadOnly.value && isDirty.value) {
+    const confirmed = await uiStore.showConfirm({
+      title: "結束編輯？",
+      message: "您有未儲存的變更，確定要直接結束編輯嗎？變更內容將不會被儲存。",
+      okText: "確定結束",
+      cancelText: "繼續編輯",
+    });
+    if (!confirmed) return;
+
+    // 重置資料
+    Object.assign(formData, JSON.parse(JSON.stringify({
+      title: "",
+      url: "",
+      mapUrl: "",
+      websiteUrl: "",
+      source: "web",
+      category: "未分類",
+      note: "",
+      imageUrl: "",
+      tags: [],
+      ...props.initialData,
+    })));
+  }
+  isReadOnly.value = !isReadOnly.value;
+};
 
 // 新增標籤
 const addTag = () => {
@@ -164,7 +192,7 @@ const handleSave = () => {
         {{ isReadOnly ? "閱覽內容" : "編輯項目" }}
       </h3>
       <button
-        @click="isReadOnly = !isReadOnly"
+        @click="toggleEditMode"
         v-if="isEditMode"
         class="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 transition-all active:scale-95"
         :class="
