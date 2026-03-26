@@ -34,7 +34,9 @@ const getInitialData = (data: Partial<ChecklistItem>) => ({
 });
 
 // 建立局部狀態副本
-const formData = reactive<Partial<ChecklistItem>>(getInitialData(props.initialData));
+const formData = reactive<Partial<ChecklistItem>>(
+  getInitialData(props.initialData),
+);
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
@@ -42,7 +44,8 @@ watch(
   (newVal) => {
     // 使用相同的初始基準進行比較
     const isDirty =
-      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
+      JSON.stringify(newVal) !==
+      JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty);
   },
   { deep: true },

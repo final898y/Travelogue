@@ -3,9 +3,11 @@
  * TimelineItem Component
  * Represents a single activity on the plan.
  */
+import { ref } from "vue";
 import type { ActivityUI } from "../../types/trip-ui";
 import { getGoogleMapsUrl } from "../../utils/mapUtils";
 import ActivityOptionItem from "./ActivityOptionItem.vue";
+import BaseImageLightbox from "../ui/BaseImageLightbox.vue";
 import {
   Landmark,
   Utensils,
@@ -14,12 +16,14 @@ import {
   MapPin,
   Map,
   GripVertical,
+  ImageIcon,
 } from "../../assets/icons";
 
 const props = defineProps<ActivityUI>();
 
 const emit = defineEmits(["click-item"]);
 
+const isLightboxOpen = ref(false);
 const categoryStyles = {
   sight: { color: "bg-forest-400", textColor: "text-forest-700" },
   food: { color: "bg-earth-300", textColor: "text-earth-700" },
@@ -27,7 +31,8 @@ const categoryStyles = {
   hotel: { color: "bg-lavender", textColor: "text-purple-700" },
 };
 
-const openMap = () => {
+const openMap = (e: Event) => {
+  e.stopPropagation();
   const url = getGoogleMapsUrl({
     title: props.title,
     subtitle: props.subtitle || props.title,
@@ -36,6 +41,11 @@ const openMap = () => {
     coordinates: props.coordinates,
   });
   window.open(url, "_blank");
+};
+
+const handleImageClick = (e: Event) => {
+  e.stopPropagation();
+  isLightboxOpen.value = true;
 };
 </script>
 
@@ -108,13 +118,30 @@ const openMap = () => {
             </p>
           </div>
 
-          <!-- Thumbnail -->
+          <!-- Thumbnail with Enhanced Style -->
           <div
             v-if="images && images.length > 0"
-            class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-forest-50"
+            @click="handleImageClick"
+            class="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-soft-sm border border-forest-50 hover:scale-105 active:scale-95 transition-all duration-300 z-20 group/img"
           >
             <img :src="images[0]?.url" class="w-full h-full object-cover" />
+
+            <!-- Multi-image indicator -->
+            <div
+              v-if="images.length > 1"
+              class="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-white backdrop-blur-[1px] opacity-0 group-hover/img:opacity-100 transition-opacity"
+            >
+              <ImageIcon :size="12" class="mb-0.5" />
+              <span class="text-[9px] font-bold">+{{ images.length - 1 }}</span>
+            </div>
+
+            <!-- Overlay for single image hover -->
+            <div
+              v-else
+              class="absolute inset-0 bg-white/0 group-hover/img:bg-black/5 transition-colors"
+            ></div>
           </div>
+
           <!-- Action Buttons -->
           <div class="flex items-center gap-1 flex-shrink-0">
             <button
@@ -148,5 +175,13 @@ const openMap = () => {
         </div>
       </div>
     </div>
+
+    <!-- Lightbox for viewing full size -->
+    <BaseImageLightbox
+      v-if="images && images.length > 0"
+      :is-open="isLightboxOpen"
+      :images="images"
+      @close="isLightboxOpen = false"
+    />
   </div>
 </template>

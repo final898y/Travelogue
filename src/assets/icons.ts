@@ -64,4 +64,6 @@ export {
   RefreshCcw,
   RotateCcw,
   BookOpen,
+  Image as ImageIcon,
+  Maximize2,
 } from "lucide-vue-next";

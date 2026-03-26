@@ -6,6 +6,18 @@
 
 ## 📅 提交歷史
 
+## [2026-03-26] feat(ui): 實作全螢幕圖片瀏覽 (Lightbox) 與縮圖視覺美化 (v2.6.4)
+
+- Hash: `TBD`
+- 變更範圍: `BaseImageLightbox.vue`, `ImageUploader.vue`, `TimelineItem.vue`, `CollectionView.vue`, `icons.ts`, `BaseImageLightbox.spec.ts`
+- 詳細內容:
+  - **沉浸式體驗**: 實作 `BaseImageLightbox.vue` 全螢幕圖片預覽組件，支援單/多圖切換、循環、鍵盤操作與手機端手勢模擬。
+  - **視覺美學**: 
+    - 為 `TimelineItem` 與 `CollectionView` 縮圖加入懸停縮放、陰影與圓角優化。
+    - 針對多圖項目實作「視覺堆疊 (Stacking)」效果與「多圖張數指示器」，強化「靈感收集」的感官意象。
+  - **單元測試**: 新增 `BaseImageLightbox.spec.ts` 涵蓋 10 個核心測試案例，確保循環邏輯、鍵盤事件與邊界值處理穩定。
+  - **工程規範**: 修正圖示導出（`ImageIcon`, `Maximize2`），並通過 Test, Lint, Format, Build 全套驗證流程。
+
 ## [2026-03-26] fix(ui): 補強表單邊界值測試、修正 ExpenseForm 引用錯誤與 Storage Mock (v2.6.3)
 
 - Hash: `TBD`

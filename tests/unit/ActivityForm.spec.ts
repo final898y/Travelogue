@@ -248,14 +248,18 @@ describe("ActivityForm.vue", () => {
       await toggleButton.trigger("click");
 
       // 修改標題 (觸發 dirty)
-      await wrapper.find("input[placeholder='例如：東京鐵塔']").setValue("Modified");
+      await wrapper
+        .find("input[placeholder='例如：東京鐵塔']")
+        .setValue("Modified");
 
       // 點擊結束編輯
       await toggleButton.trigger("click");
 
       expect(uiStore.showConfirm).toHaveBeenCalled();
       // 因為模擬為 false，所以應保持在編輯模式
-      expect(wrapper.find("input[placeholder='例如：東京鐵塔']").exists()).toBe(true);
+      expect(wrapper.find("input[placeholder='例如：東京鐵塔']").exists()).toBe(
+        true,
+      );
     });
 
     it("編輯模式下應能切換地點資訊類型", async () => {

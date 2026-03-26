@@ -8,6 +8,7 @@ import { Upload, X, DownloadCloud, RefreshCcw } from "../../assets/icons";
 import { uploadImage } from "../../services/storageService";
 import { useUIStore } from "../../stores/uiStore";
 import type { Image } from "../../types/trip";
+import BaseImageLightbox from "./BaseImageLightbox.vue";
 
 interface Props {
   images?: Image[];
@@ -27,6 +28,15 @@ const emit = defineEmits(["update:images"]);
 
 const uiStore = useUIStore();
 const fileInput = ref<HTMLInputElement | null>(null);
+
+// Lightbox State
+const isLightboxOpen = ref(false);
+const lightboxIndex = ref(0);
+
+const openLightbox = (index: number) => {
+  lightboxIndex.value = index;
+  isLightboxOpen.value = true;
+};
 
 // 上傳中的狀態追蹤
 interface UploadingState {
@@ -150,16 +160,20 @@ const handleDrop = (e: DragEvent) => {
       <div
         v-for="(img, idx) in images"
         :key="img.path"
-        class="relative aspect-square rounded-xl overflow-hidden shadow-soft-sm group border border-forest-50"
+        @click="openLightbox(idx)"
+        class="relative aspect-square rounded-xl overflow-hidden shadow-soft-sm group border border-forest-50 cursor-pointer"
       >
         <img
           :src="img.url"
           class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           alt="Preview"
         />
+        <div
+          class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"
+        ></div>
         <button
           v-if="!isReadOnly"
-          @click="removeImage(idx)"
+          @click.stop="removeImage(idx)"
           class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm text-forest-400 flex items-center justify-center hover:text-red-500 hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100"
         >
           <X :size="14" :stroke-width="3" />
@@ -253,5 +267,13 @@ const handleDrop = (e: DragEvent) => {
       </div>
       <p class="text-xs text-forest-200 italic">目前沒有相關圖片</p>
     </div>
+
+    <!-- Lightbox -->
+    <BaseImageLightbox
+      :is-open="isLightboxOpen"
+      :images="images"
+      :initial-index="lightboxIndex"
+      @close="isLightboxOpen = false"
+    />
   </div>
 </template>

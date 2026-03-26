@@ -6,6 +6,7 @@ import { useCollectionStore } from "../stores/collectionStore";
 import { useUIStore } from "../stores/uiStore";
 import BaseBottomSheet from "../components/ui/BaseBottomSheet.vue";
 import CollectionForm from "../components/trip/CollectionForm.vue";
+import BaseImageLightbox from "../components/ui/BaseImageLightbox.vue";
 import {
   ChevronLeft,
   AtSign,
@@ -17,8 +18,9 @@ import {
   MapPin,
   Bookmark,
   ExternalLink,
+  ImageIcon,
 } from "../assets/icons";
-import type { Collection } from "../types/trip";
+import type { Collection, Image } from "../types/trip";
 
 const route = useRoute();
 const router = useRouter();
@@ -45,6 +47,10 @@ const isSheetOpen = ref(false);
 const isFormDirty = ref(false);
 const currentCollection = ref<Partial<Collection> | null>(null);
 const isSaving = ref(false);
+
+// Lightbox state
+const isLightboxOpen = ref(false);
+const lightboxImages = ref<Image[]>([]);
 
 let unsubscribe: (() => void) | null = null;
 
@@ -97,6 +103,12 @@ const openEditSheet = (item?: Collection) => {
 const handleCloseSheet = () => {
   isSheetOpen.value = false;
   isFormDirty.value = false;
+};
+
+const openLightbox = (e: Event, images: Image[]) => {
+  e.stopPropagation();
+  lightboxImages.value = images;
+  isLightboxOpen.value = true;
 };
 
 const handleSaveCollection = async (updatedItem: Collection) => {
@@ -306,15 +318,37 @@ const handleDeleteCollection = async () => {
                 "{{ item.note }}"
               </p>
             </div>
-            <!-- Thumbnail -->
+
+            <!-- Thumbnail with Stack Effect -->
             <div
               v-if="item.images && item.images.length > 0"
-              class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-forest-50"
+              @click="openLightbox($event, item.images)"
+              class="relative w-16 h-16 flex-shrink-0 group/img"
             >
-              <img
-                :src="item.images[0]?.url"
-                class="w-full h-full object-cover"
-              />
+              <!-- Background Stack Layer (if multi images) -->
+              <div
+                v-if="item.images.length > 1"
+                class="absolute inset-0 bg-forest-100 rounded-xl translate-x-1 translate-y-1 rotate-2 transition-transform group-hover/img:rotate-6 group-hover/img:translate-x-1.5"
+              ></div>
+
+              <!-- Main Image -->
+              <div
+                class="relative w-full h-full rounded-xl overflow-hidden shadow-soft-sm border border-forest-50 bg-white z-10 transition-transform group-hover/img:scale-105 active:scale-95"
+              >
+                <img
+                  :src="item.images[0]?.url"
+                  class="w-full h-full object-cover"
+                />
+
+                <!-- Count Overlay -->
+                <div
+                  v-if="item.images.length > 1"
+                  class="absolute bottom-0 right-0 left-0 bg-black/40 backdrop-blur-[2px] text-white text-[9px] font-bold flex items-center justify-center py-0.5"
+                >
+                  <ImageIcon :size="10" class="mr-1" />
+                  {{ item.images.length }}
+                </div>
+              </div>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -359,6 +393,13 @@ const handleDeleteCollection = async () => {
         @update:dirty="isFormDirty = $event"
       />
     </BaseBottomSheet>
+
+    <!-- Lightbox -->
+    <BaseImageLightbox
+      :is-open="isLightboxOpen"
+      :images="lightboxImages"
+      @close="isLightboxOpen = false"
+    />
 
     <!-- Global Loading Overlay -->
     <div

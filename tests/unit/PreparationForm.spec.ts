@@ -39,7 +39,9 @@ describe("PreparationForm.vue", () => {
     });
 
     expect(wrapper.find("input").exists()).toBe(true);
-    expect((wrapper.find("input").element as HTMLInputElement).value).toBe("準備行李");
+    expect((wrapper.find("input").element as HTMLInputElement).value).toBe(
+      "準備行李",
+    );
   });
 
   it("未輸入標題時應顯示警告且不發送事件", async () => {
@@ -64,7 +66,9 @@ describe("PreparationForm.vue", () => {
     });
 
     // 找到 "證件簽證" 類別按鈕並點擊
-    const certBtn = wrapper.findAll("button").find(b => b.text().includes("證件簽證"));
+    const certBtn = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("證件簽證"));
     await certBtn?.trigger("click");
 
     const vm = wrapper.vm as any;

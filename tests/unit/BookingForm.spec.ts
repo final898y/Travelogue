@@ -36,8 +36,12 @@ describe("BookingForm.vue", () => {
       },
     });
 
-    expect(wrapper.find("input[placeholder='例如：飯店地址']").exists()).toBe(true);
-    expect((wrapper.find("input[type='text']").element as HTMLInputElement).value).toBe("測試預訂");
+    expect(wrapper.find("input[placeholder='例如：飯店地址']").exists()).toBe(
+      true,
+    );
+    expect(
+      (wrapper.find("input[type='text']").element as HTMLInputElement).value,
+    ).toBe("測試預訂");
   });
 
   it("機票類型應正確拆分初始 location 與 dateTime", () => {

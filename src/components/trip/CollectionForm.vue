@@ -54,7 +54,9 @@ const isDirty = ref(false);
 const tagInput = ref("");
 
 // 建立局部狀態副本
-const formData = reactive<Partial<Collection>>(getInitialData(props.initialData));
+const formData = reactive<Partial<Collection>>(
+  getInitialData(props.initialData),
+);
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
@@ -62,7 +64,8 @@ watch(
   (newVal) => {
     // 使用相同的初始基準進行比較
     isDirty.value =
-      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
+      JSON.stringify(newVal) !==
+      JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty.value);
   },
   { deep: true },

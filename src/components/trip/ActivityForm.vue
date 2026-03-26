@@ -89,7 +89,8 @@ watch(
   (newVal) => {
     // 使用相同的初始基準進行比較
     isDirty.value =
-      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
+      JSON.stringify(newVal) !==
+      JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty.value);
   },
   { deep: true },
