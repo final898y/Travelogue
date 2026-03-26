@@ -179,4 +179,34 @@ describe("TripForm.vue", () => {
     expect(wrapper.text()).not.toContain(expectedDefaultName);
     expect(wrapper.text()).toContain("夥伴X");
   });
+
+  it("當開始日期與結束日期相同時，天數應為 1 天 (邊界值測試)", async () => {
+    const wrapper = mountWithPinia();
+
+    const inputs = wrapper.findAll("input");
+    await inputs[1].setValue("2024-04-01"); // Start
+    await inputs[2].setValue("2024-04-01"); // End
+
+    const daysBadge = wrapper.find(".bg-forest-50 span:last-child");
+    expect(daysBadge.text()).toContain("1 天");
+  });
+
+  it("旅伴名稱重複時應顯示警告且不新增 (邊界值測試)", async () => {
+    const wrapper = mountWithPinia();
+    const uiStore = useUIStore();
+
+    // 預設已有 test
+    const input = wrapper.find("input[placeholder='輸入旅伴姓名']");
+    await input.setValue("test"); // 與預設名稱重複
+
+    const userPlusBtn = wrapper.find('[data-icon="UserPlus"]').element
+      .parentElement as HTMLButtonElement;
+    await userPlusBtn.click();
+    await nextTick();
+
+    expect(uiStore.showToast).toHaveBeenCalledWith("旅伴名稱重複", "warning");
+    // 檢查標籤數量，應該還是只有 1 個
+    const tags = wrapper.findAll(".rounded-full.bg-white.border-forest-100");
+    expect(tags.length).toBe(1);
+  });
 });

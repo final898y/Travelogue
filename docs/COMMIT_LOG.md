@@ -6,6 +6,17 @@
 
 ## 📅 提交歷史
 
+## [2026-03-26] fix(ui): 補強表單邊界值測試、修正 ExpenseForm 引用錯誤與 Storage Mock (v2.6.3)
+
+- Hash: `TBD`
+- 變更範圍: `BookingForm.vue`, `ExpenseForm.vue`, `PreparationForm.vue`, `TripForm.vue`, `storageService.spec.ts`, `BookingForm.spec.ts`, `PreparationForm.spec.ts`, `ExpenseForm.spec.ts`, `TripForm.spec.ts`
+- 詳細內容:
+  - **單元測試**: 新增 `BookingForm.spec.ts` 與 `PreparationForm.spec.ts`，確保核心組件 100% 測試覆蓋。
+  - **邊界值補強**: 為 `ExpenseForm` 新增金額為 0、負數及還款對象限制的測試；為 `TripForm` 新增同日日期天數計算及重複旅伴名稱的測試。
+  - **Bug 修復**: 修正 `ExpenseForm.vue` 中 `isDirty` 未定義導致的運行時錯誤，並優化 `BookingForm` 在機票格式不正確時的初始化邏輯。
+  - **測試環境**: 修正 `storageService.spec.ts` 由於 Firebase Storage Mock 不完整導致的執行錯誤。
+  - **工程規範**: 統一四大表單的 `getInitialData` 與 `watch` 偵測邏輯，確保版本同步至 v2.6.3。
+
 ## [2026-03-25] fix(ui): 修正「結束編輯」後 isDirty 狀態未即時重置與欄位比對不一致問題 (v2.6.2)
 
 - Hash: `TBD`

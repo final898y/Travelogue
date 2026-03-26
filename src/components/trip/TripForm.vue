@@ -28,7 +28,7 @@ const currentUserEmail = authStore.user?.email || "me";
 const defaultMemberName =
   authStore.user?.displayName || currentUserEmail.split("@")[0] || "成員";
 
-// 預設值與初始狀態
+// 預設值與初始狀態 (在外部定義以保持穩定)
 const today = new Date().toISOString().split("T")[0]!;
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0]!;
 const defaultCoverImage =
@@ -43,16 +43,17 @@ interface TripFormData {
   members: TripMember[];
 }
 
-const formData = reactive<TripFormData>({
-  title: props.initialData?.title || "",
-  startDate: props.initialData?.startDate || today,
-  endDate: props.initialData?.endDate || tomorrow,
-  coverImage: props.initialData?.coverImage || defaultCoverImage,
-  status: props.initialData?.status || "upcoming",
-  members: props.initialData?.members || [
-    { id: currentUserEmail, name: defaultMemberName },
-  ],
+// 統一初始資料生成邏輯
+const getInitialData = (data?: Partial<Trip>): TripFormData => ({
+  title: data?.title || "",
+  startDate: data?.startDate || today,
+  endDate: data?.endDate || tomorrow,
+  coverImage: data?.coverImage || defaultCoverImage,
+  status: data?.status || "upcoming",
+  members: data?.members || [{ id: currentUserEmail, name: defaultMemberName }],
 });
+
+const formData = reactive<TripFormData>(getInitialData(props.initialData));
 
 const newMemberName = ref("");
 const editingMemberId = ref<string | null>(null);
@@ -100,30 +101,9 @@ const isEditing = computed(() => !!props.initialData?.id);
 watch(
   formData,
   (newVal) => {
-    let isDirty = false;
-    if (props.initialData?.id) {
-      isDirty =
-        newVal.title !== (props.initialData.title || "") ||
-        newVal.startDate !== (props.initialData.startDate || today) ||
-        newVal.endDate !== (props.initialData.endDate || tomorrow) ||
-        newVal.coverImage !==
-          (props.initialData.coverImage || defaultCoverImage) ||
-        newVal.status !== (props.initialData.status || "upcoming") ||
-        JSON.stringify(newVal.members) !==
-          JSON.stringify(
-            props.initialData.members || [
-              { id: currentUserEmail, name: defaultMemberName },
-            ],
-          );
-    } else {
-      isDirty =
-        newVal.title !== "" ||
-        newVal.startDate !== today ||
-        newVal.endDate !== tomorrow ||
-        newVal.coverImage !== defaultCoverImage ||
-        JSON.stringify(newVal.members) !==
-          JSON.stringify([{ id: currentUserEmail, name: defaultMemberName }]);
-    }
+    // 使用相同的初始基準進行比較
+    const isDirty =
+      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty);
   },
   { deep: true },

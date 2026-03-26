@@ -190,4 +190,53 @@ describe("ExpenseForm.vue", () => {
     expect(wrapper.text()).not.toContain("平均分攤");
     expect(wrapper.text()).not.toContain("自訂金額");
   });
+
+  it("當金額為 0 或負數時不應觸發 save 事件 (邊界值測試)", async () => {
+    const wrapper = mountWithPinia({
+      props: {
+        initialData: {
+          type: "expense",
+          amount: 0,
+          description: "測試支出",
+          payer: "me",
+          splitWith: ["me"],
+        },
+        tripMembers,
+      },
+    });
+    const uiStore = useUIStore();
+
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入有效金額", "warning");
+    expect(wrapper.emitted("save")).toBeFalsy();
+
+    // 測試負數
+    const vm = wrapper.vm as any;
+    vm.formData.amount = -100;
+    await nextTick();
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith("請輸入有效金額", "warning");
+  });
+
+  it("還款模式時，付款人與收款人不能相同 (邊界值測試)", async () => {
+    const wrapper = mountWithPinia({
+      props: {
+        initialData: {
+          type: "repayment",
+          amount: 500,
+          payer: "me",
+          splitWith: ["me"], // 收款人也是 me
+        },
+        tripMembers,
+      },
+    });
+    const uiStore = useUIStore();
+
+    await wrapper.find("button.bg-forest-400").trigger("click");
+    expect(uiStore.showToast).toHaveBeenCalledWith(
+      "付款人與收款人不能相同",
+      "warning",
+    );
+    expect(wrapper.emitted("save")).toBeFalsy();
+  });
 });

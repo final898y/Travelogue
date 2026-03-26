@@ -17,17 +17,22 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
+// 統一初始資料生成邏輯
+const getInitialData = (data: Partial<Booking>) => ({
+  id: data.id,
+  type: data.type || ("flight" as BookingType),
+  title: data.title || "",
+  dateTime: data.dateTime || "",
+  confirmationNo: data.confirmationNo || "",
+  location: data.location || "",
+  note: data.note || "",
+  isConfirmed: data.isConfirmed ?? true,
+});
+
 // 建立局部狀態副本
 const formData = reactive({
-  type: "flight" as BookingType,
-  title: "",
-  dateTime: "",
-  confirmationNo: "",
-  location: "",
-  note: "",
-  isConfirmed: true,
-  ...props.initialData,
-  // 內部轉換用欄位
+  ...getInitialData(props.initialData),
+  // 內部轉換用欄位 (不參與 isDirty 比對)
   depLoc: "",
   arrLoc: "",
   depTime: "",
@@ -53,30 +58,11 @@ initSplitFields();
 watch(
   formData,
   (newVal) => {
-    // 建立一個不包含內部轉換欄位的物件用於比較
-    const cleanData = {
-      type: newVal.type,
-      title: newVal.title,
-      dateTime: newVal.dateTime,
-      confirmationNo: newVal.confirmationNo,
-      location: newVal.location,
-      note: newVal.note,
-      isConfirmed: newVal.isConfirmed,
-      id: newVal.id,
-    };
+    // 建立一個僅包含業務欄位的物件進行比較
+    const currentData = getInitialData(newVal);
+    const baseData = getInitialData(props.initialData);
 
-    const isDirty =
-      JSON.stringify(cleanData) !==
-      JSON.stringify({
-        type: "flight",
-        title: "",
-        dateTime: "",
-        confirmationNo: "",
-        location: "",
-        note: "",
-        isConfirmed: true,
-        ...props.initialData,
-      });
+    const isDirty = JSON.stringify(currentData) !== JSON.stringify(baseData);
     emit("update:dirty", isDirty);
   },
   { deep: true },

@@ -25,26 +25,24 @@ const emit = defineEmits(["save", "cancel", "delete", "update:dirty"]);
 const uiStore = useUIStore();
 const isEditMode = computed(() => !!props.initialData.id);
 
-// 建立局部狀態副本
-const formData = reactive<Partial<ChecklistItem>>({
-  title: "",
-  category: "行李",
-  isCompleted: false,
-  ...props.initialData,
+// 統一初始資料生成邏輯
+const getInitialData = (data: Partial<ChecklistItem>) => ({
+  id: data.id,
+  title: data.title || "",
+  category: data.category || "行李",
+  isCompleted: data.isCompleted ?? false,
 });
+
+// 建立局部狀態副本
+const formData = reactive<Partial<ChecklistItem>>(getInitialData(props.initialData));
 
 // 監聽變動以通知父組件是否有未儲存的變更
 watch(
   formData,
   (newVal) => {
+    // 使用相同的初始基準進行比較
     const isDirty =
-      JSON.stringify(newVal) !==
-      JSON.stringify({
-        title: "",
-        category: "行李",
-        isCompleted: false,
-        ...props.initialData,
-      });
+      JSON.stringify(newVal) !== JSON.stringify(getInitialData(props.initialData));
     emit("update:dirty", isDirty);
   },
   { deep: true },

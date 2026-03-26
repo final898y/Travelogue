@@ -10,7 +10,8 @@ import imageCompression from "browser-image-compression";
 
 // Mock Firebase Storage
 vi.mock("firebase/storage", () => ({
-  ref: vi.fn(),
+  getStorage: vi.fn(() => ({})),
+  ref: vi.fn(() => ({})),
   uploadBytesResumable: vi.fn(),
   getDownloadURL: vi.fn(),
   deleteObject: vi.fn(),

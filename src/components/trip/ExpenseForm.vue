@@ -34,19 +34,22 @@ const defaultMemberName =
 
 const isEditMode = computed(() => !!props.initialData.id);
 
-// 建立局部狀態副本
-const formData = reactive<Partial<Expense>>({
-  type: "expense",
-  date: new Date().toISOString().split("T")[0],
-  category: "Food",
-  amount: 0,
-  currency: "TWD",
-  description: "",
-  payer: currentUserEmail, // 預設付款人 ID
-  splitWith: [currentUserEmail], // 預設均分者 ID 包含自己
-  customAmounts: {}, // 自訂金額
-  ...props.initialData,
+// 統一初始資料生成邏輯
+const getInitialData = (data: Partial<Expense>) => ({
+  id: data.id,
+  type: data.type || "expense",
+  date: data.date || new Date().toISOString().split("T")[0],
+  category: data.category || "Food",
+  amount: data.amount || 0,
+  currency: data.currency || "TWD",
+  description: data.description || "",
+  payer: data.payer || currentUserEmail,
+  splitWith: data.splitWith || [currentUserEmail],
+  customAmounts: data.customAmounts || {},
 });
+
+// 建立局部狀態副本
+const formData = reactive<Partial<Expense>>(getInitialData(props.initialData));
 
 const isCustomMode = ref(Object.keys(formData.customAmounts || {}).length > 0);
 
@@ -54,20 +57,11 @@ const isCustomMode = ref(Object.keys(formData.customAmounts || {}).length > 0);
 watch(
   formData,
   (newVal) => {
+    // 使用相同的初始基準進行比較
     const isDirty =
-      JSON.stringify(newVal) !==
-      JSON.stringify({
-        type: "expense",
-        date: new Date().toISOString().split("T")[0],
-        category: "Food",
-        amount: 0,
-        currency: "TWD",
-        description: "",
-        payer: currentUserEmail,
-        splitWith: [currentUserEmail],
-        customAmounts: {},
-        ...props.initialData,
-      });
+      JSON.stringify(newVal) !== JSON.stringify(
+        getInitialData(props.initialData),
+      );
     emit("update:dirty", isDirty);
   },
   { deep: true },
