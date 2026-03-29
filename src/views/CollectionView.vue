@@ -116,10 +116,14 @@ const handleSaveCollection = async (updatedItem: Collection) => {
 
   try {
     isSaving.value = true;
-    if (updatedItem.id) {
+    // 使用原始資料是否有 ID 來判斷是「更新」還是「新增」
+    // 因為 CollectionForm 會為了圖片路徑預先產生 UUID
+    const isUpdating = !!currentCollection.value?.id;
+
+    if (isUpdating) {
       await collectionStore.updateCollection(
         tripId,
-        updatedItem.id,
+        updatedItem.id!,
         updatedItem,
       );
       uiStore.showToast("更新成功", "success");

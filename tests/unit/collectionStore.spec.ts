@@ -9,7 +9,8 @@ vi.mock("firebase/firestore", () => ({
   collection: vi.fn(),
   query: vi.fn(),
   doc: vi.fn(),
-  addDoc: vi.fn(),
+  addDoc: vi.fn(() => Promise.resolve({ id: "mock-new-id" })), // 回傳 mock ID
+  setDoc: vi.fn(() => Promise.resolve()), // 新增 setDoc mock
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
   orderBy: vi.fn(),
@@ -27,9 +28,44 @@ vi.mock("../../src/services/firebase", () => ({
   db: {},
 }));
 
+import { addDoc, setDoc } from "firebase/firestore"; // 匯入供驗證使用
+
 describe("collectionStore.ts v2.0 (邊界與極端測試)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks(); // 清除之前的呼叫紀錄
+  });
+
+  describe("新增操作行為 (Add Actions)", () => {
+    it("當 addCollection 不帶 ID 時，應使用 addDoc 並由 Firestore 產生 ID", async () => {
+      const authStore = useAuthStore();
+      authStore.user = { uid: "user-1" } as any;
+      const store = useCollectionStore();
+
+      const newItem = { title: "新收藏", url: "https://test.com" };
+      await store.addCollection("trip-1", newItem as any);
+
+      expect(addDoc).toHaveBeenCalled();
+      expect(setDoc).not.toHaveBeenCalled();
+    });
+
+    it("當 addCollection 帶有預產生的 ID 時，應使用 setDoc 確保 ID 被保留", async () => {
+      const authStore = useAuthStore();
+      authStore.user = { uid: "user-1" } as any;
+      const store = useCollectionStore();
+
+      const pregeneratedId = "custom-uuid-123";
+      const newItem = {
+        id: pregeneratedId,
+        title: "預設ID收藏",
+        url: "https://test.com",
+      };
+      const resultId = await store.addCollection("trip-1", newItem as any);
+
+      expect(setDoc).toHaveBeenCalled();
+      expect(addDoc).not.toHaveBeenCalled();
+      expect(resultId).toBe(pregeneratedId);
+    });
   });
 
   describe("計算屬性 (Computed Properties)", () => {

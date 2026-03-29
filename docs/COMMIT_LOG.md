@@ -6,13 +6,23 @@
 
 ## 📅 提交歷史
 
-## [2026-03-26] feat(ui): 實作全螢幕圖片瀏覽 (Lightbox) 與縮圖視覺美化 (v2.6.4)
+## [2026-03-29] fix(trip): 修正靈感收集新增失敗與 Firebase 報錯問題 (v2.6.5)
+
+- Hash: `TBD`
+- 變更範圍: `CollectionView.vue`, `collectionStore.ts`, `CollectionView.spec.ts`, `collectionStore.spec.ts`, `BaseImageLightbox.spec.ts`
+- 詳細內容:
+  - **Bug 修復**: 修正 `CollectionView.vue` 在新增靈感項目時，因誤判預產 ID 而觸發 `updateCollection` 導致的 Firebase 報錯。
+  - **邏輯優化**: 改用原始資料的 ID 狀態來精準區分「新增」與「更新」操作，確保 `CollectionForm` 的預產 UUID 能被正確處理。
+  - **單元測試**:
+    - 新增 `CollectionView.spec.ts` 完整模擬 View 層級的儲存判定流程。
+    - 補強 `collectionStore.spec.ts` 測試案例，驗證 `addCollection` 在處理預設 ID 時的正確性。
+  - **品質維護**: 修復 `BaseImageLightbox.spec.ts` 的 Lint 警告，並同步更新版本號至 v2.6.5。
 
 - Hash: `TBD`
 - 變更範圍: `BaseImageLightbox.vue`, `ImageUploader.vue`, `TimelineItem.vue`, `CollectionView.vue`, `icons.ts`, `BaseImageLightbox.spec.ts`
 - 詳細內容:
   - **沉浸式體驗**: 實作 `BaseImageLightbox.vue` 全螢幕圖片預覽組件，支援單/多圖切換、循環、鍵盤操作與手機端手勢模擬。
-  - **視覺美學**: 
+  - **視覺美學**:
     - 為 `TimelineItem` 與 `CollectionView` 縮圖加入懸停縮放、陰影與圓角優化。
     - 針對多圖項目實作「視覺堆疊 (Stacking)」效果與「多圖張數指示器」，強化「靈感收集」的感官意象。
   - **單元測試**: 新增 `BaseImageLightbox.spec.ts` 涵蓋 10 個核心測試案例，確保循環邏輯、鍵盤事件與邊界值處理穩定。
